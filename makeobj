@@ -1,0 +1,295 @@
+
+##################################################################################################
+
+!ifndef version
+version = Release
+!endif
+
+##################################################################################################
+
+curdir = $+ $(%cdrive):$(%cwd) $-
+#cppdir = .\cpp
+#hdir = .\cpp
+
+##################################################################################################
+
+.ERASE
+.EXTENSIONS:
+.EXTENSIONS: .exe .o .cpp .h .s .d .dxe
+
+##################################################################################################
+
+!include $(objdir)\cppdirlist
+#!include $(objdir)\incdirlist
+
+##################################################################################################
+#	.<dependent_extension> : <path_specification>
+#	.c: $(program_dir);$(screen_dir)
+
+.o:		$(objdir)
+.h:		$(hdir)
+.s:		$(cppdir)
+.d:		$(objdir)
+.dxe:	$(objdir)
+
+##################################################################################################
+
+!include $(objdir)\mkoutcpp
+!include $(objdir)\mkoutobj
+
+##################################################################################################
+
+!ifeq version Debug
+
+libsuffix = d
+
+!else ifeq version Win32_Debug
+
+debug_compiler_options = -O1
+debug_linker_options = 
+libsuffix=Win32
+buildtool = WIN32
+
+!else 
+
+libsuffix = r
+
+!endif
+
+##################################################################################################
+
+!ifeq targetcpu SAM7X
+
+buildtool = ARM
+cpu_compiler_options = --cpu=ARM7TDMI --thumb --apcs=/softfp/interwork
+cpu_asm_options = --cpu ARM7TDMI --apcs /softfp/interwork
+cpu_link_options = --cpu ARM7TDMI
+
+!else ifeq targetcpu SAME53
+
+buildtool = ARMCC
+cpu_compiler_options = --cpu=CORTEX-M4.fp.sp --thumb
+cpu_asm_options = --cpu CORTEX-M4.fp.sp --apcs /interwork
+cpu_link_options = --cpu CORTEX-M4.fp.sp
+
+!else ifeq targetcpu XMC48
+
+buildtool = ARM
+cpu_compiler_options = --cpu=CORTEX-M4.fp.sp --thumb
+cpu_asm_options = --cpu CORTEX-M4.fp.sp --apcs /interwork
+cpu_link_options = --cpu CORTEX-M4.fp.sp
+
+!else ifeq targetcpu LPC824
+
+buildtool = ARM
+cpu_compiler_options = --cpu=Cortex-M0plus --thumb
+cpu_asm_options = --cpu Cortex-M0plus --apcs /interwork
+cpu_link_options = --cpu Cortex-M0plus
+
+!else ifeq targetcpu LPC812
+
+buildtool = ARM
+cpu_compiler_options = --cpu=Cortex-M0plus --thumb
+cpu_asm_options = --cpu Cortex-M0plus --apcs /interwork
+cpu_link_options = --cpu Cortex-M0plus
+
+!else ifeq targetcpu BF592
+
+buildtool = ADSP
+adsp_cpu_options = -proc ADSP-BF592-A -DCPU_$(targetcpu)
+
+!else
+
+cpu_compiler_options = 
+cpu_asm_options =
+cpu_link_options = 
+cpu_obj = 
+cpu_scatter = 
+
+!endif
+
+##################################################################################################
+
+libname = $(curdir)\$(targetcpu)_$(libsuffix).a
+
+##################################################################################################
+
+.BEFORE
+	@if NOT EXIST $(objdir) @md $(objdir) >nul
+	@call echo Building $(buildtool) $(targetcpu) $(version) version ...
+
+##################################################################################################
+#	.<dependent_extension> : <path_specification>
+#	.c: $(program_dir);$(screen_dir)
+
+!ifeq buildtool ARMCC
+
+.cpp:	$(cpp_dir_list)
+	
+bindir = $(%ARMCC50BIN)
+
+!ifeq version Debug
+debug_compiler_options = -O0 --debug -D_DEBUG
+debug_linker_options = DEBUG ALL
+!else
+debug_compiler_options = -O3 -Otime --debug
+debug_linker_options = 
+!endif
+
+!else ifeq buildtool ADSP
+
+.cpp:	initcode;$(cpp_dir_list)
+
+bindir = $(%ADI_CCES)
+
+!ifeq version Debug
+debug_compiler_options = -O0 -D_DEBUG
+debug_linker_options = 
+!else
+debug_compiler_options = -Oa
+debug_linker_options = 
+!endif
+
+!endif
+
+##################################################################################################	  --diag_suppress=68,368,1165,1299,3017 &
+
+arm_compiler_options = $(debug_compiler_options) $(cpu_compiler_options) --gnu --asm --interleave -g -c --diag_style=ide &
+	 -D__MICROLIB -DCPU_$(targetcpu) --no_depend_system_headers --reduce_paths -I$(curdir)\cpp
+
+##################################################################################################
+
+arm_asm_options = $(cpu_asm_options) -g --xref --diag_style=ide --pd "__MICROLIB SETA 1" --cpreproc
+
+##################################################################################################
+
+arm_link_options = $(cpu_link_options) --bestdebug --strict --map --xref --callgraph --symbols --summary_stderr --library_type=microlib
+  
+##################################################################################################-wd4996
+
+win32_compiler_options = -nologo -DWIN32 -D_DEBUG -c -Z7 -Zp
+
+##################################################################################################
+
+adsp_compiler_options = $(debug_compiler_options) -c -c++ -g -structs-do-not-overlap -no-multiline &
+	-double-size-32 -decls-strong -warn-protos -si-revision 0.2 $(adsp_cpu_options) -Wterse -I$(curdir)\cpp
+
+##################################################################################################
+
+adsp_asm_options = $(adsp_cpu_options) -g -si-revision 0.2 -DADI_CCES
+
+##################################################################################################
+
+adsp_link_options = -build-lib $(adsp_cpu_options) -si-revision 0.2
+
+##################################################################################################
+
+adsp_link_options_initcode = $(adsp_cpu_options) -si-revision 0.2 -flags-link -e,-MDADI_CCES
+
+##################################################################################################
+#
+#	$$ 	represents the character "$"
+#	$# 	represents the character "#"
+#	$@ 	full file name of the target
+#	$* 	target with the extension removed
+#	$< 	list of all dependents
+#	$? 	list of dependents that are younger than the target
+#	
+#	a:\dir\target.ext : b:\dir1\dep1.ex1 c:\dir2\dep2.ex2
+#	
+#	$^@ 	a:\dir\target.ext
+#	$^* 	a:\dir\target
+#	$^& 	target
+#	$^. 	target.ext
+#	$^: 	a:\dir\
+#		
+#	$[@ 	b:\dir1\dep1.ex1
+#	$[* 	b:\dir1\dep1
+#	$[& 	dep1
+#	$[. 	dep1.ex1
+#	$[: 	b:\dir1\
+#		
+#	$]@ 	c:\dir2\dep2.ex2
+#	$]* 	c:\dir2\dep2
+#	$]& 	dep2
+#	$]. 	dep2.ex2
+#	$]: 	c:\dir2\
+#
+##################################################################################################
+##################################################################################################
+
+!ifeq buildtool ARMCC
+
+$(libname) : $(modules_obj)	
+	@echo Creating library $(libname) ...
+	@$(bindir)\armar --create $(libname) $(modules_obj)
+
+##################################################################################################
+
+!include $(objdir)\mkoutdep
+
+##################################################################################################
+
+.cpp.o:
+	@echo Compiling $[. ...
+	@$(bindir)\armcc $(arm_compiler_options) --depend="$^*.d" -o "$^@" $[@
+
+##################################################################################################
+
+.s.o:
+	@echo Assembling $[. ...
+	@$(bindir)\armasm $(arm_asm_options) --list $(objdir)\$^&.lst  -o $(objdir)\$^. $[@	
+
+##################################################################################################
+##################################################################################################
+	
+!else ifeq version Win32_Debug
+
+$(libname) : $(modules_obj)	
+	@echo Library adding: $(modules)
+	@if NOT EXIST "$(libname)" (call lib -NOLOGO -OUT:"$(libname)" -LIBPATH:"$(objdir)\" $(modules_obj)) &
+	ELSE call lib -NOLOGO -OUT:"$(libname)" -LIBPATH:"$(objdir)\" "$(libname)" $(modules_obj)
+
+##################################################################################################
+
+.cpp.o:	.AUTODEPEND
+	@cl $(win32_compiler_options) -Fo"$(objdir)\$^." $[@
+
+##################################################################################################
+##################################################################################################
+
+!else ifeq buildtool ADSP
+
+$(libname) : $(modules_obj) $(objdir)\initcode_osc25.dxe $(objdir)\initcode_osc16.dxe
+	@echo Creating library $(libname) ...
+	@"$(bindir)\ccblkfn"	$(adsp_link_options) -o "$^." $(modules_obj)
+
+##################################################################################################
+
+$(objdir)\initcode_osc25.dxe : $(objdir)\initcode_osc25.o
+	@echo Linking $^@ ...
+	@"$(bindir)\ccblkfn" $(adsp_link_options_initcode) -T LDF\initcode.ldf -o $^@ $<
+
+##################################################################################################
+
+$(objdir)\initcode_osc16.dxe : $(objdir)\initcode_osc16.o
+	@echo Linking $^@ ...
+	@"$(bindir)\ccblkfn" $(adsp_link_options_initcode) -T LDF\initcode.ldf -o $^@ $<
+
+##################################################################################################
+
+!include $(objdir)\mkoutdep
+
+################################################################################################## -MD -Mo="$^*.d"
+
+.cpp.o: .AUTODEPEND
+	@echo Compiling $[. ...
+	@"$(bindir)\ccblkfn" $(adsp_compiler_options) -o "$^@" $[@
+
+##################################################################################################
+##################################################################################################
+
+!endif
+
+
+	
