@@ -150,6 +150,10 @@ debug_compiler_options = -Oa
 debug_linker_options = 
 !endif
 
+!else
+
+.cpp:	$(cpp_dir_list)
+
 !endif
 
 ##################################################################################################	  --diag_suppress=68,368,1165,1299,3017 &
@@ -167,11 +171,11 @@ arm_link_options = $(cpu_link_options) --bestdebug --strict --map --xref --callg
   
 ##################################################################################################-wd4996
 
-win32_compiler_options = -nologo -DWIN32 -D_DEBUG -c -Z7 -Zp
+win32_compiler_options = -nologo -DWIN32 -D_DEBUG -c -Z7 -Zp -I$(curdir)\cpp
 
 ##################################################################################################
 
-adsp_compiler_options = $(debug_compiler_options) -c -c++ -g -structs-do-not-overlap -no-multiline &
+adsp_compiler_options = $(debug_compiler_options) -c -c++11 -g++ -g -structs-do-not-overlap -no-multiline &
 	-double-size-32 -decls-strong -warn-protos -si-revision 0.2 $(adsp_cpu_options) -Wterse -I$(curdir)\cpp
 
 ##################################################################################################
@@ -253,7 +257,7 @@ $(libname) : $(modules_obj)
 ##################################################################################################
 
 .cpp.o:	.AUTODEPEND
-	@cl $(win32_compiler_options) -Fo"$(objdir)\$^." $[@
+	@cl $(win32_compiler_options) -Fo"$^@" $[@
 
 ##################################################################################################
 ##################################################################################################

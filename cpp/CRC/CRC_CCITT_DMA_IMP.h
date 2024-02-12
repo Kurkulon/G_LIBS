@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include "CRC_CCITT_DMA.h"
-#include "DMA.h"
+#include "CRC\CRC_CCITT_DMA.h"
+#include "DMA\DMA.h"
 
 bool busy_CRC_CCITT_DMA = false;
 

@@ -11,7 +11,7 @@
 
 #endif
 
-#ifdef _ADI_COMPILER
+#ifdef _ADI_COMPILER_
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -109,7 +109,7 @@ protected:
 
     enum {LOCK_IS_FREE = 0, LOCK_IS_TAKEN = 1};
 
-	__forceinline u32	Lock()			{ while (_InterlockedCompareExchange(&locked, LOCK_IS_TAKEN, LOCK_IS_FREE) == LOCK_IS_TAKEN) locks_count++; }
+	__forceinline u32	Lock()			{ while (_InterlockedCompareExchange(&locked, LOCK_IS_TAKEN, LOCK_IS_FREE) == LOCK_IS_TAKEN) locks_count++; return 0; }
 	__forceinline void	Unlock(u32 t)	{ _InterlockedExchange(&locked, LOCK_IS_FREE);  }
 
 #else
@@ -414,7 +414,7 @@ public:
 
 template <class T> Ptr<T> ListRef<T>::Get()
 {
-	Lock();
+	u32 t = Lock();
 
 	Ptr<T> r;
 
@@ -435,7 +435,7 @@ template <class T> Ptr<T> ListRef<T>::Get()
 		i->Free();
 	};
 
-	Unlock();
+	Unlock(t);
 
 	return r;
 }
@@ -454,7 +454,7 @@ template <class T> bool ListRef<T>::Add(const Ptr<T>& r)
 
 	item->item = r.ptr;
 
-	Lock();
+	u32 t = Lock();
 
 	if (last == 0)
 	{
@@ -466,7 +466,7 @@ template <class T> bool ListRef<T>::Add(const Ptr<T>& r)
 		last = item;
 	};
 
-	Unlock();
+	Unlock(t);
 
 	item->next = 0;
 

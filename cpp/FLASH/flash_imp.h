@@ -2,14 +2,14 @@
 #define FLASH_IMP_H__10_05_2022__14_57
 
 #include "flash.h"
-#include "vector.h"
+#include "EMAC\vector.h"
 #include "list.h"
-#include "trap.h"
+#include "EMAC\trap.h"
 #include "PointerCRC.h"
-#include "SEGGER_RTT.h"
-#include "CRC_CCITT_DMA.h"
+#include "SEGGER_RTT\SEGGER_RTT.h"
+#include "CRC\CRC_CCITT_DMA.h"
 
-#include "flash_def.h"
+#include "FLASH\flash_def.h"
 //#include "extern_def.h"
 
 #include "i2c.h"

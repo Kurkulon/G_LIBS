@@ -30,7 +30,7 @@ DWORD txThreadCount = 0;
 #include "emac.h"
 #include "xtrap.h"
 #include "list.h"
-#include "SEGGER_RTT.h"
+#include "SEGGER_RTT\SEGGER_RTT.h"
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -75,8 +75,8 @@ static const MAC hwAdr = EMAC_HWADR;
 
 #ifdef BOOTLOADER
 
-	#include <tftp.h>
-	#include <boot_isp.h>
+	#include <EMAC\tftp.h>
+	#include <BOOT\boot_isp.h>
 
 	#ifndef ETH_RX_DRBS
 	#define ETH_RX_DRBS		((ISP_PAGESIZE+46+64)/64)

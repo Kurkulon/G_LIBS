@@ -1,7 +1,7 @@
 #ifndef TFTP_H__25_03_2020__18_36
 #define TFTP_H__25_03_2020__18_36
 
-#include "mem.h"
+#include "MEM\mem.h"
 
 #define TFTP_DATA_CHUNK_SIZE	512 // кратно 256 (странице памяти)
 

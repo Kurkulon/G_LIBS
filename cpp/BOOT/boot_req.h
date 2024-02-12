@@ -6,9 +6,16 @@
 #include "types.h"
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#ifdef _ADI_COMPILER
+#pragma pack(1)
+#endif
 
-__packed struct BootReqHS { u64 guid; u16 crc; };
+__packed struct BootReqHS { u64 guid; u16 crc; } ;
 __packed struct BootRspHS { u64 guid; u16 crc; };
+
+#ifdef _ADI_COMPILER
+#pragma pack()
+#endif
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -47,7 +54,7 @@ union BootReqV1
 
 	struct  { u16 adr; u16 rw;										u16 align; u16 crc;			} F0;	// запрос версии протокола и индентификатора железа
 	struct  { u16 adr; u16 rw; u32 len;								u16 align; u16 crc;			} F1;	// запрос контрольной суммы и длины программы во флэш-памяти
-	struct  { u16 adr; u16 rw; u16 padr; u16 plen; u32 pdata[1]; /* последние 2 байта CRC */	} F2;	// запись страницы во флэш
+	struct  { u16 adr; u16 rw; u32 padr; u32 plen; u32 pdata[1]; /* последние 2 байта CRC */	} F2;	// запись страницы во флэш
 	struct  { u16 adr; u16 rw;										u16 align;	u16 crc;		} F3;	// старт основной программы
 };
 
@@ -57,10 +64,10 @@ union BootRspV1
 {
 	enum { VERSION = 1, FUNC_MAX = 3 };
 
-	struct  { u16 adr; u16 rw; u32 ver; u64 guid; u32 startAdr; u16 pageLen;	u16 crc; } F0;	// запрос версии протокола и индентификатора железа
-	struct  { u16 adr; u16 rw; u32 flashLen;  u16 flashCRC;						u16 crc; } F1;	// запрос контрольной суммы и длины программы во флэш-памяти
-	struct  { u16 adr; u16 rw; u16 res;											u16 crc; } F2;	// запись страницы во флэш
-	struct  { u16 adr; u16 rw;										u16 align;	u16 crc; } F3;	// старт основной программы
+	struct  { u16 adr; u16 rw; u16 ver; u16 maxFunc; u64 guid; u32 startAdr; u16 pageLen;	u16 crc; } F0;	// запрос версии протокола и индентификатора железа
+	struct  { u16 adr; u16 rw; u32 flashLen;  u16 flashCRC;									u16 crc; } F1;	// запрос контрольной суммы и длины программы во флэш-памяти
+	struct  { u16 adr; u16 rw; u16 res;														u16 crc; } F2;	// запись страницы во флэш
+	struct  { u16 adr; u16 rw;													u16 align;	u16 crc; } F3;	// старт основной программы
 };
 
 #endif // BOOT_REQ_H__11_02_2024__23_05

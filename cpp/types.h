@@ -15,7 +15,7 @@
 
 #define __forceinline inline
 #define __nop __builtin_NOP
-#define __packed /**/
+#define __packed /*__attribute__((packed))*/
 
 #elif  defined(__CC_ARM)
 
@@ -37,8 +37,8 @@
 	__forceinline void __enable_irq() {}
 	//inline void __nop() {}
 
-	#define __CC_ARM
-	#define __TARGET_FPU_VFP
+	//#define __CC_ARM
+	//#define __TARGET_FPU_VFP
 
 	#if _MSC_VER > 1500
 		#pragma comment(lib, "legacy_stdio_definitions.lib")
@@ -215,9 +215,9 @@ union DataPointer
 	__packed dword	*d;
 	__packed float	*f;
 
-	DataPointer(__packed void *p) { v = p; } 
+	DataPointer(void *p) { v = p; } 
 
-	void operator=(__packed void *p) { v = p; } 
+	void operator=(void *p) { v = p; } 
 
 #ifdef _ADI_COMPILER
 	void WW(word a) { misaligned_store16(v, a); }
@@ -236,9 +236,9 @@ union ConstDataPointer
 	__packed const dword	*d;
 	__packed const float	*f;
 
-	ConstDataPointer(__packed const void *p) { v = p; } 
+	ConstDataPointer(const void *p) { v = p; } 
 
-	void operator=(__packed const void *p) { v = p; } 
+	void operator=(const void *p) { v = p; } 
 };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

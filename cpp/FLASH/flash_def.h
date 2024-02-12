@@ -4,7 +4,7 @@
 #include "types.h"
 //#include "core.h"
 #include "time.h"
-#include "CRC16.h"
+#include "CRC\CRC16.h"
 
 
 //#define NAND_MAX_CHIP		(1<<3)

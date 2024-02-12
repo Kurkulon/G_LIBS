@@ -6,7 +6,7 @@
 #include "types.h"
 #include "usic.h"
 #include "list.h"
-#include "DMA.h"
+#include "DMA\DMA.h"
 
 #define US2SPIS(v) US2CTM(v)
 #define MS2SPIS(v) MS2CTM(v)

@@ -4,10 +4,10 @@
 #include "types.h"
 #include "core.h"
 
-#include "SEGGER_RTT.h"
-#include "CRC16_8005.h"
-#include "flash_def.h"
-#include "DMA.h"
+#include "SEGGER_RTT\SEGGER_RTT.h"
+#include "CRC\CRC16_8005.h"
+#include "FLASH\flash_def.h"
+#include "DMA\DMA.h"
 
 #ifdef WIN32
 
@@ -17,7 +17,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <intrin.h>
-#include "CRC16_CCIT.h"
+//#include "CRC\CRC16_CCIT.h"
 #include "list.h"
 
 static HANDLE handleNandFile;

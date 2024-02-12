@@ -561,6 +561,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\cpp\BOOT\boot_imp.h"
+					>
+				</File>
+				<File
 					RelativePath=".\cpp\BOOT\boot_isp.h"
 					>
 				</File>

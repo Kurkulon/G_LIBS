@@ -5,9 +5,9 @@
 
 #include "RequestQuery.h"
 
-#include "CRC16.h"
+#include "CRC\CRC16.h"
 #include "time.h"
-#include "CRC_CCITT_DMA.h"
+#include "CRC\CRC_CCITT_DMA.h"
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

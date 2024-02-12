@@ -3,9 +3,9 @@
 
 #pragma once
 
-#include "ComPort.h"
+#include "ComPort\ComPort.h"
 #include "list.h"
-#include "flash.h"
+#include "FLASH\flash.h"
 
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

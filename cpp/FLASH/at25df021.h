@@ -7,8 +7,12 @@
 #define FLASH_START_ADR 0x10000 	
 #endif
 
-#ifndef SECTOR_SIZE
-#define SECTOR_SIZE		4096
+#ifndef FLASH_SECTOR_SIZE
+#define FLASH_SECTOR_SIZE	4096
+#endif
+
+#ifndef FLASH_PAGE_SIZE
+#define FLASH_PAGE_SIZE		256
 #endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -25,7 +29,7 @@ struct Req
 	u32 len;
 	u32 dataOffset;
 
-	byte data[256+32]; 
+	byte data[FLASH_PAGE_SIZE+32]; 
 	 
 	void* GetDataPtr() { return data+dataOffset; }
 	u32 MaxLen() { return sizeof(data); }
