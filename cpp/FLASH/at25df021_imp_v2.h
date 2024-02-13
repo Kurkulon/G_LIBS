@@ -36,6 +36,10 @@ static S_SPIM	spi(0, HW::PIOF, SPI_CS_MASK, ArraySize(SPI_CS_MASK), SCLK);
 #define BAUD_RATE_DIVISOR 	50
 #endif
 
+#ifndef AT25_SPI_BAUD_RATE
+#define AT25_SPI_BAUD_RATE 	1000000
+#endif
+
 /* application definitions */
 #define SPIMODE	(CPOL|CPHA)
 //#define COMMON_SPI_SETTINGS (SPE|MSTR|CPOL|CPHA)  /* settings to the SPI_CTL */
@@ -1031,7 +1035,7 @@ void FlashInit()
 		freeReq.Add(_req+i);
 	};
 
-	spi.Connect(1000000);
+	spi.Connect(AT25_SPI_BAUD_RATE);
 }
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

@@ -139,6 +139,8 @@ static bool RequestFunc_02(Req *r, ComPort::WriteBuffer *wb)
 
 	if (r->len < xl) return  false;
 
+	u16 adr = req.F2.adr;
+
 	if (req.F2.padr >= curWriteReqAdr)
 	{
 		curWriteReqAdr = req.F2.padr + req.F2.plen;
@@ -148,9 +150,13 @@ static bool RequestFunc_02(Req *r, ComPort::WriteBuffer *wb)
 		r->len = req.F2.plen;
 
 		FlashWriteReq(r);
+	}
+	else
+	{
+		FreeReq(r);
 	};
 
-	if (req.F2.adr == 0) return false;
+	if (adr == 0) return false;
 
 	rsp.F2.adr	= req.F2.adr;
 	rsp.F2.rw	= req.F2.rw;
@@ -201,9 +207,16 @@ static bool RequestFunc(Req *r, ComPort::WriteBuffer *wb)
 	BootReqV1 &req = *((BootReqV1*)(r->GetDataPtr()));
 
 	u16 t = req.F0.rw;
+	u16 adr = GetNetAdr();
 
-	if ((req.F0.adr != GetNetAdr() && req.F0.adr != 0) || (t & manReqMask) != manReqWord || r->len < 2)
+	bool cm = (t & manReqMask) != manReqWord;
+	bool ca = req.F0.adr == adr || req.F0.adr == 0;
+
+	if (ca && cm) cmdRunMainApp = run = false, RunMainApp();
+
+	if (!ca || cm || r->len < 2)
 	{
+		FreeReq(r);
 		return false;
 	};
 
@@ -218,7 +231,7 @@ static bool RequestFunc(Req *r, ComPort::WriteBuffer *wb)
 		case 2: 	result = RequestFunc_02(r, wb); break;
 		case 3: 	result = RequestFunc_03(r, wb); break;
 
-		default:	cmdRunMainApp = run = false; RunMainApp(); break;
+		default:	FreeReq(r); cmdRunMainApp = run = false; RunMainApp(); break;
 	};
 
 	if (result)	tm32.Reset(), timeOut = MS2CTM(10000);
@@ -273,8 +286,6 @@ static void UpdateBlackFin()
 					}
 					else
 					{
-						FreeReq(req);
-
 						req = 0;
 
 						i = 0;
@@ -366,7 +377,7 @@ static void CheckFlash()
 	static ADI_BOOT_HEADER bh;
 	static u16 crc = 0;
 
-	if (FlashBusy()) return;
+	while (FlashBusy()) FlashUpdate();
 
 	u32 *p = (u32*)&bh;
 

@@ -779,7 +779,7 @@ void ComPort::EnableReceive(void* dst, word count)
 		*pUART0_IER = 0;
 
 		*pDMA7_START_ADDR = dst;
-		*pDMA7_CURR_X_COUNT = *pDMA7_X_COUNT = count;
+		*pDMA7_CURR_X_COUNT = *pDMA7_X_COUNT = _prevDmaCounter = count;
 		*pDMA7_X_MODIFY = 1;
 		*pDMA7_CONFIG = WNR|FLOW_STOP|WDSIZE_8|SYNC|DMAEN;
 
