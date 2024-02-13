@@ -1,0 +1,395 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="CPP">
+      <UniqueIdentifier>{d663a78f-5a3b-48ba-ac50-520491c08588}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CPP\SEGGER_RTT">
+      <UniqueIdentifier>{03a335b4-9309-47be-9ba7-2147fc3e1645}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CPP\MEM">
+      <UniqueIdentifier>{926d1776-fd03-43e5-b6af-2ffc9df93a7e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CPP\MANCH">
+      <UniqueIdentifier>{f3dadf47-07e5-43d4-bb6b-89c88f6c87a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CPP\EMAC">
+      <UniqueIdentifier>{c6ef80da-2322-47e1-9d6a-f048b37bd5c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CPP\DMA">
+      <UniqueIdentifier>{d004988b-71ae-44fb-a3d4-126d67456961}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CPP\FLASH">
+      <UniqueIdentifier>{470c2396-1de2-4a25-9b9a-62480087c986}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CPP\CRC">
+      <UniqueIdentifier>{a631e5b6-88d7-4c4b-b4ca-1fbe93cc2ccc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CPP\ComPort">
+      <UniqueIdentifier>{b620ed5b-59f7-4235-aeaf-fc8b141c676f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CPP\BOOT">
+      <UniqueIdentifier>{f8f964c6-91ac-4976-85fc-260f83236561}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CPP\ARM">
+      <UniqueIdentifier>{e28bf18e-b425-4412-af89-46bc061a1c52}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CPP\ADSP">
+      <UniqueIdentifier>{02fd3b5b-f7df-47d7-9a85-8861b57d887d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CPP\WAVEPACK">
+      <UniqueIdentifier>{dd0b1b36-9802-438f-b52c-54635b170cb1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scatter">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>sct;</Extensions>
+      <ParseFiles>false</ParseFiles>
+    </Filter>
+    <Filter Include="Initcode">
+      <UniqueIdentifier>{dcbdf615-d5f5-4248-a281-4debcc1b4f0d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="LDF">
+      <UniqueIdentifier>{158fdddc-f409-48bc-92b7-34cc2a06bcde}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="cpp\Clock.h">
+      <Filter>CPP</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\Clock_imp.h">
+      <Filter>CPP</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\core.h">
+      <Filter>CPP</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\extern_def.h">
+      <Filter>CPP</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\I2C.h">
+      <Filter>CPP</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\list.h">
+      <Filter>CPP</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\PointerCRC.h">
+      <Filter>CPP</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\RequestQuery.h">
+      <Filter>CPP</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\RequestQuery_imp.h">
+      <Filter>CPP</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\SPI.h">
+      <Filter>CPP</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\SPIS.h">
+      <Filter>CPP</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\SPIS_imp.h">
+      <Filter>CPP</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\time.h">
+      <Filter>CPP</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\types.h">
+      <Filter>CPP</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\usic.h">
+      <Filter>CPP</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\SEGGER_RTT\SEGGER_RTT.h">
+      <Filter>CPP\SEGGER_RTT</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\SEGGER_RTT\SEGGER_RTT_Conf.h">
+      <Filter>CPP\SEGGER_RTT</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\MEM\mem.h">
+      <Filter>CPP\MEM</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\MEM\mem_imp.h">
+      <Filter>CPP\MEM</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\MANCH\manch.h">
+      <Filter>CPP\MANCH</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\MANCH\manch_imp.h">
+      <Filter>CPP\MANCH</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\EMAC\emac.h">
+      <Filter>CPP\EMAC</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\EMAC\EMAC_DEF.h">
+      <Filter>CPP\EMAC</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\EMAC\emac_imp.h">
+      <Filter>CPP\EMAC</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\EMAC\emac_imp_v2.h">
+      <Filter>CPP\EMAC</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\EMAC\tftp.h">
+      <Filter>CPP\EMAC</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\EMAC\tftp_imp.h">
+      <Filter>CPP\EMAC</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\EMAC\trap.h">
+      <Filter>CPP\EMAC</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\EMAC\trap_def.h">
+      <Filter>CPP\EMAC</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\EMAC\vector.h">
+      <Filter>CPP\EMAC</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\EMAC\xtrap.h">
+      <Filter>CPP\EMAC</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\DMA\DMA.h">
+      <Filter>CPP\DMA</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\FLASH\at25df021.h">
+      <Filter>CPP\FLASH</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\FLASH\at25df021_imp.h">
+      <Filter>CPP\FLASH</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\FLASH\at25df021_imp_v2.h">
+      <Filter>CPP\FLASH</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\FLASH\flash.h">
+      <Filter>CPP\FLASH</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\FLASH\flash_def.h">
+      <Filter>CPP\FLASH</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\FLASH\flash_imp.h">
+      <Filter>CPP\FLASH</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\FLASH\hw_nand_imp.h">
+      <Filter>CPP\FLASH</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\CRC\CRC16.h">
+      <Filter>CPP\CRC</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\CRC\CRC16_8005.h">
+      <Filter>CPP\CRC</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\CRC\CRC16_CCIT.h">
+      <Filter>CPP\CRC</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\CRC\CRC32.h">
+      <Filter>CPP\CRC</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\CRC\CRC_CCITT_DMA.h">
+      <Filter>CPP\CRC</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\CRC\CRC_CCITT_DMA_IMP.h">
+      <Filter>CPP\CRC</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\ComPort\ComPort.h">
+      <Filter>CPP\ComPort</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\ComPort\ComPort_imp.h">
+      <Filter>CPP\ComPort</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\ComPort\ComPort_LPC8XX.h">
+      <Filter>CPP\ComPort</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\ComPort\ComPort_LPC8XX_imp.h">
+      <Filter>CPP\ComPort</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\BOOT\boot_com_emac_imp.h">
+      <Filter>CPP\BOOT</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\BOOT\boot_imp.h">
+      <Filter>CPP\BOOT</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\BOOT\boot_isp.h">
+      <Filter>CPP\BOOT</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\BOOT\BOOT_LPC824_IMP.h">
+      <Filter>CPP\BOOT</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\BOOT\boot_req.h">
+      <Filter>CPP\BOOT</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\ARM\cm0.h">
+      <Filter>CPP\ARM</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\ARM\cm4.h">
+      <Filter>CPP\ARM</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\ARM\lpc81x.h">
+      <Filter>CPP\ARM</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\ARM\lpc82x.h">
+      <Filter>CPP\ARM</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\ARM\same53.h">
+      <Filter>CPP\ARM</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\ARM\system_imp.h">
+      <Filter>CPP\ARM</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\ARM\XMC4800.h">
+      <Filter>CPP\ARM</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\ADSP\BF592.h">
+      <Filter>CPP\ADSP</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\ADSP\system_imp.h">
+      <Filter>CPP\ADSP</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\WAVEPACK\fdct.h">
+      <Filter>CPP\WAVEPACK</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\WAVEPACK\fdct_imp.h">
+      <Filter>CPP\WAVEPACK</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\WAVEPACK\mdct.h">
+      <Filter>CPP\WAVEPACK</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\WAVEPACK\mdct_imp.h">
+      <Filter>CPP\WAVEPACK</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\WAVEPACK\wavepack_imp.h">
+      <Filter>CPP\WAVEPACK</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="cpp\i2c.cpp">
+      <Filter>CPP</Filter>
+    </ClCompile>
+    <ClCompile Include="cpp\PointerCRC.cpp">
+      <Filter>CPP</Filter>
+    </ClCompile>
+    <ClCompile Include="cpp\spi.cpp">
+      <Filter>CPP</Filter>
+    </ClCompile>
+    <ClCompile Include="cpp\time.cpp">
+      <Filter>CPP</Filter>
+    </ClCompile>
+    <ClCompile Include="cpp\usic.cpp">
+      <Filter>CPP</Filter>
+    </ClCompile>
+    <ClCompile Include="cpp\SEGGER_RTT\SEGGER_RTT.cpp">
+      <Filter>CPP\SEGGER_RTT</Filter>
+    </ClCompile>
+    <ClCompile Include="cpp\SEGGER_RTT\SEGGER_RTT_printf.cpp">
+      <Filter>CPP\SEGGER_RTT</Filter>
+    </ClCompile>
+    <ClCompile Include="cpp\EMAC\trap.cpp">
+      <Filter>CPP\EMAC</Filter>
+    </ClCompile>
+    <ClCompile Include="cpp\EMAC\xtrap.cpp">
+      <Filter>CPP\EMAC</Filter>
+    </ClCompile>
+    <ClCompile Include="cpp\DMA\DMA.cpp">
+      <Filter>CPP\DMA</Filter>
+    </ClCompile>
+    <ClCompile Include="cpp\DMA\DMA_CH.cpp">
+      <Filter>CPP\DMA</Filter>
+    </ClCompile>
+    <ClCompile Include="cpp\DMA\DMA_DSC.cpp">
+      <Filter>CPP\DMA</Filter>
+    </ClCompile>
+    <ClCompile Include="cpp\CRC\CRC16.cpp">
+      <Filter>CPP\CRC</Filter>
+    </ClCompile>
+    <ClCompile Include="cpp\CRC\CRC16_8005.cpp">
+      <Filter>CPP\CRC</Filter>
+    </ClCompile>
+    <ClCompile Include="cpp\CRC\CRC16_CCIT.cpp">
+      <Filter>CPP\CRC</Filter>
+    </ClCompile>
+    <ClCompile Include="cpp\CRC\CRC32.cpp">
+      <Filter>CPP\CRC</Filter>
+    </ClCompile>
+    <ClCompile Include="cpp\CRC\GetCRC16.cpp">
+      <Filter>CPP\CRC</Filter>
+    </ClCompile>
+    <ClCompile Include="cpp\CRC\GetCRC16_2.cpp">
+      <Filter>CPP\CRC</Filter>
+    </ClCompile>
+    <ClCompile Include="cpp\CRC\GetCRC16_8005.cpp">
+      <Filter>CPP\CRC</Filter>
+    </ClCompile>
+    <ClCompile Include="cpp\CRC\GetCRC16_CCIT.cpp">
+      <Filter>CPP\CRC</Filter>
+    </ClCompile>
+    <ClCompile Include="cpp\CRC\GetCRC32.cpp">
+      <Filter>CPP\CRC</Filter>
+    </ClCompile>
+    <ClCompile Include="cpp\ADSP\heaptab.cpp">
+      <Filter>CPP\ADSP</Filter>
+    </ClCompile>
+    <ClCompile Include="initcode\initcode_osc16.cpp">
+      <Filter>Initcode</Filter>
+    </ClCompile>
+    <ClCompile Include="initcode\initcode_osc25.cpp">
+      <Filter>Initcode</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cpp\ARM\startup_CM0.s">
+      <Filter>CPP\ARM</Filter>
+    </None>
+    <None Include="cpp\ARM\startup_CM4.s">
+      <Filter>CPP\ARM</Filter>
+    </None>
+    <None Include="cpp\ADSP\startup_BF592A.s">
+      <Filter>CPP\ADSP</Filter>
+    </None>
+    <None Include="Scatter\LPC812.sct">
+      <Filter>Scatter</Filter>
+    </None>
+    <None Include="Scatter\LPC812_BOOT.sct">
+      <Filter>Scatter</Filter>
+    </None>
+    <None Include="Scatter\LPC812_NO_BOOTLOADER.sct">
+      <Filter>Scatter</Filter>
+    </None>
+    <None Include="Scatter\LPC824.sct">
+      <Filter>Scatter</Filter>
+    </None>
+    <None Include="Scatter\LPC824_BOOT.sct">
+      <Filter>Scatter</Filter>
+    </None>
+    <None Include="Scatter\LPC824_NO_BOOTLOADER.sct">
+      <Filter>Scatter</Filter>
+    </None>
+    <None Include="Scatter\SAME53.sct">
+      <Filter>Scatter</Filter>
+    </None>
+    <None Include="Scatter\SAME53_18.sct">
+      <Filter>Scatter</Filter>
+    </None>
+    <None Include="Scatter\SAME53_18_BOOT.sct">
+      <Filter>Scatter</Filter>
+    </None>
+    <None Include="Scatter\SAME53_18_NO_BOOTLOADER.sct">
+      <Filter>Scatter</Filter>
+    </None>
+    <None Include="Scatter\SAME53_BOOT.sct">
+      <Filter>Scatter</Filter>
+    </None>
+    <None Include="Scatter\SAME53_NO_BOOTLOADER.sct">
+      <Filter>Scatter</Filter>
+    </None>
+    <None Include="Scatter\XMC48.sct">
+      <Filter>Scatter</Filter>
+    </None>
+    <None Include="Scatter\XMC48_BOOT.sct">
+      <Filter>Scatter</Filter>
+    </None>
+    <None Include="LDF\BF592A.ldf">
+      <Filter>LDF</Filter>
+    </None>
+    <None Include="LDF\initcode.ldf">
+      <Filter>LDF</Filter>
+    </None>
+    <None Include="makeobj" />
+  </ItemGroup>
+</Project>

@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="BF592_Debug|Win32">
+      <Configuration>BF592_Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="BF592_Release|Win32">
+      <Configuration>BF592_Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="LPC812_Debug|Win32">
       <Configuration>LPC812_Debug</Configuration>
       <Platform>Win32</Platform>
@@ -39,10 +47,18 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{0EB74A34-94BC-4e8e-8F38-A0122D0B88D4}</ProjectGuid>
+    <ProjectGuid>{0EB74A34-94BC-4E8E-8F38-A0122D0B88D4}</ProjectGuid>
     <RootNamespace>G_LIBS</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='BF592_Release|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='BF592_Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='LPC812_Release|Win32'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <PlatformToolset>v142</PlatformToolset>
@@ -82,6 +98,12 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='BF592_Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='BF592_Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='LPC812_Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
@@ -120,7 +142,7 @@
     <NMakeReBuildCommandLine>wmake -h -a version=Debug targetcpu=SAME53</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
     <NMakeOutput>$(ProjectDir)\SAME53_d.a</NMakeOutput>
-    <NMakePreprocessorDefinitions>_DEBUG;__softfp=;CPU_SAME53;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakePreprocessorDefinitions>_DEBUG;__softfp=;CPU_SAME53;</NMakePreprocessorDefinitions>
     <NMakeIncludeSearchPath>$(ARMCC50INC);</NMakeIncludeSearchPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='SAME53_Release|Win32'">
@@ -130,7 +152,7 @@
     <NMakeReBuildCommandLine>wmake -h -a version=Release targetcpu=SAME53</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
     <NMakeOutput>$(ProjectDir)\SAME53_r.a</NMakeOutput>
-    <NMakePreprocessorDefinitions>__softfp=;CPU_SAME53;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakePreprocessorDefinitions>__softfp=;CPU_SAME53;</NMakePreprocessorDefinitions>
     <NMakeIncludeSearchPath>$(ARMCC50INC);</NMakeIncludeSearchPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='XMC48_Debug|Win32'">
@@ -140,8 +162,8 @@
     <NMakeReBuildCommandLine>wmake -h -a version=Debug targetcpu=XMC48</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
     <NMakeOutput>$(ProjectDir)\xmc48_d.a</NMakeOutput>
-    <NMakePreprocessorDefinitions>_DEBUG;__softfp=;CPU_XMC48;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ARMCC50INC);</NMakeIncludeSearchPath>
+    <NMakePreprocessorDefinitions>_DEBUG,__softfp=,CPU_XMC48;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>$(ARMCC50INC);$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='XMC48_Release|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
@@ -150,8 +172,8 @@
     <NMakeReBuildCommandLine>wmake -h -a version=Release targetcpu=XMC48</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
     <NMakeOutput>$(ProjectDir)\xmc48_r.a</NMakeOutput>
-    <NMakePreprocessorDefinitions>__softfp=;CPU_XMC48;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ARMCC50INC);</NMakeIncludeSearchPath>
+    <NMakePreprocessorDefinitions>__softfp=,CPU_XMC48;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>$(ARMCC50INC);$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win32_Debug|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
@@ -170,8 +192,8 @@
     <NMakeReBuildCommandLine>wmake -h -a version=Debug targetcpu=LPC824</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
     <NMakeOutput>$(ProjectDir)\LPC824_d.a</NMakeOutput>
-    <NMakePreprocessorDefinitions>_DEBUG;__softfp=;CPU_LPC824;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ARMCC50INC);</NMakeIncludeSearchPath>
+    <NMakePreprocessorDefinitions>_DEBUG,__softfp=,CPU_LPC824;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>$(ARMCC50INC);$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='LPC824_Release|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
@@ -180,8 +202,8 @@
     <NMakeReBuildCommandLine>wmake -h -a version=Release targetcpu=LPC824</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
     <NMakeOutput>$(ProjectDir)\LPC824_r.a</NMakeOutput>
-    <NMakePreprocessorDefinitions>__softfp=;CPU_LPC824;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ARMCC50INC);</NMakeIncludeSearchPath>
+    <NMakePreprocessorDefinitions>__softfp=,CPU_LPC824;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>$(ARMCC50INC);$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='LPC812_Debug|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
@@ -190,8 +212,8 @@
     <NMakeReBuildCommandLine>wmake -h -a version=Debug targetcpu=LPC812</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
     <NMakeOutput>$(ProjectDir)\LPC812_d.a</NMakeOutput>
-    <NMakePreprocessorDefinitions>_DEBUG;__softfp=;CPU_LPC812;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ARMCC50INC);</NMakeIncludeSearchPath>
+    <NMakePreprocessorDefinitions>_DEBUG,__softfp=,CPU_LPC812;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>$(ARMCC50INC);$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='LPC812_Release|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
@@ -200,99 +222,148 @@
     <NMakeReBuildCommandLine>wmake -h -a version=Release targetcpu=LPC812</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
     <NMakeOutput>$(ProjectDir)\LPC812_r.a</NMakeOutput>
-    <NMakePreprocessorDefinitions>__softfp=;CPU_LPC812;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ARMCC50INC);</NMakeIncludeSearchPath>
+    <NMakePreprocessorDefinitions>__softfp=,CPU_LPC812;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>$(ARMCC50INC);$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='BF592_Debug|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+    <NMakeBuildCommandLine>wmake -h version=Debug targetcpu=BF592</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>wmake -h -a version=Debug targetcpu=BF592</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
+    <NMakeOutput>$(ProjectDir)\BF592_d.a</NMakeOutput>
+    <NMakePreprocessorDefinitions>_DEBUG;CPU_BF592;_ADI_COMPILER;</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>$(ADI_CCES)\Blackfin\include;</NMakeIncludeSearchPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='BF592_Release|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+    <NMakeBuildCommandLine>wmake -h version=Release targetcpu=BF592</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>wmake -h -a version=Release targetcpu=BF592</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
+    <NMakeOutput>$(ProjectDir)\BF592_d.a</NMakeOutput>
+    <NMakePreprocessorDefinitions>CPU_BF592;_ADI_COMPILER;</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>$(ADI_CCES)\Blackfin\include;</NMakeIncludeSearchPath>
   </PropertyGroup>
   <ItemDefinitionGroup>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="cpp\CRC16.cpp" />
-    <ClCompile Include="cpp\CRC16_8005.cpp" />
-    <ClCompile Include="cpp\CRC16_CCIT.cpp" />
-    <ClCompile Include="cpp\CRC32.cpp" />
-    <ClCompile Include="cpp\DMA.cpp" />
-    <ClCompile Include="cpp\DMA_CH.cpp" />
-    <ClCompile Include="cpp\DMA_DSC.cpp" />
-    <ClCompile Include="cpp\GetCRC16.cpp" />
-    <ClCompile Include="cpp\GetCRC16_2.cpp" />
-    <ClCompile Include="cpp\GetCRC16_8005.cpp" />
-    <ClCompile Include="cpp\GetCRC16_CCIT.cpp" />
-    <ClCompile Include="cpp\GetCRC32.cpp" />
-    <ClCompile Include="cpp\i2c.cpp" />
-    <ClCompile Include="cpp\PointerCRC.cpp" />
-    <ClCompile Include="cpp\SEGGER_RTT.cpp" />
-    <ClCompile Include="cpp\SEGGER_RTT_printf.cpp" />
-    <ClCompile Include="cpp\spi.cpp" />
-    <ClCompile Include="cpp\time.cpp" />
-    <ClCompile Include="cpp\trap.cpp" />
-    <ClCompile Include="cpp\usic.cpp" />
-    <ClCompile Include="cpp\xtrap.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="cpp\at25df021.h" />
-    <ClInclude Include="cpp\at25df021_imp.h" />
-    <ClInclude Include="cpp\boot_com_emac_imp.h" />
-    <ClInclude Include="cpp\boot_isp.h" />
-    <ClInclude Include="cpp\BOOT_LPC824_IMP.h" />
-    <ClInclude Include="cpp\boot_req.h" />
+    <ClInclude Include="cpp\ADSP\BF592.h" />
+    <ClInclude Include="cpp\ADSP\system_imp.h" />
+    <ClInclude Include="cpp\ARM\cm0.h" />
+    <ClInclude Include="cpp\ARM\cm4.h" />
+    <ClInclude Include="cpp\ARM\lpc81x.h" />
+    <ClInclude Include="cpp\ARM\lpc82x.h" />
+    <ClInclude Include="cpp\ARM\same53.h" />
+    <ClInclude Include="cpp\ARM\system_imp.h" />
+    <ClInclude Include="cpp\ARM\XMC4800.h" />
+    <ClInclude Include="cpp\BOOT\boot_com_emac_imp.h" />
+    <ClInclude Include="cpp\BOOT\boot_imp.h" />
+    <ClInclude Include="cpp\BOOT\boot_isp.h" />
+    <ClInclude Include="cpp\BOOT\BOOT_LPC824_IMP.h" />
+    <ClInclude Include="cpp\BOOT\boot_req.h" />
     <ClInclude Include="cpp\Clock.h" />
     <ClInclude Include="cpp\Clock_imp.h" />
-    <ClInclude Include="cpp\cm0.h" />
-    <ClInclude Include="cpp\cm4.h" />
-    <ClInclude Include="cpp\ComPort.h" />
-    <ClInclude Include="cpp\ComPort_imp.h" />
-    <ClInclude Include="cpp\ComPort_LPC8XX.h" />
-    <ClInclude Include="cpp\ComPort_LPC8XX_imp.h" />
+    <ClInclude Include="cpp\ComPort\ComPort.h" />
+    <ClInclude Include="cpp\ComPort\ComPort_imp.h" />
+    <ClInclude Include="cpp\ComPort\ComPort_LPC8XX.h" />
+    <ClInclude Include="cpp\ComPort\ComPort_LPC8XX_imp.h" />
     <ClInclude Include="cpp\core.h" />
-    <ClInclude Include="cpp\CRC16.h" />
-    <ClInclude Include="cpp\CRC16_8005.h" />
-    <ClInclude Include="cpp\CRC16_CCIT.h" />
-    <ClInclude Include="cpp\CRC32.h" />
-    <ClInclude Include="cpp\CRC_CCITT_DMA.h" />
-    <ClInclude Include="cpp\CRC_CCITT_DMA_IMP.h" />
-    <ClInclude Include="cpp\DMA.h" />
-    <ClInclude Include="cpp\emac.h" />
-    <ClInclude Include="cpp\EMAC_DEF.h" />
-    <ClInclude Include="cpp\emac_imp.h" />
-    <ClInclude Include="cpp\emac_imp_v2.h" />
+    <ClInclude Include="cpp\CRC\CRC16.h" />
+    <ClInclude Include="cpp\CRC\CRC16_8005.h" />
+    <ClInclude Include="cpp\CRC\CRC16_CCIT.h" />
+    <ClInclude Include="cpp\CRC\CRC32.h" />
+    <ClInclude Include="cpp\CRC\CRC_CCITT_DMA.h" />
+    <ClInclude Include="cpp\CRC\CRC_CCITT_DMA_IMP.h" />
+    <ClInclude Include="cpp\DMA\DMA.h" />
+    <ClInclude Include="cpp\EMAC\emac.h" />
+    <ClInclude Include="cpp\EMAC\EMAC_DEF.h" />
+    <ClInclude Include="cpp\EMAC\emac_imp.h" />
+    <ClInclude Include="cpp\EMAC\emac_imp_v2.h" />
+    <ClInclude Include="cpp\EMAC\tftp.h" />
+    <ClInclude Include="cpp\EMAC\tftp_imp.h" />
+    <ClInclude Include="cpp\EMAC\trap.h" />
+    <ClInclude Include="cpp\EMAC\trap_def.h" />
+    <ClInclude Include="cpp\EMAC\vector.h" />
+    <ClInclude Include="cpp\EMAC\xtrap.h" />
     <ClInclude Include="cpp\extern_def.h" />
-    <ClInclude Include="cpp\flash.h" />
-    <ClInclude Include="cpp\flash_def.h" />
-    <ClInclude Include="cpp\flash_imp.h" />
-    <ClInclude Include="cpp\hw_nand_imp.h" />
+    <ClInclude Include="cpp\FLASH\at25df021.h" />
+    <ClInclude Include="cpp\FLASH\at25df021_imp.h" />
+    <ClInclude Include="cpp\FLASH\at25df021_imp_v2.h" />
+    <ClInclude Include="cpp\FLASH\flash.h" />
+    <ClInclude Include="cpp\FLASH\flash_def.h" />
+    <ClInclude Include="cpp\FLASH\flash_imp.h" />
+    <ClInclude Include="cpp\FLASH\hw_nand_imp.h" />
     <ClInclude Include="cpp\I2C.h" />
     <ClInclude Include="cpp\list.h" />
-    <ClInclude Include="cpp\lpc81x.h" />
-    <ClInclude Include="cpp\lpc82x.h" />
-    <ClInclude Include="cpp\manch.h" />
-    <ClInclude Include="cpp\manch_imp.h" />
-    <ClInclude Include="cpp\mem.h" />
-    <ClInclude Include="cpp\mem_imp.h" />
+    <ClInclude Include="cpp\MANCH\manch.h" />
+    <ClInclude Include="cpp\MANCH\manch_imp.h" />
+    <ClInclude Include="cpp\MEM\mem.h" />
+    <ClInclude Include="cpp\MEM\mem_imp.h" />
     <ClInclude Include="cpp\PointerCRC.h" />
     <ClInclude Include="cpp\RequestQuery.h" />
     <ClInclude Include="cpp\RequestQuery_imp.h" />
-    <ClInclude Include="cpp\same53.h" />
-    <ClInclude Include="cpp\SEGGER_RTT.h" />
-    <ClInclude Include="cpp\SEGGER_RTT_Conf.h" />
+    <ClInclude Include="cpp\SEGGER_RTT\SEGGER_RTT.h" />
+    <ClInclude Include="cpp\SEGGER_RTT\SEGGER_RTT_Conf.h" />
     <ClInclude Include="cpp\SPI.h" />
     <ClInclude Include="cpp\SPIS.h" />
     <ClInclude Include="cpp\SPIS_imp.h" />
-    <ClInclude Include="cpp\system_imp.h" />
-    <ClInclude Include="cpp\tftp.h" />
-    <ClInclude Include="cpp\tftp_imp.h" />
     <ClInclude Include="cpp\time.h" />
-    <ClInclude Include="cpp\trap.h" />
-    <ClInclude Include="cpp\trap_def.h" />
     <ClInclude Include="cpp\types.h" />
     <ClInclude Include="cpp\usic.h" />
-    <ClInclude Include="cpp\vector.h" />
-    <ClInclude Include="cpp\XMC4800.h" />
-    <ClInclude Include="cpp\xtrap.h" />
+    <ClInclude Include="cpp\WAVEPACK\fdct.h" />
+    <ClInclude Include="cpp\WAVEPACK\fdct_imp.h" />
+    <ClInclude Include="cpp\WAVEPACK\mdct.h" />
+    <ClInclude Include="cpp\WAVEPACK\mdct_imp.h" />
+    <ClInclude Include="cpp\WAVEPACK\wavepack_imp.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="cpp\startup_CM0.s" />
-    <None Include="cpp\startup_CM4.s" />
+    <ClCompile Include="cpp\ADSP\heaptab.cpp" />
+    <ClCompile Include="cpp\CRC\CRC16.cpp" />
+    <ClCompile Include="cpp\CRC\CRC16_8005.cpp" />
+    <ClCompile Include="cpp\CRC\CRC16_CCIT.cpp" />
+    <ClCompile Include="cpp\CRC\CRC32.cpp" />
+    <ClCompile Include="cpp\CRC\GetCRC16.cpp" />
+    <ClCompile Include="cpp\CRC\GetCRC16_2.cpp" />
+    <ClCompile Include="cpp\CRC\GetCRC16_8005.cpp" />
+    <ClCompile Include="cpp\CRC\GetCRC16_CCIT.cpp" />
+    <ClCompile Include="cpp\CRC\GetCRC32.cpp" />
+    <ClCompile Include="cpp\DMA\DMA.cpp" />
+    <ClCompile Include="cpp\DMA\DMA_CH.cpp" />
+    <ClCompile Include="cpp\DMA\DMA_DSC.cpp" />
+    <ClCompile Include="cpp\EMAC\trap.cpp" />
+    <ClCompile Include="cpp\EMAC\xtrap.cpp" />
+    <ClCompile Include="cpp\i2c.cpp" />
+    <ClCompile Include="cpp\PointerCRC.cpp" />
+    <ClCompile Include="cpp\SEGGER_RTT\SEGGER_RTT.cpp" />
+    <ClCompile Include="cpp\SEGGER_RTT\SEGGER_RTT_printf.cpp" />
+    <ClCompile Include="cpp\spi.cpp" />
+    <ClCompile Include="cpp\time.cpp" />
+    <ClCompile Include="cpp\usic.cpp" />
+    <ClCompile Include="initcode\initcode_osc16.cpp" />
+    <ClCompile Include="initcode\initcode_osc25.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cpp\ADSP\startup_BF592A.s" />
+    <None Include="cpp\ARM\startup_CM0.s" />
+    <None Include="cpp\ARM\startup_CM4.s" />
+    <None Include="LDF\BF592A.ldf" />
+    <None Include="LDF\initcode.ldf" />
     <None Include="makeobj" />
+    <None Include="Scatter\LPC812.sct" />
+    <None Include="Scatter\LPC812_BOOT.sct" />
+    <None Include="Scatter\LPC812_NO_BOOTLOADER.sct" />
+    <None Include="Scatter\LPC824.sct" />
+    <None Include="Scatter\LPC824_BOOT.sct" />
+    <None Include="Scatter\LPC824_NO_BOOTLOADER.sct" />
+    <None Include="Scatter\SAME53.sct" />
+    <None Include="Scatter\SAME53_18.sct" />
+    <None Include="Scatter\SAME53_18_BOOT.sct" />
+    <None Include="Scatter\SAME53_18_NO_BOOTLOADER.sct" />
+    <None Include="Scatter\SAME53_BOOT.sct" />
+    <None Include="Scatter\SAME53_NO_BOOTLOADER.sct" />
+    <None Include="Scatter\XMC48.sct" />
+    <None Include="Scatter\XMC48_BOOT.sct" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
