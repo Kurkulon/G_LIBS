@@ -288,7 +288,7 @@ $(objdir)\initcode_osc16.dxe : $(objdir)\initcode_osc16.o
 
 .cpp.o: .AUTODEPEND
 	@echo Compiling $[. ...
-	@"$(bindir)\ccblkfn" $(adsp_compiler_options) -o "$^@" $[@
+	@ccbl.bat $(adsp_compiler_options) -o "$^@" $[@
 
 ##################################################################################################
 ##################################################################################################
