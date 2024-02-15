@@ -148,6 +148,20 @@ struct CTM32
 };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#ifdef ADSP_BLACKFIN
+
+struct CTM64
+{
+	u64 pt;
+
+	//TM32() : pt(0) {}
+	bool Check(u64 v) { u64 t = GetCycles64(); if ((u64)(t - pt) >= v) { pt = t; return true; } else { return false; }; }
+	bool Timeout(u64 v) { return (u64)(GetCycles64() - pt) >= v; }
+	void Reset() { pt = GetCycles64(); }
+};
+
+#endif
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 struct Dbt
 {

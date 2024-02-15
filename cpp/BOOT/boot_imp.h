@@ -22,7 +22,6 @@ static u32 manCounter = 0;
 static u32 err06 = 0;
 
 
-static u32 timeOut = MS2CTM(500);
 //static bool runMainApp = false;
 
 static u16 flashCRC = 0;
@@ -33,7 +32,10 @@ static bool flashChecked = false;
 static bool flashCRCOK = false;
 static bool cmdRunMainApp = false;
 
-static CTM32 tm32;
+#ifdef BOOT_TIMEOUT
+static CTM64 tm64;
+static u64 timeOut = MS2CTM(500);
+#endif
 
 static void CheckFlash();
 
@@ -73,7 +75,7 @@ static void RunMainApp()
 
 	if (flashOK && flashCRCOK) HW::DisableWDT(), bfrom_SpiBoot(FLASH_START_ADR, BFLAG_PERIPHERAL | BFLAG_NOAUTO | BFLAG_FASTREAD | BFLAG_TYPE3 | 7, 0, 0);
 	
-	tm32.Reset(); timeOut = MS2CTM(1000);
+	tm64.Reset(); timeOut = MS2CTM(1000);
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -209,12 +211,16 @@ static bool RequestFunc(Req *r, ComPort::WriteBuffer *wb)
 	u16 t = req.F0.rw;
 	u16 adr = GetNetAdr();
 
-	bool cm = (t & manReqMask) != manReqWord;
+	bool cm = (t & manReqMask) == manReqWord;
 	bool ca = req.F0.adr == adr || req.F0.adr == 0;
 
-	if (ca && cm) cmdRunMainApp = run = false, RunMainApp();
+	#if defined(BOOT_TIMEOUT) && defined(BOOT_MAIN_TIMEOUT)
+		if (cm)	tm64.Reset(), timeOut = BOOT_MAIN_TIMEOUT;
+	#endif
+	
+	if (!cm || adr > BOOT_MAX_NETADR) cmdRunMainApp = run = false, RunMainApp();
 
-	if (!ca || cm || r->len < 2)
+	if (!ca || !cm || r->len < 2)
 	{
 		FreeReq(r);
 		return false;
@@ -234,7 +240,7 @@ static bool RequestFunc(Req *r, ComPort::WriteBuffer *wb)
 		default:	FreeReq(r); cmdRunMainApp = run = false; RunMainApp(); break;
 	};
 
-	if (result)	tm32.Reset(), timeOut = MS2CTM(10000);
+	//if (result)	tm64.Reset(), timeOut = MS2CTM(10000);
 
 	return result;
 }
@@ -275,8 +281,6 @@ static void UpdateBlackFin()
 			{
 				if (rb.recieved && rb.len > 0 && GetCRC16(rb.data, rb.len) == 0)
 				{
-					tm32.Reset();
-
 					req->len = rb.len;
 
 					if (RequestFunc(req, &wb))
@@ -293,6 +297,10 @@ static void UpdateBlackFin()
 				}
 				else
 				{
+					#ifdef BOOT_COM_ERROR_TIMEOUT
+						if (rb.recieved) timeOut = BOOT_COM_ERROR_TIMEOUT;
+					#endif
+
 					FreeReq(req);
 
 					req = 0;
@@ -455,7 +463,9 @@ int main( void )
 
 	#endif
 
-	tm32.Reset(); timeOut = MS2CTM(10000);
+	#ifdef BOOT_TIMEOUT
+		tm64.Reset(); timeOut = BOOT_TIMEOUT;
+	#endif
 
 	while (run)
 	{
@@ -467,8 +477,8 @@ int main( void )
 		#endif
 
 
-		#ifdef BOOT_HANDSHAKE
-			if (tm32.Check(timeOut)) break;
+		#ifdef BOOT_TIMEOUT
+			if (tm64.Timeout(timeOut)) break;
 		#endif
 
 		MAIN_LOOP_PIN_TGL();
