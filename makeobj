@@ -15,7 +15,7 @@ curdir = $+ $(%cdrive):$(%cwd) $-
 
 .ERASE
 .EXTENSIONS:
-.EXTENSIONS: .exe .o .cpp .h .s .d .dxe
+.EXTENSIONS: .exe .doj .cpp .h .s .d .dxe
 
 ##################################################################################################
 
@@ -26,7 +26,7 @@ curdir = $+ $(%cdrive):$(%cwd) $-
 #	.<dependent_extension> : <path_specification>
 #	.c: $(program_dir);$(screen_dir)
 
-.o:		$(objdir)
+.doj:	$(objdir)
 .h:		$(hdir)
 .s:		$(cppdir)
 .d:		$(objdir)
@@ -234,13 +234,13 @@ $(libname) : $(modules_obj)
 
 ##################################################################################################
 
-.cpp.o:
+.cpp.doj:
 	@echo Compiling $[. ...
 	@$(bindir)\armcc $(arm_compiler_options) --depend="$^*.d" -o "$^@" $[@
 
 ##################################################################################################
 
-.s.o:
+.s.doj:
 	@echo Assembling $[. ...
 	@$(bindir)\armasm $(arm_asm_options) --list $(objdir)\$^&.lst  -o $(objdir)\$^. $[@	
 
@@ -256,7 +256,7 @@ $(libname) : $(modules_obj)
 
 ##################################################################################################
 
-.cpp.o:	.AUTODEPEND
+.cpp.doj:	.AUTODEPEND
 	@cl $(win32_compiler_options) -Fo"$^@" $[@
 
 ##################################################################################################
@@ -270,25 +270,25 @@ $(libname) : $(modules_obj) $(objdir)\initcode_osc25.dxe $(objdir)\initcode_osc1
 
 ##################################################################################################
 
-$(objdir)\initcode_osc25.dxe : $(objdir)\initcode_osc25.o
-	@echo Linking $^@ ...
-	@"$(bindir)\ccblkfn" $(adsp_link_options_initcode) -T LDF\initcode.ldf -o $^@ $<
-
-##################################################################################################
-
-$(objdir)\initcode_osc16.dxe : $(objdir)\initcode_osc16.o
-	@echo Linking $^@ ...
-	@"$(bindir)\ccblkfn" $(adsp_link_options_initcode) -T LDF\initcode.ldf -o $^@ $<
-
-##################################################################################################
-
 !include $(objdir)\mkoutdep
 
 ################################################################################################## -MD -Mo="$^*.d"
 
-.cpp.o: .AUTODEPEND
+$(objdir)\initcode_osc25.dxe : $(objdir)\initcode_osc25.doj
+	@echo Linking $^@ ...
+	@"$(bindir)\ccblkfn" $(adsp_link_options_initcode) -T LDF\initcode.ldf -o $^@ $<
+
+##################################################################################################
+
+$(objdir)\initcode_osc16.dxe : $(objdir)\initcode_osc16.doj
+	@echo Linking $^@ ...
+	@"$(bindir)\ccblkfn" $(adsp_link_options_initcode) -T LDF\initcode.ldf -o $^@ $<
+
+##################################################################################################
+
+.cpp.doj: .AUTODEPEND
 	@echo Compiling $[. ...
-	@ccbl.bat $(adsp_compiler_options) -o "$^@" $[@
+	@ccbl.bat $(adsp_compiler_options) -save-temps -path-output $^: -i -gnu-style-dependencies -absolute-path-dependencies -MD -Mo="$^*.d" -o "$^@" $[@
 
 ##################################################################################################
 ##################################################################################################
