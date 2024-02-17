@@ -61,11 +61,15 @@ static byte*		flashWritePtr = 0;
 static u16			flashWriteLen = 0;
 static u32			flashWriteAdr = 0;
 
-#pragma instantiate List<Req>
-static List<Req>	freeReq;
-static List<Req>	readyReq;
+#pragma instantiate List<ReqAT25>
+static List<ReqAT25>	freeReq;
+static List<ReqAT25>	readyReq;
 
-static Req			_req[64];
+#ifndef FLASH_REQ_NUM
+#define FLASH_REQ_NUM 	64
+#endif
+
+static ReqAT25			_req[FLASH_REQ_NUM];
 
 
 static ERROR_CODE	lastError = NO_ERR;
@@ -781,7 +785,7 @@ void FlashUpdate()
 {
 	static CTM32 tm;
 
-	static Req *request = 0;
+	static ReqAT25 *request = 0;
 
 	switch (flashState)
 	{
@@ -789,7 +793,7 @@ void FlashUpdate()
 
 			if (request != 0)
 			{
-				FreeReq(request);
+				FreeReqAT25(request);
 			};
 
 			request = readyReq.Get();
@@ -1039,21 +1043,21 @@ void FlashInit()
 }
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Req* AllocReq()
+ReqAT25* AllocReqAT25()
 {
 	return freeReq.Get();
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void FreeReq(Req *req)
+void FreeReqAT25(ReqAT25 *req)
 {
 	freeReq.Add(req);
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void FlashWriteReq(Req *req)
+void FlashWriteReq(ReqAT25 *req)
 {
 	readyReq.Add(req);
 }

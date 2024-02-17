@@ -1,7 +1,7 @@
 #ifndef	POINTERCRC_H__26_05_2009__15_56
 #define	POINTERCRC_H__26_05_2009__15_56
 
-#ifndef _ADI_COMPILER
+#ifndef _ADI_COMPILER_
 
 #include "types.h"
 #include "CRC\CRC16.h"

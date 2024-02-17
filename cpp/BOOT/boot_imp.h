@@ -80,7 +80,7 @@ static void RunMainApp()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static bool RequestFunc_00(Req *r, ComPort::WriteBuffer *wb)
+static bool RequestFunc_00(ReqAT25 *r, ComPort::WriteBuffer *wb)
 {
 	const BootReqV1 &req = *((BootReqV1*)(r->GetDataPtr()));
 	static BootRspV1 rsp;
@@ -100,14 +100,14 @@ static bool RequestFunc_00(Req *r, ComPort::WriteBuffer *wb)
 	wb->data = &rsp.F0;
 	wb->len = sizeof(rsp.F0);
 
-	FreeReq(r);
+	FreeReqAT25(r);
 
 	return true;
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static bool RequestFunc_01(Req *r, ComPort::WriteBuffer *wb)
+static bool RequestFunc_01(ReqAT25 *r, ComPort::WriteBuffer *wb)
 {
 	const BootReqV1 &req = *((BootReqV1*)(r->GetDataPtr()));
 	static BootRspV1 rsp;
@@ -125,14 +125,14 @@ static bool RequestFunc_01(Req *r, ComPort::WriteBuffer *wb)
 	wb->data = &rsp.F1;
 	wb->len = sizeof(rsp.F1);
 
-	FreeReq(r);
+	FreeReqAT25(r);
 
 	return true;
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static bool RequestFunc_02(Req *r, ComPort::WriteBuffer *wb)
+static bool RequestFunc_02(ReqAT25 *r, ComPort::WriteBuffer *wb)
 {
 	const BootReqV1 &req = *((BootReqV1*)(r->GetDataPtr()));
 	static BootRspV1 rsp;
@@ -155,7 +155,7 @@ static bool RequestFunc_02(Req *r, ComPort::WriteBuffer *wb)
 	}
 	else
 	{
-		FreeReq(r);
+		FreeReqAT25(r);
 	};
 
 	if (adr == 0) return false;
@@ -176,7 +176,7 @@ static bool RequestFunc_02(Req *r, ComPort::WriteBuffer *wb)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static bool RequestFunc_03(Req *r, ComPort::WriteBuffer *wb)
+static bool RequestFunc_03(ReqAT25 *r, ComPort::WriteBuffer *wb)
 {
 	const BootReqV1 &req = *((BootReqV1*)(r->GetDataPtr()));
 	static BootRspV1 rsp;
@@ -195,14 +195,14 @@ static bool RequestFunc_03(Req *r, ComPort::WriteBuffer *wb)
 	wb->data = &rsp.F3;
 	wb->len = sizeof(rsp.F3);
 
-	FreeReq(r);
+	FreeReqAT25(r);
 
 	return true;
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static bool RequestFunc(Req *r, ComPort::WriteBuffer *wb)
+static bool RequestFunc(ReqAT25 *r, ComPort::WriteBuffer *wb)
 {
 	bool result = false;
 
@@ -222,7 +222,7 @@ static bool RequestFunc(Req *r, ComPort::WriteBuffer *wb)
 
 	if (!ca || !cm || r->len < 2)
 	{
-		FreeReq(r);
+		FreeReqAT25(r);
 		return false;
 	};
 
@@ -237,7 +237,7 @@ static bool RequestFunc(Req *r, ComPort::WriteBuffer *wb)
 		case 2: 	result = RequestFunc_02(r, wb); break;
 		case 3: 	result = RequestFunc_03(r, wb); break;
 
-		default:	FreeReq(r); cmdRunMainApp = run = false; RunMainApp(); break;
+		default:	FreeReqAT25(r); cmdRunMainApp = run = false; RunMainApp(); break;
 	};
 
 	//if (result)	tm64.Reset(), timeOut = MS2CTM(10000);
@@ -253,7 +253,7 @@ static void UpdateBlackFin()
 	static ComPort::WriteBuffer wb;
 	static ComPort::ReadBuffer rb;
 	
-	static Req *req = 0;
+	static ReqAT25 *req = 0;
 
 	ResetWDT();
 
@@ -261,7 +261,7 @@ static void UpdateBlackFin()
 	{
 		case 0:
 
-			req = AllocReq();
+			req = AllocReqAT25();
 
 			if (req != 0)
 			{
@@ -301,7 +301,7 @@ static void UpdateBlackFin()
 						if (rb.recieved) timeOut = BOOT_COM_ERROR_TIMEOUT;
 					#endif
 
-					FreeReq(req);
+					FreeReqAT25(req);
 
 					req = 0;
 

@@ -67,8 +67,11 @@ static u32			flashWriteAdr = 0;
 static List<Req>	freeReq;
 static List<Req>	readyReq;
 
-static Req			_req[64];
+#ifndef FLASH_REQ_NUM
+#define FLASH_REQ_NUM 	64
+#endif
 
+static Req			_req[FLASH_REQ_NUM];
 
 static ERROR_CODE	lastError = NO_ERR;
 

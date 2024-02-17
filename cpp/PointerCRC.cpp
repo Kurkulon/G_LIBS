@@ -1,4 +1,4 @@
-#ifndef _ADI_COMPILER
+#ifndef _ADI_COMPILER_1
 
 #include "PointerCRC.h"
 

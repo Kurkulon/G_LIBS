@@ -21,9 +21,9 @@
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-struct Req
+struct ReqAT25
 {
-	Req *next;
+	ReqAT25 *next;
 
 	u32 stAdr;
 	u32 len;
@@ -100,9 +100,9 @@ extern ERROR_CODE EraseBlock(int nBlock);
 //extern u32 GetSectorSize();
 extern void FlashUpdate();
 extern void FlashInit();
-extern Req* AllocReq();
-extern void FreeReq(Req *req);
-extern void FlashWriteReq(Req *req);
+extern ReqAT25* AllocReqAT25();
+extern void FreeReqAT25(ReqAT25 *req);
+extern void FlashWriteReq(ReqAT25 *req);
 extern ERROR_CODE GetLastError();
 extern bool FlashBusy();
 
