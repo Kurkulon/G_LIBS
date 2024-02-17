@@ -338,7 +338,7 @@ static u16 WavePack_FDCT(i16* src, byte* dst, u16 len, u16 shift, u16 OVRLAP, u1
 	{
 		WavePack_FDCT_Transform(src + index, fdct_w);
 
-		packLen = WavePack_FDCT_Quant(fdct_w, FDCT_N, shift, &scale);
+		packLen = WavePack_FDCT_Quant(fdct_w, maxPackLen, shift, &scale);
 
 		PackDCT* pdct = (PackDCT*)(dst + wpLen);
 
