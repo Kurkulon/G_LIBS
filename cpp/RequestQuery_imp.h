@@ -197,6 +197,8 @@ void RequestQuery::Update()
 				_state = CHECK_CRC_2;
 			};
 
+			break;
+
 		case CHECK_CRC_2:
 
 			if (_req->crcType == _req->CRC16)
