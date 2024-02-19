@@ -30,7 +30,7 @@ static u16 lastErasedBlock = ~0;
 static bool flashOK = false;
 static bool flashChecked = false;
 static bool flashCRCOK = false;
-static bool cmdRunMainApp = false;
+//static bool cmdRunMainApp = false;
 
 #ifdef BOOT_TIMEOUT
 static CTM64 tm64;
@@ -118,7 +118,6 @@ static bool RequestFunc_01(ReqAT25 *r, ComPort::WriteBuffer *wb)
 	rsp.F1.rw		= req.F1.rw;
 	rsp.F1.flashLen	= flashLen;
 	rsp.F1.flashCRC = flashCRC;
-	//rsp.F1.startAdr = FLASH_START_ADR;
 
 	rsp.F1.crc = GetCRC16(&rsp.F1, sizeof(rsp.F1)-sizeof(rsp.F1.crc));
 
@@ -183,7 +182,7 @@ static bool RequestFunc_03(ReqAT25 *r, ComPort::WriteBuffer *wb)
 
 	if (r->len < sizeof(req.F3)) return  false;
 
-	cmdRunMainApp = true;
+	run = false;
 
 	if (req.F3.adr == 0) return  false;
 
@@ -218,7 +217,7 @@ static bool RequestFunc(ReqAT25 *r, ComPort::WriteBuffer *wb)
 		if (cm)	tm64.Reset(), timeOut = BOOT_MAIN_TIMEOUT;
 	#endif
 	
-	if (!cm || adr > BOOT_MAX_NETADR) cmdRunMainApp = run = false, RunMainApp();
+	if (!cm || adr > BOOT_MAX_NETADR) run = false, RunMainApp();
 
 	if (!ca || !cm || r->len < 2)
 	{
@@ -237,7 +236,7 @@ static bool RequestFunc(ReqAT25 *r, ComPort::WriteBuffer *wb)
 		case 2: 	result = RequestFunc_02(r, wb); break;
 		case 3: 	result = RequestFunc_03(r, wb); break;
 
-		default:	FreeReqAT25(r); cmdRunMainApp = run = false; RunMainApp(); break;
+		default:	FreeReqAT25(r); run = false; RunMainApp(); break;
 	};
 
 	//if (result)	tm64.Reset(), timeOut = MS2CTM(10000);
@@ -315,8 +314,6 @@ static void UpdateBlackFin()
 
 			if (!com.Update())
 			{
-				if (cmdRunMainApp) run = false, RunMainApp();
-
 				i = 0;
 			};
 

@@ -3098,7 +3098,7 @@ namespace HW
 
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	inline bool RamCheck(void *ptr)
+	inline bool RamCheck(const void *ptr)
 	{
 		u32 v = (u32)ptr;
 
@@ -3109,7 +3109,7 @@ namespace HW
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	inline bool RomCheck(void *ptr)
+	inline bool RomCheck(const void *ptr)
 	{
 		//u32 v = (u32)ptr;
 

@@ -163,7 +163,8 @@ void RequestQuery::Update()
 				}
 				else
 				{
-					_state = CALLBACK_1;
+					_req->ready = true;
+					_state = WAIT;
 				};
 			};
 
