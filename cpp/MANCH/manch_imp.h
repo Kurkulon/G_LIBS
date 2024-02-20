@@ -1191,7 +1191,7 @@ static u16 rcvManLen = 0;
 
 static MRB *manRB = 0;
 
-static u16 rcvManLen12 = 0;
+//static u16 rcvManLen12 = 0;
 static u32 rcvManSum12 = 0;
 static u16 rcvManCount12 = 0;
 //u32 rcvManMax12 = 0;
@@ -1212,10 +1212,19 @@ static void ManRcvEnd(bool ok)
 	manRB->ready = true;
 	manRB->len = rcvManLen;
 
-	rcvManLen12 = (rcvManCount12 != 0) ? (rcvManSum12 / rcvManCount12) : 0;
-	rcvManQuality = (rcvManLen12 > US2MR(12)) ? 0 : (((US2MR(12) - rcvManLen12) * 100 + US2MR(6))/US2MR(12));
-	
-	//rcvManQuality = (rcvManMax12 > US2MR(12)) ? 0 : (((US2MR(12) - rcvManMax12) * 100 + US2MR(6))/US2MR(12));
+	if (rcvManSum12 > 40000000 || rcvManCount12 < 2)
+	{
+		rcvManQuality = 0;
+	}
+	else
+	{
+		u32 y = (rcvManCount12 - 1) * US2MR(3*3);
+		u32 e = 100 * rcvManSum12 / y;
+		rcvManQuality = (e < 100) ? (100 - e) : 0;
+	};
+
+	//rcvManLen12 = (rcvManCount12 != 0) ? (rcvManSum12 / rcvManCount12) : 0;
+	//rcvManQuality = (rcvManLen12 > US2MR(12)) ? 0 : (((US2MR(12) - rcvManLen12) * 100 + US2MR(6))/US2MR(12));
 
 	rcvBusy = false;
 }
@@ -1272,7 +1281,7 @@ static __irq void ManRcvIRQ2()
 			_length += 2; dl = len - US2MR(48);
 		};
 
-		if (dl < 0) dl = -dl; rcvManSum12 += dl; rcvManCount12++;
+		/*if (dl < 0) dl = -dl;*/ rcvManSum12 += dl*dl; rcvManCount12++;
 
 		if(_length >= 3)
 		{
@@ -1306,7 +1315,7 @@ static __irq void ManRcvIRQ2()
 				_length = 2; dl = len - US2MR(96); 
 			};
 
-			if (dl < 0) dl = -dl; rcvManSum12 += dl; rcvManCount12++;
+			/*if (dl < 0) dl = -dl;*/ rcvManSum12 += dl*dl; rcvManCount12++;
 		};
 	};
 

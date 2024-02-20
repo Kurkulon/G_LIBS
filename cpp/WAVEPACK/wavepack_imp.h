@@ -286,7 +286,7 @@ static u16 WavePack_FDCT_Quant(FDCT_DATA* src, u16 packLen, u16 shift, u16* cons
 
 	while (max > 32000) { max /= 2; *scale += 1; };
 
-	u32 xx = 8 << *scale;
+	u32 xx = 16 << *scale;
 
 	if ((u32)lim < xx) lim = xx;
 
