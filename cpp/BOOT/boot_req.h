@@ -19,7 +19,7 @@ __packed struct BootRspHS { u64 guid; u16 crc; };
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-struct BootReqMes
+struct BootReqMes_old
 {
 	u32 len;
 	
@@ -34,7 +34,7 @@ struct BootReqMes
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-struct BootRspMes
+struct BootRspMes_old
 {
 	u32 len;
 

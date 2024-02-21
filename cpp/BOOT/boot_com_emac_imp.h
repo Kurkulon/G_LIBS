@@ -26,7 +26,7 @@
 
 #ifdef BOOT_COM
 
-	#include <ComPort.h>
+	#include <ComPort\ComPort.h>
 	#ifndef BOOT_COM_MODE
 	#define BOOT_COM_MODE	ComPort::ASYNC
 	#endif
@@ -47,6 +47,9 @@
 	#ifndef BOOT_COM_POSTTIMEOUT
 	#define BOOT_COM_POSTTIMEOUT	MS2COM(2)
 	#endif
+
+	static u16 manReqWord = BOOT_MAN_REQ_WORD;
+	static u16 manReqMask = BOOT_MAN_REQ_MASK;
 
 #endif
 
@@ -405,35 +408,26 @@ typedef BootRspHS RspHS;
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-typedef BootReqMes ReqMes;
-typedef BootRspMes RspMes;
+//typedef BootReqV1 ReqMes;
+//typedef BootRspV1 RspMes;
 
-//struct ReqMes
-//{
-//	u32 len;
-//	
-//	union
-//	{
-//		struct { u32 func; u32 len;										u16 align; u16 crc; }	F1; // Get CRC
-//		struct { u32 func;												u16 align; u16 crc; }	F2; // Exit boot loader
-//		struct { u32 func; u32 padr; u32 plen; u32 pdata[PAGEDWORDS];	u16 align; u16 crc; }	F3; // Programm page
-//	};
-//
-//};
+struct ReqMes
+{
+	u32 len;
+
+	BootReqV1 mes;
+
+	u32 exdata[PAGEDWORDS];
+};
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-//struct RspMes
-//{
-//	u32 len;
-//
-//	union
-//	{
-//		struct { u32 func; u32 pageLen;	u32 len;	u16 sCRC;	u16 crc; }	F1; // Get CRC
-//		struct { u32 func;							u16 align;	u16 crc; } 	F2; // Exit boot loader
-//		struct { u32 func; u32 padr;	u32 status; u16 align;	u16 crc; } 	F3; // Programm page
-//	};
-//};
+struct RspMes
+{
+	u32 len;
+
+	BootRspV1 mes;
+};
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -568,6 +562,16 @@ void ISP_InitFlashWrite()
 {
 	state_write_flash = WRITE_INIT;
 }
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static bool FlashBusy()
+{
+	return (state_write_flash != WRITE_WAIT) || !writeFlBuf.Empty();
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -817,10 +821,39 @@ static bool HandShake()
 
 #ifdef BOOT_COM
 
-static bool Request_F1_GetCRC(ReqMes &req, RspMes &rsp)
+static bool Request_00_GetInfo(ReqMes &req, RspMes &rsp)
 {
-	u32 len = 0;
-	u32 adr = 0;
+	rsp.len = 0;
+
+	BootReqV1::SF0 &rq = req.mes.F0;
+	BootRspV1::SF0 &rp = rsp.mes.F0;
+
+	if (rq.adr == 0 || req.len < sizeof(rq)) return true;
+
+	rp.adr		= rq.adr;
+	rp.rw		= rq.rw;
+	rp.ver		= req.mes.VERSION;
+	rp.maxFunc	= req.mes.FUNC_MAX;
+	rp.guid		= BOOT_SGUID;
+	rp.startAdr = FLASH_START;
+	rp.pageLen	= ISP_PAGESIZE;
+	rp.crc		= GetCRC16(&rp, sizeof(rp)-sizeof(rp.crc));
+
+	rsp.len = sizeof(rp);
+
+	return true;
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static bool Request_01_GetCRC(ReqMes &req, RspMes &rsp)
+{
+	rsp.len = 0;
+
+	BootReqV1::SF1 &rq = req.mes.F1;
+	BootRspV1::SF1 &rp = rsp.mes.F1;
+
+	if (rq.adr == 0) return true;
 
 #ifdef CPU_SAME53
 	bool c = true;
@@ -828,75 +861,82 @@ static bool Request_F1_GetCRC(ReqMes &req, RspMes &rsp)
 	bool c = (HW::FLASH0->FSR & FLASH_FSR_PFPAGE_Msk) == 0;
 #endif
 
-	if (req.len == sizeof(req.F1) && c)
+	if (req.len == sizeof(rq) && c)
 	{
-		//len = GetSectorAdrLen(req.F1.sadr, &adr);
-
-		if (req.F1.len != 0)
+		if (rq.len != 0)
 		{
-			rsp.F1.sCRC = GetCRC16((void*)(FLASH_START), req.F1.len);
+			rp.flashCRC = GetCRC16((void*)(FLASH_START), rq.len);
+			rp.flashLen = rq.len;
 		};
 	}
 	else
 	{
-		adr = ~0;
-		len = 0;
-		rsp.F1.sCRC = 0;
+		rp.flashCRC = 0;
+		rp.flashLen = 0;
 	};
 
-	rsp.F1.func = req.F1.func;
-	rsp.F1.pageLen = ISP_PAGESIZE;
-	rsp.F1.len = req.F1.len;
-	rsp.F1.crc = GetCRC16(&rsp.F1, sizeof(rsp.F1) - 2);
-	rsp.len = sizeof(rsp.F1);
+	rp.adr		= rq.adr;
+	rp.rw		= rq.rw;
+	rp.crc		= GetCRC16(&rp, sizeof(rp)-sizeof(rp.crc));
+
+	rsp.len = sizeof(rp);
 
 	return true;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static bool Request_F2_ExitBootLoader(ReqMes &req, RspMes &rsp)
-{
-	//bool c = false;
-
-	//if (req.len == sizeof(req.F2))
-	//{
-	//	c = true; //IAP_EraseSector(req.F2.sadr);
-	//};
-
-	rsp.F2.func = req.F2.func;
-	rsp.F2.crc = GetCRC16(&rsp.F2, sizeof(rsp.F2) - 2);
-	rsp.len = sizeof(rsp.F2);
-
-	return false;
-}
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-static bool Request_F3_WritePage(Ptr<MB> &mb, RspMes &rsp)
+static bool Request_02_WritePage(Ptr<MB> &mb, RspMes &rsp)
 {
 	FLWB &flwb = *((FLWB*)mb->GetDataPtr());
-
 	ReqMes &req = *((ReqMes*)flwb.data);
+
+	BootReqV1::SF2 &rq = req.mes.F2;
+	BootRspV1::SF2 &rp = rsp.mes.F2;
+
+	rsp.len = 0;
+
+	u16 xl = rq.plen + sizeof(rq) - sizeof(rq.pdata);
 
 	bool c = false;
 
-	if (req.len == sizeof(req.F3) && flash_write_error == 0)
+	if (req.len >= xl /*&& flash_write_error == 0*/)
 	{
-		flwb.adr = req.F3.padr;
-		flwb.dataLen = req.F3.plen;
-		flwb.dataOffset = (byte*)req.F3.pdata - flwb.data;
+		flwb.adr		= rq.padr;
+		flwb.dataLen	= rq.plen;
+		flwb.dataOffset = (byte*)rq.pdata - flwb.data;
 		
 		c = ISP_RequestFlashWrite(mb);
 	};
 
-	rsp.F3.func = req.F3.func;
-	rsp.F3.padr = req.F3.padr;
-	rsp.F3.status = c;
-	rsp.F3.crc = GetCRC16(&rsp.F3, sizeof(rsp.F3) - 2);
-	rsp.len = sizeof(rsp.F3);
+	if (rq.adr == 0) return true;
 
-	return c;
+	rp.adr		= rq.adr;
+	rp.rw		= rq.rw;
+	rp.res		= c;
+	rp.crc		= GetCRC16(&rp, sizeof(rp)-sizeof(rp.crc));
+	rsp.len		= sizeof(rp);
+
+	return true;
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static bool Request_03_ExitBootLoader(ReqMes &req, RspMes &rsp)
+{
+	BootReqV1::SF3 &rq = req.mes.F3;
+	BootRspV1::SF3 &rp = rsp.mes.F3;
+
+	rsp.len = 0;
+
+	if (rq.adr == 0) return false;
+
+	rp.adr		= rq.adr;
+	rp.rw		= rq.rw;
+	rp.crc		= GetCRC16(&rp, sizeof(rp)-sizeof(rp.crc));
+	rsp.len		= sizeof(rp);
+
+	return false;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -906,13 +946,34 @@ static bool RequestHandler(Ptr<MB> &mb, RspMes &rsp)
 	FLWB &flwb = *((FLWB*)(mb->GetDataPtr()));
 	ReqMes &req = *((ReqMes*)flwb.data);
 
+	u16 t = req.mes.F0.rw;
+	u16 adr = GetNetAdr();
+
+	bool cm = (t & manReqMask) == manReqWord;
+	bool ca = req.mes.F0.adr == adr || req.mes.F0.adr == 0;
+
+	#if defined(BOOT_TIMEOUT) && defined(BOOT_MAIN_TIMEOUT)
+		if (cm)	tm64.Reset(), timeOut = BOOT_MAIN_TIMEOUT;
+	#endif
+	
+	if (!cm || adr > BOOT_MAX_NETADR) return false;
+
+	//if (!ca || !cm || r->len < 2)
+	//{
+	//	FreeReqAT25(r);
+	//	return false;
+	//};
+
 	bool c = false;
 
-	switch (req.F1.func)
+	t &= 0xFF;
+
+	switch (t)
 	{
-		case 1: c = Request_F1_GetCRC(req, rsp);			break;
-		case 2: c = Request_F2_ExitBootLoader(req, rsp);	break;
-		case 3: c = Request_F3_WritePage(mb, rsp);			break;
+		case 0: c = Request_00_GetInfo(req, rsp);			break;
+		case 1: c = Request_01_GetCRC(req, rsp);			break;
+		case 2: c = Request_02_WritePage(mb, rsp);			break;
+		case 3: c = Request_03_ExitBootLoader(req, rsp);	break;
 	};
 
 	return c;
@@ -954,8 +1015,8 @@ static void UpdateCom()
 
 		case 1:
 
-			rb.data = &req->F1;
-			rb.maxLen = sizeof(*req);
+			rb.data = &req->mes;
+			rb.maxLen = sizeof(*req) - sizeof(req->len);
 			
 			com.Read(&rb, BOOT_COM_PRETIMEOUT, BOOT_COM_POSTTIMEOUT);
 
@@ -994,7 +1055,7 @@ static void UpdateCom()
 
 			if (tm.Check(2))
 			{
-				wb.data = &rsp.F1;
+				wb.data = &rsp.mes;
 				wb.len = rsp.len;
 
 				com.Write(&wb);
@@ -1120,6 +1181,8 @@ int main()
 
 		if(tm.Check(MS2CTM(50))) Pin_MainLoop_Tgl();
 	};
+
+	while (FlashBusy()) UpdateWriteFlash();
 
 	#ifdef BOOT_EXIT_BREAKPOINT
 		__breakpoint(0);
