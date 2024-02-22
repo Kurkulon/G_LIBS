@@ -204,7 +204,8 @@
 
 
 
-static TM32 timeOut;
+static TM32 tm64;
+static u32 timeOut;
 
 enum STATEWRFL { WRITE_WAIT = 0, WRITE_START, WRITE_ERASE_SECTOR, WRITE_PAGE, WRITE_PAGE_0, WRITE_OK, WRITE_ERROR, WRITE_FINISH, WRITE_INIT };
 
@@ -941,29 +942,54 @@ static bool Request_03_ExitBootLoader(ReqMes &req, RspMes &rsp)
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+static bool Request_04_SetTimeOut(ReqMes &req, RspMes &rsp)
+{
+	BootReqV1::SF4 &rq = req.mes.F4;
+	BootRspV1::SF4 &rp = rsp.mes.F4;
+
+	timeOut = rq.timeOutMS;
+	tm64.Reset();
+
+	rsp.len = 0;
+
+	if (rq.adr == 0) return true;
+
+	rp.adr		= rq.adr;
+	rp.rw		= rq.rw;
+	rp.crc		= GetCRC16(&rp, sizeof(rp)-sizeof(rp.crc));
+	rsp.len		= sizeof(rp);
+
+	return true;
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 static bool RequestHandler(Ptr<MB> &mb, RspMes &rsp)
 {
 	FLWB &flwb = *((FLWB*)(mb->GetDataPtr()));
 	ReqMes &req = *((ReqMes*)flwb.data);
+	BootReqV1::SF0 &rq = req.mes.F0;
 
-	u16 t = req.mes.F0.rw;
+	if (req.len < (sizeof(rq.adr)+sizeof(rq.rw))) return true;
+
+	u16 t = rq.rw;
 	u16 adr = GetNetAdr();
 
 	bool cm = (t & manReqMask) == manReqWord;
-	bool ca = req.mes.F0.adr == adr || req.mes.F0.adr == 0;
+	bool ca = rq.adr == adr || rq.adr == 0;
 
-	#if defined(BOOT_TIMEOUT) && defined(BOOT_MAIN_TIMEOUT)
-		if (cm)	tm64.Reset(), timeOut = BOOT_MAIN_TIMEOUT;
-	#endif
+	if (cm && adr <= BOOT_MAX_NETADR)
+	{
+		#if defined(BOOT_TIMEOUT) && defined(BOOT_MAIN_TIMEOUT)
+			tm64.Reset();
+			if (timeOut < BOOT_MAIN_TIMEOUT) timeOut = BOOT_MAIN_TIMEOUT;
+		#endif
+	}
+	else
+	{
+		return true;
+	};
 	
-	if (!cm || adr > BOOT_MAX_NETADR) return false;
-
-	//if (!ca || !cm || r->len < 2)
-	//{
-	//	FreeReqAT25(r);
-	//	return false;
-	//};
-
 	bool c = false;
 
 	t &= 0xFF;
@@ -974,6 +1000,7 @@ static bool RequestHandler(Ptr<MB> &mb, RspMes &rsp)
 		case 1: c = Request_01_GetCRC(req, rsp);			break;
 		case 2: c = Request_02_WritePage(mb, rsp);			break;
 		case 3: c = Request_03_ExitBootLoader(req, rsp);	break;
+		case 4: c = Request_04_SetTimeOut(req, rsp);		break;
 	};
 
 	return c;
@@ -1034,16 +1061,13 @@ static void UpdateCom()
 
 					c = RequestHandler(mb, rsp);
 					
-					timeOut.Reset();
-
 					i++;
 				}
 				else
 				{
-					if (timeOut.Check(2000))
-					{
-						runCom = c = false;
-					};
+					#ifdef BOOT_COM_ERROR_TIMEOUT
+						if (rb.recieved) timeOut = BOOT_COM_ERROR_TIMEOUT;
+					#endif
 
 					i = 4;
 				};
@@ -1175,6 +1199,10 @@ int main()
 
 		#else
 				runEmac = false;
+		#endif
+
+		#ifdef BOOT_TIMEOUT
+			if (tm64.Timeout(timeOut)) break;
 		#endif
 
 		HW::WDT->Update();
