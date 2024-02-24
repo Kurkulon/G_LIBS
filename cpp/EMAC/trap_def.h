@@ -1,6 +1,8 @@
 #ifndef TRAP_DEF_H__28_01_2016__15_08
 #define TRAP_DEF_H__28_01_2016__15_08
 
+#pragma once
+
 #include "types.h"
 #include "time.h"
 #include "emac.h"

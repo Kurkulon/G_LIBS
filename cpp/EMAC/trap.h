@@ -1,6 +1,9 @@
 #ifndef MEMORY_AT91SAM7X256_TRAP_H
 #define MEMORY_AT91SAM7X256_TRAP_H
 
+#pragma once
+
+
 //#include "rtc.h"
 //#include "power.h"
 #include "trap_def.h"

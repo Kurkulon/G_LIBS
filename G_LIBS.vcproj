@@ -453,19 +453,31 @@
 					>
 				</File>
 				<File
-					RelativePath=".\cpp\FLASH\flash.h"
+					RelativePath=".\cpp\FLASH\FlashInt_imp.h"
 					>
 				</File>
 				<File
-					RelativePath=".\cpp\FLASH\flash_def.h"
+					RelativePath=".\cpp\FLASH\FlashMem.h"
 					>
 				</File>
 				<File
-					RelativePath=".\cpp\FLASH\flash_imp.h"
+					RelativePath=".\cpp\FLASH\FlashSPI_imp.h"
 					>
 				</File>
 				<File
 					RelativePath=".\cpp\FLASH\hw_nand_imp.h"
+					>
+				</File>
+				<File
+					RelativePath=".\cpp\FLASH\NandFlash.h"
+					>
+				</File>
+				<File
+					RelativePath=".\cpp\FLASH\NandFlash_def.h"
+					>
+				</File>
+				<File
+					RelativePath=".\cpp\FLASH\NandFlash_imp.h"
 					>
 				</File>
 			</Filter>

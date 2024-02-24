@@ -1,6 +1,8 @@
 #ifndef EMAC_H__02_03_2015__16_38
 #define EMAC_H__02_03_2015__16_38
 
+#pragma once
+
 #include "types.h"
 #include "list.h"
 #include "EMAC_DEF.h"

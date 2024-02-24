@@ -1,12 +1,14 @@
 #ifndef NAND_IMP_H__06_05_2022__19_15
 #define NAND_IMP_H__06_05_2022__19_15
 
+#pragma once
+
 #include "types.h"
 #include "core.h"
 
 #include "SEGGER_RTT\SEGGER_RTT.h"
 #include "CRC\CRC16_8005.h"
-#include "FLASH\flash_def.h"
+#include "FLASH\NandFlash_def.h"
 #include "DMA\DMA.h"
 
 #ifdef WIN32

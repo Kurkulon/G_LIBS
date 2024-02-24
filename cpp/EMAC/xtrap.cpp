@@ -6,7 +6,7 @@
 #include "trap.h"
 #include "trap_def.h"
 #include "list.h"
-#include "FLASH\flash.h"
+#include "FLASH\NandFlash.h"
 #include "vector.h"
 #include "extern_def.h"
 

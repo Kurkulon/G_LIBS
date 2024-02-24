@@ -1,6 +1,8 @@
 #ifndef FLASH_DEF_H__20_04_2022__10_55
 #define FLASH_DEF_H__20_04_2022__10_55
 
+#pragma once
+
 #include "types.h"
 //#include "core.h"
 #include "time.h"
@@ -296,40 +298,12 @@ __packed struct SpareArea
 };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-//extern bool NAND_BUSY(); 
-//extern bool NAND_CmdBusy();
-//extern void NAND_WriteDataDMA(volatile void *src, u16 len);
-////extern void NAND_WriteDataPIO(volatile void *src, u16 len);
-//extern void NAND_ReadDataDMA(volatile void *dst, u16 len);
-//extern void NAND_ReadDataDMA2(volatile void *dst, u16 len);
-////extern void NAND_ReadDataPIO(volatile void *dst, u16 len);
-//extern bool NAND_CheckDataComplete();
-//extern void NAND_Chip_Select(byte chip);
-//extern void NAND_Chip_Disable();
-//extern void NAND_WRITE(byte data);
-//extern void NAND_CopyDataDMA(volatile void *src, volatile void *dst, u16 len);
-//extern bool NAND_CheckCopyComplete();
-//
-//extern void NAND_CmdEraseBlock(u32 bl);
-//extern void NAND_CmdRandomRead(u16 col);
-//extern void NAND_CmdReadPage(u16 col, u32 bl, u16 pg);
-//extern void NAND_CmdWritePage(u16 col, u32 bl, u16 pg);
-//extern void NAND_CmdWritePage2();
-//extern byte NAND_CmdReadStatus();
-//
-//inline const NandMemSize* NAND_GetMemSize() { extern NandMemSize nandSize; return &nandSize; } 
-//inline u32 NAND_GetGoodChipMask() { extern NandMemSize nandSize; return nandSize.mask; } 
-
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #ifdef WIN32
 
 extern int PutString(u32 x, u32 y, byte c, const char *str);
 extern int Printf(u32 x, u32 y, byte c, const char *format, ... );
-
-//extern void NAND_FlushBlockBuffers();
-//extern void NAND_ReqFlushBlockBuffers();
 
 #endif
 

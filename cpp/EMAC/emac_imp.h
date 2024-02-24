@@ -1,6 +1,8 @@
 #ifndef EMAC_IMP_H__11_10_2022__18_02
 #define EMAC_IMP_H__11_10_2022__18_02
 
+#pragma once
+
 #ifdef WIN32
 
 #include <winsock2.h>

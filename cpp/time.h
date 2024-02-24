@@ -125,6 +125,8 @@ inline word GetMillisecondsLow()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#ifndef ADSP_BLACKFIN
+
 struct TM32
 {
 	u32 pt;
@@ -134,6 +136,8 @@ struct TM32
 	bool Timeout(u32 v) { return (u32)(GetMilliseconds() - pt) >= v; }
 	void Reset() { pt = GetMilliseconds(); }
 };
+
+#endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -149,6 +153,15 @@ struct CTM32
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #ifdef ADSP_BLACKFIN
+
+struct TM32
+{
+	u64 pt;
+
+	bool Check(u32 v) { u64 t = GetCycles64(); if ((u32)(t - pt) >= MS2CTM(v)) { pt = t; return true; } else { return false; }; }
+	bool Timeout(u32 v) { return (u64)(GetCycles64() - pt) >= MS2CTM(v); }
+	void Reset() { pt = GetMilliseconds(); }
+};
 
 struct CTM64
 {

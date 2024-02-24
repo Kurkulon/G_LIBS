@@ -1,6 +1,8 @@
 #ifndef EMAC_DEF_H__13_06_2013__09_47
 #define EMAC_DEF_H__13_06_2013__09_47
 
+#pragma once
+
 #include "core.h"
 
 //#define NUM_RX_BUF          8          

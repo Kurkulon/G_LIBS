@@ -7,21 +7,11 @@
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#ifdef CPU_SAME53
-	#define ISP_PAGESIZE 512
-#elif defined(CPU_XMC48)
-	#define ISP_PAGESIZE 256
-#endif
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-struct FLWB
-{
-	u32		adr;
-	u32 	dataLen;
-	u32 	dataOffset;
-	byte	data[0];
-};
+//#ifdef CPU_SAME53
+//	#define ISP_PAGESIZE 512
+//#elif defined(CPU_XMC48)
+//	#define ISP_PAGESIZE 256
+//#endif
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

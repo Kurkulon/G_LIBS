@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef WIN32
 
 #include "time.h"
@@ -367,6 +369,8 @@ static void TFTP_SendMode(byte mode)
 
 static bool TFTP_HandleRxData(Ptr<MB> &mb)
 {
+	typedef FlashMem::FLWB FLWB;
+
 	if (!mb.Valid()) return false;
 
 	tftp_processed++;

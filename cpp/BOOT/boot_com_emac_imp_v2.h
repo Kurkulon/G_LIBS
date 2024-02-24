@@ -18,8 +18,17 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #ifdef BOOT_EMAC
+
 #include <EMAC\tftp.h>
+
+#ifndef TFTP_DATA_CHUNK_SIZE
+#define TFTP_DATA_CHUNK_SIZE 512
+#endif
+
+#ifndef ISP_DATASIZE
 #define ISP_DATASIZE TFTP_DATA_CHUNK_SIZE
+#endif
+
 #endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -55,9 +64,9 @@
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#ifndef ISP_DATASIZE
-#define ISP_DATASIZE 512
-#endif
+//#ifndef ISP_DATASIZE
+//#define ISP_DATASIZE 512
+//#endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -97,6 +106,50 @@
 #endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static TM32 tm64;
+static u32 timeOut;
+
+#ifdef BOOT_COM
+static bool runCom = true;
+#else
+static bool runCom = false;
+#endif
+
+#ifdef BOOT_EMAC
+static bool runEmac = true;
+#else
+static bool runEmac = false;
+#endif
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+typedef BootReqHS ReqHS;
+typedef BootRspHS RspHS;
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+struct ReqMes
+{
+	u32 len;
+
+	BootReqV1 mes;
+
+	u32 exdata[PAGEDWORDS];
+};
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+struct RspMes
+{
+	u32 len;
+
+	BootRspV1 mes;
+};
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#ifdef BOOT_V2
 
 #ifdef CPU_SAME53	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -204,8 +257,6 @@
 
 
 
-static TM32 tm64;
-static u32 timeOut;
 
 enum STATEWRFL { WRITE_WAIT = 0, WRITE_START, WRITE_ERASE_SECTOR, WRITE_PAGE, WRITE_PAGE_0, WRITE_OK, WRITE_ERROR, WRITE_FINISH, WRITE_INIT };
 
@@ -379,58 +430,6 @@ static u32 GetSectorAdrLen(u32 sadr, u32 *radr)
 //static FL flDscr;
 
 //static bool run = false;
-
-#ifdef BOOT_COM
-static bool runCom = true;
-#else
-static bool runCom = false;
-#endif
-
-#ifdef BOOT_EMAC
-static bool runEmac = true;
-#else
-static bool runEmac = false;
-#endif
-
-//static u32 crcErrors = 0;
-//static u32 lenErrors = 0;
-//static u32 reqErrors = 0;
-
-//static u32 lens[300] = {0};
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-typedef BootReqHS ReqHS;
-typedef BootRspHS RspHS;
-
-
-//__packed struct ReqHS { u64 guid; u16 crc; };
-//__packed struct RspHS { u64 guid; u16 crc; };
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-//typedef BootReqV1 ReqMes;
-//typedef BootRspV1 RspMes;
-
-struct ReqMes
-{
-	u32 len;
-
-	BootReqV1 mes;
-
-	u32 exdata[PAGEDWORDS];
-};
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-struct RspMes
-{
-	u32 len;
-
-	BootRspV1 mes;
-};
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static bool IsFlashReady()
 {
@@ -713,6 +712,57 @@ static void UpdateWriteFlash()
 
 	}; // switch(state_write_flash)
 }
+#else // #ifdef BOOT_V2
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+u32 ISP_Flash_Read(u32 addr, byte *data, u32 size) 
+{
+	return bootFlash.Read(addr, data, size);
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void ISP_InitFlashWrite()
+{
+	bootFlash.InitFlashWrite();
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+u32	ISP_GetFlashWriteError()
+{
+	return bootFlash.Get_WriteError();
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+u32	ISP_GetFlashWriteOK()
+{
+	return bootFlash.Get_WriteOK();
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+u16	ISP_GetBootloaderVersion()
+{
+	return BOOTLOADER_VERSION;
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+bool ISP_RequestFlashWrite(Ptr<MB> &b)
+{
+	return bootFlash.RequestWrite(b);
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#endif // #else // #ifdef BOOT_V2
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #ifdef BOOT_HANDSHAKE
@@ -805,7 +855,7 @@ static bool HandShake()
 			if (EmacIsEnergyDetected() && EmacIsCableNormal())
 			{
 				runEmac = c = true;
-				timeOut.Reset();
+				tm64.Reset();
 
 				SEGGER_RTT_printf(0, RTT_CTRL_TEXT_BRIGHT_GREEN "Emac connected - %u ms\n", GetMilliseconds());
 			};
@@ -821,6 +871,8 @@ static bool HandShake()
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #ifdef BOOT_COM
+
+typedef FlashMem::FLWB FLWB;
 
 static bool Request_00_GetInfo(ReqMes &req, RspMes &rsp)
 {
@@ -1103,6 +1155,7 @@ static void UpdateCom()
 			break;
 	};
 }
+
 #endif // BOOT_COM
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -1176,7 +1229,7 @@ int main()
 
 	while(runCom || runEmac)
 	{
-		UpdateWriteFlash();
+		bootFlash.Update();
 
 		#ifdef BOOT_COM
 			if (runCom) UpdateCom();
@@ -1191,7 +1244,7 @@ int main()
 				UpdateEMAC();
 				runEmac = TFTP_Idle();
 
-				if (!TFTP_Connected() && timeOut.Check(10000))
+				if (!TFTP_Connected() && tm64.Check(10000))
 				{
 					runEmac = false;
 				};
@@ -1210,7 +1263,7 @@ int main()
 		if(tm.Check(MS2CTM(50))) Pin_MainLoop_Tgl();
 	};
 
-	while (FlashBusy()) UpdateWriteFlash();
+	while (bootFlash.Busy()) bootFlash.Update();
 
 	#ifdef BOOT_EXIT_BREAKPOINT
 		__breakpoint(0);
@@ -1256,6 +1309,15 @@ int main()
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #include <MEM\mem_imp.h>
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#ifdef BOOT_EMAC
+
+#include <EMAC\emac_imp_v2.h>
+#include <EMAC\tftp_imp.h>
+
+#endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

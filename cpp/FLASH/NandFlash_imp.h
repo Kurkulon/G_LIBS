@@ -1,7 +1,9 @@
-#ifndef FLASH_IMP_H__10_05_2022__14_57
-#define FLASH_IMP_H__10_05_2022__14_57
+#ifndef NANDFLASH_IMP_H__24_02_2024__15_38
+#define NANDFLASH_IMP_H__24_02_2024__15_38
 
-#include "flash.h"
+#pragma once
+
+#include "NandFlash.h"
 #include "EMAC\vector.h"
 #include "list.h"
 #include "EMAC\trap.h"
@@ -9,7 +11,7 @@
 #include "SEGGER_RTT\SEGGER_RTT.h"
 #include "CRC\CRC_CCITT_DMA.h"
 
-#include "FLASH\flash_def.h"
+#include "FLASH\NandFlash_def.h"
 //#include "extern_def.h"
 
 #include "i2c.h"
@@ -88,17 +90,17 @@ static ListItem listItems[LIST_ITEMS_NUM];
 
 //List<UNIBUF> UNIBUF::freeBufList;
 //static UNIBUF flashWriteBuffer[FLASH_WRITE_BUFFER_NUM];
-static FLRB flashReadBuffer[FLASH_READ_BUFFER_NUM];
+static NANDFLRB flashReadBuffer[FLASH_READ_BUFFER_NUM];
 
 //List<PtrFLWB> PtrFLWB::freePtrList;
 
 //static List<FLWB> freeFlWrBuf;
 static ListRef<MB> writeFlBuf;
 
-static List<FLRB> freeFlRdBuf;
-static List<FLRB> readFlBuf;
+static List<NANDFLRB> freeFlRdBuf;
+static List<NANDFLRB> readFlBuf;
 
-static FLRB *curRdBuf = 0;
+static NANDFLRB *curRdBuf = 0;
 
 struct PageBuffer { PageBuffer *next; u32 page; u32 prevPage; byte data[NAND_PAGE_SIZE]; SpareArea spare; };
 
@@ -143,7 +145,7 @@ __packed struct NVV // NonVolatileVars
 {
 	u32 timeStamp;
 
-	FileDsc f;
+	NandFileDsc f;
 
 	u16 index;
 
@@ -159,7 +161,7 @@ __packed struct NVSI // NonVolatileSessionInfo
 {
 	u32 timeStamp;
 
-	FileDsc f;
+	NandFileDsc f;
 
 	u16 crc;
 };
@@ -206,13 +208,13 @@ const SessionInfo* GetLastSessionInfo()
 
 enum flash_status_type
 {
-	FLASH_STATUS_WAIT = 0,
-	FLASH_STATUS_WRITE,
-	FLASH_STATUS_READ,
-//	FLASH_STATUS_ERASE
+	NANDFL_STAT_WAIT = 0,
+	NANDFL_STAT_WRITE,
+	NANDFL_STAT_READ,
+//	NANDFL_STAT_ERASE
 };
 
-static byte flashStatus = FLASH_STATUS_WAIT;
+static byte flashStatus = NANDFL_STAT_WAIT;
 
 enum NandState
 {
@@ -231,7 +233,7 @@ static NandState nandState = NAND_STATE_WAIT;
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static byte lastFlashStatus = FLASH_STATUS_NONE;
+static byte lastFlashStatus = NANDFL_STAT_NONE;
 static u32 lastFlashProgress = ~0;
 static u32 lastFlashTime = 0;
 
@@ -316,7 +318,7 @@ void	FLADR::InitVaildTables(u16 mask)
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-bool FLASH_SendStatus(u32 progress, byte status)
+bool NandFlash_SendStatus(u32 progress, byte status)
 {
 	lastFlashProgress = progress;
 	lastFlashStatus = status;
@@ -337,7 +339,7 @@ static void FLASH_UpdateStatus()
 		TRAP_MEMORY_SendStatus(lastFlashProgress, lastFlashStatus);
 
 		lastFlashProgress = ~0;
-		lastFlashStatus = FLASH_STATUS_NONE;
+		lastFlashStatus = NANDFL_STAT_NONE;
 		lastFlashTime = t;
 	};
 }
@@ -364,13 +366,13 @@ static void InitFlashBuffer()
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-MB* AllocFlashWriteBuffer(u32 minLen)
+MB* NandFlash_AllocWB(u32 minLen)
 {
-	MB* mb = AllocMemBuffer(minLen+sizeof(VecData::Hdr)+2);
+	MB* mb = AllocMemBuffer(minLen+sizeof(NandVecData::Hdr)+2);
 
 	if (mb != 0)
 	{
-		mb->dataOffset = sizeof(VecData::Hdr);
+		mb->dataOffset = sizeof(NandVecData::Hdr);
 	};
 
 	return mb;
@@ -385,21 +387,21 @@ MB* AllocFlashWriteBuffer(u32 minLen)
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-FLRB* AllocFlashReadBuffer()
+NANDFLRB* NandFlash_AllocRB()
 {
 	return freeFlRdBuf.Get();
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void FreeFlashReadBuffer(FLRB* b)
+void NandFlash_FreeRB(NANDFLRB* b)
 {
 	freeFlRdBuf.Add(b);
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-bool RequestFlashRead(FLRB* b)
+bool NandFlash_RequestRead(NANDFLRB* b)
 {
 	if ((b != 0)/* && (b->data != 0) && (b->maxLen > 0)*/)
 	{
@@ -621,7 +623,7 @@ struct Write
 
 	byte	wr_pg_error;
 	u16		wr_count;
-	VecData *vector;
+	NandVecData *vector;
 	byte*	wr_data	;
 	void*	wr_ptr	;
 
@@ -649,7 +651,7 @@ struct Write
 
 	bool Start();
 	bool Update();
-	void Vector_Make(VecData *vd, u16 size);
+	void Vector_Make(NandVecData *vd, u16 size);
 	void Finish();
 	void Init();
 	void Init(u32 bl, u32 file, u32 prfile);
@@ -732,7 +734,7 @@ void Write::SaveSession()
 {
 	nvv.index = (nvv.index+1) & 127;
 
-	FileDsc &s = nvv.f;
+	NandFileDsc &s = nvv.f;
 	NVSI &d = nvsi[nvv.index];
 
 	d.f = nvv.f;
@@ -752,7 +754,7 @@ void Write::SaveSession()
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void Write::Vector_Make(VecData *vd, u16 size)
+void Write::Vector_Make(NandVecData *vd, u16 size)
 {
 	vd->h.session = spare.v1.file;
 //	vd->h.device = 0;
@@ -804,7 +806,7 @@ bool Write::Start()
 
 		//GetTime(&lastRTC);
 
-		vector = (VecData*)((byte*)curWrBuf->GetDataPtr()-sizeof(VecData::Hdr));
+		vector = (NandVecData*)((byte*)curWrBuf->GetDataPtr()-sizeof(NandVecData::Hdr));
 		vector->h.dataLen = curWrBuf->len;
 
 		state = (vector->h.flags) ? CRC_START : VECTOR_UPDATE;
@@ -1389,7 +1391,7 @@ bool ReadSpare::Update()
 //	Read() : sparePage(~0), rd_data(0), rd_count(0), vecStart(false), state(WAIT) {}
 //
 //	bool Start();
-////	static bool Start(FLRB *flrb, FLADR *adr);
+////	static bool Start(NANDFLRB *flrb, FLADR *adr);
 //	bool Update();
 //	void End() { curRdBuf->ready = true; curRdBuf = 0; state = WAIT; }
 //};
@@ -1427,7 +1429,7 @@ struct Read2
 	Read2() :  rd_data(0), rd_count(0), sparePage(~0), prevSparePage(~0), vecStart(false), state(WAIT), statePage(0), pagebuf(0) {}
 	
 	bool Start();
-//	bool Start(FLRB *flrb, FLADR *adr);
+//	bool Start(NANDFLRB *flrb, FLADR *adr);
 	bool Update();
 	bool UpdateFull() { bool c = Update(); return  c || statePage != 0; }
 	void End() { curRdBuf->ready = true; curRdBuf = 0; state = WAIT; }
@@ -2062,7 +2064,7 @@ bool Read2::Update()
 //
 ////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //
-//static void ReadVecHdrNow(VecData::Hdr *h, FLADR *rd)
+//static void ReadVecHdrNow(NandVecData::Hdr *h, FLADR *rd)
 //{
 //	ReadDataNow(h, sizeof(*h), rd);
 //
@@ -2095,7 +2097,7 @@ static void InitSessions()
 
 	for (u16 i = 128, ind = nvv.index; i > 0; i--, ind = (ind-1)&127)
 	{
-		FileDsc &f = nvsi[ind].f;
+		NandFileDsc &f = nvsi[ind].f;
 
 		if (f.size == 0) continue;
 
@@ -2211,7 +2213,7 @@ static void InitSessionsNew()
 
 	for (u16 i = 128, ind = nvv.index; i > 0; i--, ind = (ind-1)&127)
 	{
-		FileDsc &f = nvsi[ind].f;
+		NandFileDsc &f = nvsi[ind].f;
 
 		if (firstSessionValid && f.session == firstSessionNum)
 		{
@@ -2249,7 +2251,7 @@ static void InitSessionsNew()
 		flashUsedSize += f.size;
 	}; 
 
-	u64 fullSize = FLASH_Full_Size_Get();
+	u64 fullSize = NandFlash_Full_Size_Get();
 
 	if (flashUsedSize > fullSize) flashUsedSize = fullSize;
 
@@ -2271,7 +2273,7 @@ static bool UpdateBlackBoxSendSessions()
 
 	static ReadSpare readSpare;
 
-	static FLRB flrb;
+	static NANDFLRB flrb;
 
 	static u32	firstSessionBlock = ~0;
 	static u32	firstSessionLastBlock = ~0;
@@ -2455,7 +2457,7 @@ static bool UpdateBlackBoxSendSessions()
 			flrb.useAdr = true;
 			flrb.adr = findFileStartAdr;
 
-			RequestFlashRead(&flrb);
+			NandFlash_RequestRead(&flrb);
 
 			state++;
 
@@ -2491,7 +2493,7 @@ static bool UpdateBlackBoxSendSessions()
 				flrb.useAdr = true;
 				flrb.adr = adr.GetRawAdr();
 
-				RequestFlashRead(&flrb);
+				NandFlash_RequestRead(&flrb);
 
 				countFindVec = 10;
 
@@ -2531,7 +2533,7 @@ static bool UpdateBlackBoxSendSessions()
 					flrb.useAdr = true;
 					flrb.adr = adr.GetRawAdr();
 					
-					RequestFlashRead(&flrb);
+					NandFlash_RequestRead(&flrb);
 
 					state--;
 				}
@@ -2599,7 +2601,7 @@ static bool UpdateBlackBoxSendSessions()
 
 		case 10: //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-			if (TRAP_MEMORY_SendStatus(~0, FLASH_STATUS_READ_SESSION_READY))
+			if (TRAP_MEMORY_SendStatus(~0, NANDFL_STAT_READ_SESSION_READY))
 			{
 				state++;
 			};
@@ -2622,7 +2624,7 @@ static bool UpdateBlackBoxSendSessions()
 	{
 		prgrss = rd.GetRawBlock() * (0x100000000/(rd.RAWBLOCK_MASK+1));
 
-		TRAP_MEMORY_SendStatus(prgrss, FLASH_STATUS_READ_SESSION_IDLE);
+		TRAP_MEMORY_SendStatus(prgrss, NANDFL_STAT_READ_SESSION_IDLE);
 	};
 
 	return result;
@@ -2630,7 +2632,7 @@ static bool UpdateBlackBoxSendSessions()
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void StartSendSession()
+void NandFlash_StartSendSession()
 {
 	cmdSendSession = true;
 }
@@ -2651,7 +2653,7 @@ static bool UpdateSendSession()
 	static FLADR a(0);
 	static TM32 tm;
 
-	FileDsc &s = nvsi[ind].f;
+	NandFileDsc &s = nvsi[ind].f;
 
 	__packed const u32* const pe = nvv.pageError;
 
@@ -2696,7 +2698,7 @@ static bool UpdateSendSession()
 
 		case 2:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-			if (FLASH_SendStatus(prgrss, FLASH_STATUS_READ_SESSION_IDLE))
+			if (NandFlash_SendStatus(prgrss, NANDFL_STAT_READ_SESSION_IDLE))
 			{
 				if (count > 0)
 				{
@@ -2716,7 +2718,7 @@ static bool UpdateSendSession()
 
 			if (tm.Check(50))
 			{
-				FLASH_SendStatus(~0, FLASH_STATUS_READ_SESSION_IDLE);
+				NandFlash_SendStatus(~0, NANDFL_STAT_READ_SESSION_IDLE);
 
 				if (count > 0) count--; else count = 3, i++;
 			};
@@ -2727,7 +2729,7 @@ static bool UpdateSendSession()
 
 			if (tm.Check(50))
 			{
-				FLASH_SendStatus(~0, FLASH_STATUS_READ_SESSION_READY);
+				NandFlash_SendStatus(~0, NANDFL_STAT_READ_SESSION_READY);
 
 				if (count > 0) count--; else  i++;
 			};
@@ -2760,11 +2762,11 @@ static bool UpdateSendSession()
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-FileDsc* GetSessionInfo(u16 session, u64 adr)
+NandFileDsc* NandFlash_GetSessionInfo(u16 session, u64 adr)
 {
 	u16 ind = nvv.index;
 
-	FileDsc *s = 0;
+	NandFileDsc *s = 0;
 
 	for (u16 i = 128; i > 0; i--)
 	{
@@ -2892,7 +2894,7 @@ void NAND_Idle()
 
 					if (tm.Check(500)) 
 					{ 
-						FLASH_SendStatus((eb-t)*((u64)0x100000000)/eb, FLASH_STATUS_BUSY); 
+						NandFlash_SendStatus((eb-t)*((u64)0x100000000)/eb, NANDFL_STAT_BUSY); 
 #ifdef WIN32
 						Printf(0, 3, 0xF0, "%9li", t);
 #endif
@@ -2906,7 +2908,7 @@ void NAND_Idle()
 
 					adrLastVector = ~0;
 
-					FLASH_SendStatus(~0, FLASH_STATUS_ERASE);
+					NandFlash_SendStatus(~0, NANDFL_STAT_ERASE);
 					nandState = NAND_STATE_WAIT;
 				};
 			};
@@ -2951,56 +2953,56 @@ void NAND_Idle()
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-u32 FLASH_Vectors_Errors_Get()
+u32 NandFlash_Vectors_Errors_Get()
 {
 	return write.errVec;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-u32 FLASH_Vectors_Saved_Get()
+u32 NandFlash_Vectors_Saved_Get()
 {
 	return write.spare.v1.vectorCount;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-u32 FLASH_Vectors_Recieved_Get()
+u32 NandFlash_Vectors_Recieved_Get()
 {
 	return write.rcvVec;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-u32 FLASH_Vectors_Rejected_Get()
+u32 NandFlash_Vectors_Rejected_Get()
 {
 	return write.rejVec;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-u32 FLASH_Session_Get()
+u32 NandFlash_Session_Get()
 {
 	return write.spare.v1.file;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-u64 FLASH_Current_Adress_Get()
+u64 NandFlash_Current_Adress_Get()
 {
 	return write.wr.GetRawAdr();
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-u64 FLASH_Full_Size_Get()
+u64 NandFlash_Full_Size_Get()
 {
 	return nandSize.fl;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-u64 FLASH_Used_Size_Get()
+u64 NandFlash_Used_Size_Get()
 {
 	return flashUsedSize;
 }
@@ -3009,12 +3011,12 @@ u64 FLASH_Used_Size_Get()
 
 i64 FLASH_Empty_Size_Get()
 {
-	return FLASH_Full_Size_Get() - FLASH_Used_Size_Get();
+	return NandFlash_Full_Size_Get() - NandFlash_Used_Size_Get();
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-u16 FLASH_Chip_Mask_Get()
+u16 NandFlash_Chip_Mask_Get()
 {
 	return nandSize.mask;
 }
@@ -3025,7 +3027,7 @@ u16 FLASH_Chip_Mask_Get()
 // удалить 
 bool FLASH_Erase_Full()
 {
-	//if(flash_status_operation != FLASH_STATUS_OPERATION_WAIT) return false;
+	//if(flash_status_operation != NANDFL_STAT_OPERATION_WAIT) return false;
 	//FRAM_Memory_Start_Adress_Set(FRAM_Memory_Current_Adress_Get());
 	return true;
 }
@@ -3035,7 +3037,7 @@ bool FLASH_Erase_Full()
 // восстановить
 bool FLASH_UnErase_Full()
 {
-	//if(flash_status_operation != FLASH_STATUS_OPERATION_WAIT) return false;
+	//if(flash_status_operation != NANDFL_STAT_OPERATION_WAIT) return false;
 	//FRAM_Memory_Start_Adress_Set(-1);
 	return true;
 }
@@ -3047,7 +3049,7 @@ bool FLASH_UnErase_Full()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-bool RequestFlashWrite(Ptr<MB> &fwb, u16 devID, bool updateCRC)
+bool NandFlash_RequestWrite(Ptr<MB> &fwb, u16 devID, bool updateCRC)
 {
 	bool result = false;
 
@@ -3057,11 +3059,11 @@ bool RequestFlashWrite(Ptr<MB> &fwb, u16 devID, bool updateCRC)
 	}
 	else
 	{
-		if (fwb->len > 0 && fwb->dataOffset >= sizeof(VecData::Hdr))
+		if (fwb->len > 0 && fwb->dataOffset >= sizeof(NandVecData::Hdr))
 		{
-			//fwb->dataOffset -= sizeof(VecData::Hdr);
+			//fwb->dataOffset -= sizeof(NandVecData::Hdr);
 
-			VecData* vd = (VecData*)((byte*)fwb->GetDataPtr()-sizeof(VecData::Hdr));
+			NandVecData* vd = (NandVecData*)((byte*)fwb->GetDataPtr()-sizeof(NandVecData::Hdr));
 
 			vd->h.device = deviceID = devID;
 			vd->h.flags = updateCRC;
@@ -3076,7 +3078,7 @@ bool RequestFlashWrite(Ptr<MB> &fwb, u16 devID, bool updateCRC)
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-bool FLASH_WriteEnable()
+bool NandFlash_WriteEnable()
 {
 	bool result = false;
 
@@ -3089,14 +3091,14 @@ bool FLASH_WriteEnable()
 	};
 
 	writeFlashEnabled = true;
-	flashStatus = FLASH_STATUS_WRITE;
+	flashStatus = NANDFL_STAT_WRITE;
 
 	return result;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void FLASH_WriteDisable()
+void NandFlash_WriteDisable()
 {
 	if (writeFlashEnabled && nvv.f.size > 0)
 	{
@@ -3105,12 +3107,12 @@ void FLASH_WriteDisable()
 
 	writeFlashEnabled = false;
 
-	flashStatus = FLASH_STATUS_WAIT;
+	flashStatus = NANDFL_STAT_WAIT;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-byte FLASH_Status()
+byte NandFlash_Status()
 {
 	return flashStatus;
 }
@@ -3612,7 +3614,7 @@ static void LoadSessions()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void FLASH_Init()
+void NandFlash_Init()
 {
 	NAND_Init();
 
@@ -3632,11 +3634,11 @@ void FLASH_Init()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void FLASH_Update()
+void NandFlash_Update()
 {
 	SaveVars();
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#endif // FLASH_IMP_H__10_05_2022__14_57
+#endif // NANDFLASH_IMP_H__24_02_2024__15_38

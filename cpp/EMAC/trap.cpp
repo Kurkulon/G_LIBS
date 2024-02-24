@@ -10,7 +10,7 @@
 
 #include "time.h"
 #include "trap.h"
-#include "FLASH\flash.h"
+#include "FLASH\NandFlash.h"
 #include "emac.h"
 
 #include "trap_def.h"
@@ -170,8 +170,8 @@ bool TRAP_INFO_SendInfo()
 
 	trap.version = GetVersionDevice();
 	trap.number = GetNumDevice(); 
-	trap.memory_mask = FLASH_Chip_Mask_Get();
-	trap.memory_size = FLASH_Full_Size_Get();
+	trap.memory_mask = NandFlash_Chip_Mask_Get();
+	trap.memory_size = NandFlash_Full_Size_Get();
 	trap.devices_mask = TRAP_DEVICES_MASK;
 	trap.device_type = 1;// память 
 	trap.device_telemetry = 2; // USART
@@ -350,9 +350,9 @@ bool TRAP_MEMORY_SendInfo()
 
 	trap.hdr.cmd = TRAP_MEMORY_COMMAND_INFO;
 
-	trap.mask = FLASH_Chip_Mask_Get();
-	trap.size = FLASH_Full_Size_Get();
-	trap.size_used = FLASH_Used_Size_Get();
+	trap.mask = NandFlash_Chip_Mask_Get();
+	trap.size = NandFlash_Full_Size_Get();
+	trap.size_used = NandFlash_Used_Size_Get();
 
 	mb->len = sizeof(EthUdp) + sizeof(trap);
 
@@ -660,10 +660,10 @@ void TRAP_HandleRxData(Ptr<MB> &mb)
 
 						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_MEMORY_DEVICE, TrapRxCounter);
 
-						StartSendSession();
+						NandFlash_StartSendSession();
 
 						//TRAP_MEMORY_SendLastSession(GetLastSessionInfo());
-						//TRAP_MEMORY_SendStatus(-1, FLASH_STATUS_READ_SESSION_READY);
+						//TRAP_MEMORY_SendStatus(-1, NANDFL_STAT_READ_SESSION_READY);
 
 //						TRAP_MEMORY_SendNullSession();
 
@@ -686,7 +686,7 @@ void TRAP_HandleRxData(Ptr<MB> &mb)
 
 						stop = true;
 
-						FLASH_SendStatus(~0, FLASH_STATUS_STOP);
+						NandFlash_SendStatus(~0, NANDFL_STAT_STOP);
 
 //						Mode_Ethernet_Flash_Stop();
 						break;
@@ -697,7 +697,7 @@ void TRAP_HandleRxData(Ptr<MB> &mb)
 
 						pause = true;
 
-						FLASH_SendStatus(~0, FLASH_STATUS_PAUSE);
+						NandFlash_SendStatus(~0, NANDFL_STAT_PAUSE);
 
 						break;
 
@@ -707,7 +707,7 @@ void TRAP_HandleRxData(Ptr<MB> &mb)
 
 						pause = false;
 
-						FLASH_SendStatus(~0, FLASH_STATUS_RESUME);
+						NandFlash_SendStatus(~0, NANDFL_STAT_RESUME);
 
 						break;
 
@@ -818,7 +818,7 @@ static void StartSendVector(u16 session, u64 adr)
 static bool UpdateSendVector()
 {
 	static byte i = 0;
-	static FLRB flrb;
+	static NANDFLRB flrb;
 
 	static Ptr<MB> mb;
 //	static VecData::Hdr h;
@@ -837,7 +837,7 @@ static bool UpdateSendVector()
 	static u64 flashFullSize = 0x200000000ULL;
 	static bool useadr = false;
 
-	static FileDsc *si = 0;
+	static NandFileDsc *si = 0;
 
 	__packed struct TRP { EthUdp eu; TrapVector tv; byte data[VECTOR_IP_MTU - sizeof(UdpHdr) - sizeof(TrapVector)]; };
 	__packed struct FR  { EthIp  ei; byte data[VECTOR_IP_MTU]; };
@@ -853,14 +853,14 @@ static bool UpdateSendVector()
 				ses = startSession;
 				useadr = true;
 
-				si = GetSessionInfo(ses, adr);
+				si = NandFlash_GetSessionInfo(ses, adr);
 
 				if (si != 0)
 				{
 					size = si->size;
 				};
 
-				flashFullSize = FLASH_Full_Size_Get();
+				flashFullSize = NandFlash_Full_Size_Get();
 
 				if (size > flashFullSize)
 				{
@@ -869,7 +869,7 @@ static bool UpdateSendVector()
 
 				vecCount = 0;
 
-				FLASH_SendStatus(0, FLASH_STATUS_READ_VECTOR_IDLE);
+				NandFlash_SendStatus(0, NANDFL_STAT_READ_VECTOR_IDLE);
 
 				i++;
 			}
@@ -884,7 +884,7 @@ static bool UpdateSendVector()
 
 			if (tm.Check(200))
 			{
-				FLASH_SendStatus(vecCount * (1<<22) / (size/1024), FLASH_STATUS_READ_VECTOR_IDLE);
+				NandFlash_SendStatus(vecCount * (1<<22) / (size/1024), NANDFL_STAT_READ_VECTOR_IDLE);
 			};
 
 			if (stop)
@@ -907,7 +907,7 @@ static bool UpdateSendVector()
 					flrb.useAdr = useadr;
 					flrb.adr = adr;
 
-					RequestFlashRead(&flrb);
+					NandFlash_RequestRead(&flrb);
 
 					useadr = false;
 
@@ -925,7 +925,7 @@ static bool UpdateSendVector()
 				{
 					mb->len = 0;
 
-					FLASH_SendStatus(~0, FLASH_STATUS_READ_VECTOR_READY);
+					NandFlash_SendStatus(~0, NANDFL_STAT_READ_VECTOR_READY);
 
 					stop = false;
 					pause = false;
@@ -996,7 +996,7 @@ static bool UpdateSendVector()
 
 				if (flrb.maxLen > fragLen) { flrb.maxLen = fragLen; };
 
-				RequestFlashRead(&flrb);
+				NandFlash_RequestRead(&flrb);
 
 				i++;
 			};
@@ -1056,7 +1056,7 @@ static bool UpdateSendVector()
 static bool UpdateSendVector_Dlya_Vova()
 {
 	static byte i = 0;
-//	static FLRB flrb;
+//	static NANDFLRB flrb;
 
 	static Ptr<MB> mb;
 //	static VecData::Hdr h;
@@ -1076,7 +1076,7 @@ static bool UpdateSendVector_Dlya_Vova()
 
 	static RTC_type rtc;
 
-	//static FileDsc *si = 0;
+	//static NandFileDsc *si = 0;
 
 	__packed struct TRP { EthUdp eu; TrapVector tv; byte data[VECTOR_IP_MTU - sizeof(UdpHdr) - sizeof(TrapVector)]; };
 	//__packed struct FR  { EthIp  ei; byte data[ETH_IP_MTU]; };
@@ -1093,7 +1093,7 @@ static bool UpdateSendVector_Dlya_Vova()
 				ses = startSession;
 				//useadr = true;
 
-				//si = GetSessionInfo(ses, adr);
+				//si = NandFlash_GetSessionInfo(ses, adr);
 
 				size = 20000000;
 
@@ -1114,12 +1114,12 @@ static bool UpdateSendVector_Dlya_Vova()
 
 			if (tm.Check(200))
 			{
-				FLASH_SendStatus((u64)vecCount*(1<<22)/(size>>10), FLASH_STATUS_READ_VECTOR_IDLE);
+				NandFlash_SendStatus((u64)vecCount*(1<<22)/(size>>10), NANDFL_STAT_READ_VECTOR_IDLE);
 			};
 
 			if (vecCount >= size)
 			{
-				FLASH_SendStatus(~0, FLASH_STATUS_READ_VECTOR_READY);
+				NandFlash_SendStatus(~0, NANDFL_STAT_READ_VECTOR_READY);
 
 				stop = false;
 				pause = false;

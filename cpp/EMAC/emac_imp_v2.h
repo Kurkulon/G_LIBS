@@ -1,7 +1,9 @@
 #ifndef EMAC_IMP_V2_H__07_12_2022__10_23
 #define EMAC_IMP_V2_H__07_12_2022__10_23
 
-#include <types.h>
+#pragma once
+
+#include "types.h"
 
 #ifdef WIN32
 

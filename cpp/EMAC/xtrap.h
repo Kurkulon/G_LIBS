@@ -1,6 +1,8 @@
 #ifndef XTRAP_H__12_03_20015__11_14
 #define XTRAP_H__12_03_20015__11_14
 
+#pragma once
+
 #include "types.h"
 #include "emac.h"
 #include "trap_def.h"
