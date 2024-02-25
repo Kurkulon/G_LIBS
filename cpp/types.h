@@ -17,6 +17,8 @@
 #define __nop __builtin_NOP
 #define __packed /*__attribute__((packed))*/
 
+#define __disable_irq cli
+
 #elif  defined(__CC_ARM)
 
 #elif defined(_MSC_VER)

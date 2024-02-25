@@ -5,6 +5,7 @@
 
 #include "core.h"
 #include "FlashMem.h"
+#include "CRC\crc16.h"
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -164,19 +165,49 @@ protected:
 
 public:
 
+	u16 flashCRC;
+	u32 flashLen;
+	bool flashOK;
+	bool flashChecked;
+	bool flashCRCOK;
+
 	u32 Get_WriteError() { return flash_write_error; }
 	u32 Get_WriteOK() { return flash_write_ok; }
 
-	virtual u32		GetSectorAdrLen(u32 sadr, u32 *radr);
-	virtual void	Update();
-	virtual u32		Read(u32 addr, byte *data, u32 size);
-	virtual void	InitFlashWrite(){ state_write_flash = WRITE_INIT; }
-	virtual bool	Busy() { return (state_write_flash != WRITE_WAIT) || !writeFlBuf.Empty(); }
-	virtual bool	RequestWrite(Ptr<MB> &b);
+	u32		GetSectorAdrLen(u32 sadr, u32 *radr);
+	void	Update();
+	u32		Read(u32 addr, void *data, u32 size);
+	void	InitFlashWrite(){ state_write_flash = WRITE_INIT; }
+	bool	Busy() { return (state_write_flash != WRITE_WAIT) || !writeFlBuf.Empty(); }
+	bool	RequestWrite(Ptr<MB> &b);
+	void	Init() { }
+	u16		CRC16(u32 len, u32 *rlen);
 
 	FlashInt() : FlashMem(ISP_PAGESIZE, FLASH_START), state_write_flash(WRITE_WAIT), secStartAdr(~0), secEndAdr(~0), flwb(0), wadr(0), wlen(0), 
 					flash_write_error(0), flash_write_ok(0), wdata(0) {}
 };
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+u16 FlashInt::CRC16(u32 len, u32 *rlen)
+{
+	u16 crc;
+
+	if (flashChecked)
+	{
+		crc = flashCRC;
+		len = flashLen;
+	}
+	else
+	{
+		crc = GetCRC16((void*)FLASH_START, len);
+	};
+
+	if (rlen != 0) *rlen = len;
+
+	return crc;
+}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -245,7 +276,7 @@ u32 FlashInt::GetSectorAdrLen(u32 sadr, u32 *radr)
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-u32 FlashInt::Read(u32 addr, byte *data, u32 size) 
+u32 FlashInt::Read(u32 addr, void *data, u32 size) 
 {
 #ifdef CPU_SAME53
 #elif defined(CPU_XMC48)

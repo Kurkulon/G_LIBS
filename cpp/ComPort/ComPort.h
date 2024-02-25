@@ -314,7 +314,8 @@ class ComPort : public USIC
 
 #ifdef ADSP_BLACKFIN
 
-	bool		Connect(dword speed, byte parity);
+	bool		Connect(CONNECT_TYPE ct, dword speed, byte parity, byte stopBits);
+	bool		Connect(dword speed, byte parity) { return Connect(ASYNC, speed, parity, 1); }
 
 #else
 				bool	Connect(CONNECT_TYPE ct, dword speed, byte parity, byte stopBits = 1);

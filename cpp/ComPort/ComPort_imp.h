@@ -79,7 +79,7 @@ inline void Usic_Unlock() {}
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-bool ComPort::Connect(dword speed, byte parity)
+bool ComPort::Connect(CONNECT_TYPE ct, dword speed, byte parity, byte stopBits)
 {
 	if (_connected)
 	{

@@ -24,12 +24,14 @@ public:
 	const u32		pageSize;
 	const u32		flashStartAdr;
 
-	virtual u32		GetSectorAdrLen(u32 sadr, u32 *radr)	= 0;
-	virtual void	Update()								= 0;
-	virtual u32		Read(u32 addr, byte *data, u32 size)	= 0;
-	virtual void	InitFlashWrite()						= 0;
-	virtual bool	Busy()									= 0;
-	virtual bool	RequestWrite(Ptr<MB> &b)				= 0;
+	//virtual u32		GetSectorAdrLen(u32 sadr, u32 *radr)	= 0;
+	//virtual void	Update()								= 0;
+	//virtual u32		Read(u32 addr, void *data, u32 size)	= 0;
+	//virtual void	InitFlashWrite()						= 0;
+	//virtual bool	Busy()									= 0;
+	//virtual bool	RequestWrite(Ptr<MB> &b)				= 0;
+	//virtual void	Init()									= 0;
+	//virtual u16		CRC16(u32 len, u32 *rlen)				= 0;
 
 	FlashMem(u32 psz, u32 stAdr) : pageSize(psz), flashStartAdr(stAdr) {}
 };

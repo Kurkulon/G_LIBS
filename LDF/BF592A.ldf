@@ -76,7 +76,7 @@ $LIBRARIES =
 
 	libcc.dlb
 	//,libio.dlb
-	//,libc.dlb
+	,libc.dlb
 	//,librt_fileio.dlb
 	,libcpp.dlb
 	//,libdsp.dlb

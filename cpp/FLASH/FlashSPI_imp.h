@@ -12,6 +12,7 @@
 #include "time.h"
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 #ifndef FLASH_START_ADR
 #define FLASH_START_ADR 0x10000 	
 #endif
@@ -36,6 +37,10 @@
 #define AT25_SPI_BAUD_RATE 	1000000
 #endif
 
+#define PAGEDWORDS		(FLASH_PAGE_SIZE/4)
+#define FLASH_START		FLASH_START_ADR
+#define ISP_PAGESIZE	FLASH_PAGE_SIZE
+
 #define SPIMODE	(CPOL|CPHA)
 
 static char 		*pFlashDesc =		"Atmel AT25DF021";
@@ -44,11 +49,7 @@ static char 		*pDeviceCompany	=	"Atmel Corporation";
 static int			gNumSectors = NUM_SECTORS;
 
 //static u32			bufsect[(SECTOR_SIZE+3)/4];
-static u16			lastErasedBlock = ~0;
 
-static byte*		flashWritePtr = 0;
-static u16			flashWriteLen = 0;
-static u32			flashWriteAdr = 0;
 
 /* flash commands */
 #define SPI_WREN            (0x06)  //Set Write Enable Latch
@@ -100,6 +101,16 @@ enum ERROR_CODE
 
 class FlashSPI : public FlashMem
 {
+public:
+
+	//struct FLWB
+	//{
+	//	u32		adr;
+	//	u32 	dataLen;
+	//	u32 	dataOffset;
+	//	byte	data[0];
+	//};
+
 protected:
 	
 	enum FlashState 
@@ -109,7 +120,7 @@ protected:
 		FLASH_STATE_ERASE_WAIT,
 		FLASH_STATE_ERASE_WAIT_2,
 		FLASH_STATE_ERASE_CHECK,
-		FLASH_STATE_WRITE_START, 
+		//FLASH_STATE_WRITE_START, 
 		FLASH_STATE_WRITE_PAGE, 
 		FLASH_STATE_WRITE_PAGE_2, 
 		FLASH_STATE_WRITE_PAGE_3, 
@@ -119,13 +130,18 @@ protected:
 
 	FlashState flashState;
 
-	u32 secStartAdr;
-	u32 secEndAdr;
-	u32 wadr;
-	u32 wlen;
+	CTM32 tm;
+	byte*		flashWritePtr;
+	u16			flashWriteLen;
+	u32			flashWriteAdr;
+
+	//u32 secStartAdr;
+	//u32 secEndAdr;
+	//u32 wadr;
+	//u32 wlen;
 	u32 flash_write_error;
 	u32 flash_write_ok;
-	__packed u32 *wdata;
+	//__packed u32 *wdata;
 
 	S_SPIM	&spi;
 
@@ -135,7 +151,16 @@ protected:
 
 	ERROR_CODE	lastError;
 
-	byte buf[SPI_PAGE_SIZE];
+
+	u16	lastErasedBlock;
+
+	#ifdef ADSP_CHECKFLASH
+		ADI_BOOT_HEADER bh;
+		u16 crc = 0;
+	#endif
+
+	byte buf[10];
+	byte bufpage[SPI_PAGE_SIZE];
 
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -168,24 +193,72 @@ protected:
 
 	byte ReadStatusRegister(void);
 
-
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 public:
 
+	u16 flashCRC;
+	u32 flashLen;
+	bool flashOK;
+	bool flashChecked;
+	bool flashCRCOK;
+
 	u32 Get_WriteError() { return flash_write_error; }
 	u32 Get_WriteOK() { return flash_write_ok; }
 
-	virtual u32		GetSectorAdrLen(u32 sadr, u32 *radr);
-	virtual void	Update();
-	virtual u32		Read(u32 addr, byte *data, u32 size);
-	virtual void	InitFlashWrite() { /*state_write_flash = WRITE_INIT;*/ }
-	virtual bool	Busy() { return (flashState != FLASH_STATE_WAIT) || !writeFlBuf.Empty(); }
-	virtual bool	RequestWrite(Ptr<MB> &b);
+	u32		GetSectorAdrLen(u32 sadr, u32 *radr);
+	void	Update();
+	u32		Read(u32 addr, void *data, u32 size);
+	void	InitFlashWrite() { /*state_write_flash = WRITE_INIT;*/ }
+	bool	Busy() { return (flashState != FLASH_STATE_WAIT) || !writeFlBuf.Empty(); }
+	bool	RequestWrite(Ptr<MB> &b);
+	void	Init();
+	u16		CRC16(u32 len, u32 *rlen);
 
-	FlashSPI(S_SPIM &sp) : FlashMem(FLASH_PAGE_SIZE, FLASH_START_ADR), flashState(FLASH_STATE_WAIT), lastError(NO_ERR), secStartAdr(~0), secEndAdr(~0), flwb(0), wadr(0), wlen(0), 
-					flash_write_error(0), flash_write_ok(0), wdata(0), spi(sp) {}
+	FlashSPI(S_SPIM &sp) : FlashMem(FLASH_PAGE_SIZE, FLASH_START_ADR), flashState(FLASH_STATE_WAIT), flashCRC(0), flashLen(0), flashOK(false), flashChecked(false), flashCRCOK(false),
+							lastErasedBlock(~0), lastError(NO_ERR), flwb(0), flash_write_error(0), flash_write_ok(0), spi(sp) {}
+
+#ifdef ADSP_CHECKFLASH
+
+	void ADSP_CheckFlash();
+
+#endif
 };
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void FlashSPI::Init()
+{
+	spi.Connect(AT25_SPI_BAUD_RATE);
+
+#ifdef ADSP_CHECKFLASH
+
+	ADSP_CheckFlash();
+
+#endif
+
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+u16 FlashSPI::CRC16(u32 len, u32 *rlen)
+{
+	u16 crc;
+
+	if (flashChecked)
+	{
+		crc = flashCRC;
+		len = flashLen;
+	}
+	else
+	{
+		crc = this->GetCRC16(FLASH_START_ADR, len);
+	};
+
+	if (rlen != 0) *rlen = len;
+
+	return crc;
+}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -283,7 +356,7 @@ void FlashSPI::CmdWriteStatusReg(byte stat)
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-u32 FlashSPI::Read(u32 addr, byte *data, u32 size)
+u32 FlashSPI::Read(u32 addr, void *data, u32 size)
 {
     buf[0] = SPI_FAST_READ;
     buf[1] = addr >> 16;
@@ -497,135 +570,310 @@ ERROR_CODE FlashSPI::Wait_For_Status( char Statusbit )
 
 void FlashSPI::Update()
 {
-	switch(state_write_flash)
+	switch (flashState)
 	{
-		case WRITE_WAIT:
+		case FLASH_STATE_WAIT:
 
 			curFlwb = writeFlBuf.Get();
 
 			if (curFlwb.Valid())
 			{
 				flwb = (FLWB*)curFlwb->GetDataPtr();
-				wadr = flwb->adr;
-				wlen = flwb->dataLen;
-				wdata = (__packed u32*)(flwb->data + flwb->dataOffset);
 
-				state_write_flash = WRITE_START;
-			};
+				flashWriteAdr = flwb->adr; //FLASH_START_ADR + request->stAdr;
+				flashWritePtr = flwb->data + flwb->dataOffset;
+				flashWriteLen = flwb->dataLen;
 
-			break;
+				u16 block = flashWriteAdr/FLASH_SECTOR_SIZE;
 
-		case WRITE_START:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
-			
-			if (wadr >= secStartAdr &&  wadr < secEndAdr)
-			{
-				state_write_flash = WRITE_PAGE;
-			}
-			else
-			{
-				u32 len = GetSectorAdrLen(wadr, &secStartAdr);
-
-				if (len != 0)
+				if (lastErasedBlock != block)
 				{
-					secEndAdr = secStartAdr + len - 1;
+					lastErasedBlock = block;
 
-					if (!REQ_EraseSector(secStartAdr)) len = 0;
-				};
-
-				state_write_flash = (len != 0) ? WRITE_ERASE_SECTOR : WRITE_ERROR;
-			};
-
-			break;
-	
-		case WRITE_ERASE_SECTOR:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
-
-			if (IsFlashReady())
-			{
-				state_write_flash = (IsFlashReqOK()) ? WRITE_PAGE : WRITE_ERROR;
-			};
-
-			break;
-
-		case WRITE_PAGE:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
-
-			state_write_flash = (REQ_WritePage(wadr, wdata, wlen)) ? WRITE_PAGE_0 : WRITE_ERROR;
-
-			break;
-
-		case WRITE_PAGE_0:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
-
-			if (IsFlashReady())
-			{
-				if (IsFlashReqOK())
-				{
-					wadr += ISP_PAGESIZE;
-					wdata += PAGEDWORDS;
-
-					if (wlen >= ISP_PAGESIZE)
-					{
-						wlen -= ISP_PAGESIZE;
-					}
-					else
-					{
-						wlen = 0;	
-					};
-
-					state_write_flash = (wlen > 0) ? WRITE_START : WRITE_OK;
+					flashState = FLASH_STATE_ERASE_START;
 				}
 				else
 				{
-					state_write_flash = WRITE_ERROR;
+					flashState = FLASH_STATE_WRITE_PAGE;
 				};
 			};
 
 			break;
 
-		case WRITE_OK:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
+		case FLASH_STATE_ERASE_START:
 
-			flash_write_ok++;
+			GlobalUnProtect();
+			GlobalUnProtect();
 
-			state_write_flash = WRITE_FINISH;
+			CmdWriteEnable();
 
-			break;
+			tm.Reset();
 
-		case WRITE_ERROR:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
-
-			flash_write_error++;
-
-			state_write_flash = WRITE_FINISH;
-
-			break;
-		
-		case WRITE_FINISH:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
-
-			curFlwb.Free();
-
-			flwb = 0;
-
-			state_write_flash = WRITE_WAIT;
+			flashState = FLASH_STATE_ERASE_WAIT;
 
 			break;
 
-		case WRITE_INIT:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
+		case FLASH_STATE_ERASE_WAIT:
+		{ 
+			byte st = ReadStatusRegister();
 
-			curFlwb.Free();
+			if ((st & RDY_BSY) == 0 && (st & WEL) != 0)
+			{
+				lastError = NO_ERR;
 
-			flash_write_error = 0;
-			flash_write_ok = 0;
+				CmdEraseSector(lastErasedBlock);
 
-			secStartAdr = ~0;
-			secEndAdr = ~0;
+				tm.Reset();
 
-			flwb = 0;
+				flashState = FLASH_STATE_ERASE_WAIT_2;
+			}
+			else if (tm.Check(MS2CTM(10)))
+			{
+				__breakpoint();
+				lastError = POLL_TIMEOUT;
+				flashState = FLASH_STATE_WAIT;
+			}; 
 
-			state_write_flash = WRITE_WAIT;
+			break;
+		};
+
+		case FLASH_STATE_ERASE_WAIT_2:
+		{
+			byte st = ReadStatusRegister();
+
+			if ((st & RDY_BSY) == 0)
+			{
+				if (st & EPE)
+				{
+					__breakpoint();
+					lastError = ERROR_ERASE;
+					flashState = FLASH_STATE_WAIT;
+				}
+				else
+				{
+					lastError = NO_ERR;
+
+					flashState = (flashWritePtr != 0 && flashWriteLen != 0) ? FLASH_STATE_WRITE_PAGE : FLASH_STATE_ERASE_WAIT;
+				};
+			}
+			else if (tm.Check(MS2CTM(1000)))
+			{
+				__breakpoint();
+				lastError = POLL_TIMEOUT;
+				flashState = FLASH_STATE_WAIT;
+			};
+
+			break;
+		};
+
+		//case FLASH_STATE_WRITE_START:
+		//{
+		//	//ReqDsp06 &req = request->req;
+
+		//	flashWriteAdr = FLASH_START_ADR + request->stAdr;
+		//	flashWritePtr = (byte*)request->GetDataPtr();
+		//	flashWriteLen = request->len;
+
+		//	u16 block = flashWriteAdr/FLASH_SECTOR_SIZE;
+
+		//	if (lastErasedBlock != block)
+		//	{
+		//		lastErasedBlock = block;
+
+		//		flashState = FLASH_STATE_ERASE_START;
+
+		//		break;
+		//	};
+		//};
+
+		case FLASH_STATE_WRITE_PAGE:
+
+			CmdWriteEnable();
+
+			tm.Reset();
+
+			flashState = FLASH_STATE_WRITE_PAGE_2;
 
 			break;
 
-	}; // switch(state_write_flash)
+		case FLASH_STATE_WRITE_PAGE_2:
+		{ 
+			byte st = ReadStatusRegister();
+
+			if ((st & RDY_BSY) == 0 && (st & WEL) != 0)
+			{
+				lastError = NO_ERR;
+
+				ChipEnable();
+				
+				buf[0] = SPI_PP;
+				buf[1] = flashWriteAdr >> 16;
+				buf[2] = flashWriteAdr >> 8;
+				buf[3] = flashWriteAdr;
+
+				spi.WriteAsyncDMA(buf, 4, flashWritePtr, flashWriteLen);
+
+				//WritePageAsync(flashWritePtr, flashWriteAdr, flashWriteLen);
+
+				flashState = FLASH_STATE_WRITE_PAGE_3;
+			}
+			else if (tm.Check(MS2CTM(10)))
+			{
+				__breakpoint();
+				lastError = POLL_TIMEOUT;
+				flashState = FLASH_STATE_WAIT;
+			}; 
+
+			break;
+		};
+
+		case FLASH_STATE_WRITE_PAGE_3:
+
+			if (spi.CheckWriteComplete())
+			{
+				ChipDisable();
+
+				tm.Reset();
+
+				flashState = FLASH_STATE_WRITE_PAGE_4;
+			};
+
+			break;
+
+		case FLASH_STATE_WRITE_PAGE_4:
+		{ 
+			byte st = ReadStatusRegister();
+
+			if ((st & RDY_BSY) == 0)
+			{
+				if (st & EPE)
+				{
+					__breakpoint();
+					lastError = ERROR_PROGRAM;
+					flashState = FLASH_STATE_WAIT;
+				}
+				else
+				{
+					lastError = NO_ERR;
+
+					ChipEnable();
+				
+					buf[0] = SPI_FAST_READ;
+					buf[1] = flashWriteAdr >> 16;
+					buf[2] = flashWriteAdr >> 8;
+					buf[3] = flashWriteAdr;
+					buf[4] = 0;
+
+					spi.WriteSyncDMA(buf, 5);
+					spi.ReadAsyncDMA(bufpage, flashWriteLen);
+
+					//ReadAsyncDMA(bufpage, flashWriteAdr, flashWriteLen);
+
+					flashState = FLASH_STATE_VERIFY_PAGE;
+				};
+			}
+			else if (tm.Check(MS2CTM(10)))
+			{
+				__breakpoint();
+				lastError = POLL_TIMEOUT;
+				flashState = FLASH_STATE_WAIT;
+			}; 
+
+			break;
+		};
+
+		case FLASH_STATE_VERIFY_PAGE:
+
+			if (spi.CheckReadComplete())
+			{
+				ChipDisable();
+
+				bool c = false;
+
+				for (u32 i = 0; i < flashWriteLen; i++)
+				{
+					if (flashWritePtr[i] != bufpage[i]) { c = true; break; };
+				};
+
+				if (c)
+				{
+					__breakpoint();
+
+					lastError = VERIFY_WRITE;
+				}
+				else
+				{
+					lastError = NO_ERR;
+				};
+
+				flashWritePtr = 0;
+				flashWriteLen = 0;
+
+				flashState = FLASH_STATE_WAIT;
+			};
+
+			break;
+
+
+	};
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void FlashSPI::ADSP_CheckFlash()
+{
+	while (Busy()) Update();
+
+	u32 *p = (u32*)&bh;
+
+	u32 adr = 0;
+	
+	flashOK = flashChecked = flashCRCOK = false;
+
+	//at25df021_Read(buf, 0, sizeof(buf));
+
+	while (1)
+	{
+		Read(FLASH_START_ADR + adr, (byte*)&bh, sizeof(bh));
+
+		u32 x = p[0] ^ p[1] ^ p[2] ^ p[3];
+		x ^= x >> 16; 
+		x = (x ^ (x >> 8)) & 0xFF; 
+
+		if (((u32)(bh.dBlockCode) >> 24) == 0xAD && x == 0)
+		{
+			adr += sizeof(bh);
+
+			if ((bh.dBlockCode & BFLAG_FILL) == 0)
+			{
+				adr += bh.dByteCount;	
+			};
+
+			if (bh.dBlockCode & BFLAG_FINAL)
+			{
+				flashOK = true;
+
+				break;
+			};
+		}
+		else
+		{
+			break;
+		};
+	};
+
+	flashLen = adr;
+
+	Read(FLASH_START_ADR + adr, &crc, sizeof(crc));
+
+	if (flashLen > 0) flashCRC = this->GetCRC16(FLASH_START_ADR, flashLen), flashCRCOK = (flashCRC == crc);
+
+	if (!flashCRCOK) flashLen = 0;
+
+	flashChecked = true;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

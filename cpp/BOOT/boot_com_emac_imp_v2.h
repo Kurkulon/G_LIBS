@@ -36,8 +36,13 @@
 #ifdef BOOT_COM
 
 	#include "ComPort\ComPort.h"
+
 	#ifndef BOOT_COM_MODE
 	#define BOOT_COM_MODE	ComPort::ASYNC
+	#endif
+
+	#ifndef BOOT_COM_STOPBITS
+	#define BOOT_COM_STOPBITS	1
 	#endif
 
 	#ifdef BOOT_HANDSHAKE
@@ -869,6 +874,23 @@ static bool HandShake()
 #endif
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#ifdef ADSP_BLACKFIN
+
+static void _MainAppStart(u32 adr)
+{
+	if (!bootFlash.flashChecked) bootFlash.ADSP_CheckFlash();
+
+	if (bootFlash.flashOK && bootFlash.flashCRCOK) HW::WDT->Disable(), bfrom_SpiBoot(FLASH_START_ADR, BFLAG_PERIPHERAL | BFLAG_NOAUTO | BFLAG_FASTREAD | BFLAG_TYPE3 | 7, 0, 0);
+	
+	tm64.Reset(); timeOut = MS2CTM(1000);
+}
+
+#else
+
+extern "C" void _MainAppStart(u32 adr);
+
+#endif
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #ifdef BOOT_COM
 
@@ -908,18 +930,18 @@ static bool Request_01_GetCRC(ReqMes &req, RspMes &rsp)
 
 	if (rq.adr == 0) return true;
 
-#ifdef CPU_SAME53
-	bool c = true;
-#elif defined(CPU_XMC48)
+#ifdef CPU_XMC48
 	bool c = (HW::FLASH0->FSR & FLASH_FSR_PFPAGE_Msk) == 0;
+#else
+	bool c = true;
 #endif
 
 	if (req.len == sizeof(rq) && c)
 	{
 		if (rq.len != 0)
 		{
-			rp.flashCRC = GetCRC16((void*)(FLASH_START), rq.len);
-			rp.flashLen = rq.len;
+			rp.flashCRC = bootFlash.CRC16(rq.len, &rp.flashLen); //GetCRC16((void*)(FLASH_START), rq.len);
+			//rp.flashLen = rq.len;
 		};
 	}
 	else
@@ -1194,8 +1216,6 @@ static void WDT_Init()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-extern "C" void _MainAppStart(u32 adr);
-
 int main()
 {
 	#ifdef BOOT_START_BREAKPOINT
@@ -1212,6 +1232,8 @@ int main()
 
 	Init_time(MCK);
 	WDT_Init();
+
+	bootFlash.Init();
 
 	#ifdef BOOT_EMAC
 		InitEMAC();
@@ -1271,33 +1293,35 @@ int main()
 
 	__disable_irq();
 
-	CM4::SysTick->CTRL = 0;
+	#ifdef CORTEX_M4
+		CM4::SysTick->CTRL = 0;
+	#endif
 
 	#ifdef BOOT_EMAC
 		ResetPHY();
 	#endif
 
-#ifdef CPU_SAME53
+	#ifdef CPU_SAME53
 
-	HW::RTC->CTRLA = RTC_SWRST;
-	HW::GMAC->NCR = 0;
-	HW::GMAC->NCFGR = 0x80000;
-	HW::DMAC->CTRL = DMAC_SWRST;
-	HW::GCLK->CTRLA = GCLK_SWRST;
-	HW::WDT->Disable();
-	HW::MCLK->APBAMASK &= ~APBA_WDT;
+		HW::RTC->CTRLA = RTC_SWRST;
+		HW::GMAC->NCR = 0;
+		HW::GMAC->NCFGR = 0x80000;
+		HW::DMAC->CTRL = DMAC_SWRST;
+		HW::GCLK->CTRLA = GCLK_SWRST;
+		HW::WDT->Disable();
+		HW::MCLK->APBAMASK &= ~APBA_WDT;
 
-#elif defined(CPU_XMC48)
+	#elif defined(CPU_XMC48)
 
-	HW::Peripheral_Disable(PID_DMA0);
-	HW::Peripheral_Disable(PID_DMA1);
+		HW::Peripheral_Disable(PID_DMA0);
+		HW::Peripheral_Disable(PID_DMA1);
 
-	HW::Peripheral_Disable(PID_USIC0);
-	HW::Peripheral_Disable(PID_USIC1);
+		HW::Peripheral_Disable(PID_USIC0);
+		HW::Peripheral_Disable(PID_USIC1);
 
-	HW::WDT_Disable();
+		HW::WDT_Disable();
 
-#endif
+	#endif
 
 	SEGGER_RTT_printf(0, RTT_CTRL_TEXT_BRIGHT_GREEN "Main App Start ... %u ms\n", GetMilliseconds());
 

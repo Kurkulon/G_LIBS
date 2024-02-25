@@ -53,9 +53,16 @@ extern RTC timeBDC;
 
 #endif // #if defined(CPU_SAME53) || defined(CPU_XMC48)
 
+#ifndef ADSP_BLACKFIN
+
 extern void Init_time(u32 mck);
 extern void RTT_Init();
+#else
 
+#define Init_time(v)
+#define RTT_Init()
+
+#endif
 
 #ifdef WIN32	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -152,7 +159,8 @@ struct CTM32
 };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#ifdef ADSP_BLACKFIN
+
+#if defined(ADSP_BLACKFIN) && defined(MS2CCLK)
 
 struct TM32
 {
@@ -160,8 +168,12 @@ struct TM32
 
 	bool Check(u32 v) { u64 t = GetCycles64(); if ((u32)(t - pt) >= MS2CTM(v)) { pt = t; return true; } else { return false; }; }
 	bool Timeout(u32 v) { return (u64)(GetCycles64() - pt) >= MS2CTM(v); }
-	void Reset() { pt = GetMilliseconds(); }
+	void Reset() { pt = GetCycles64(); }
 };
+
+#endif
+
+#ifdef ADSP_BLACKFIN
 
 struct CTM64
 {

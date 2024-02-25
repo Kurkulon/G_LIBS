@@ -435,6 +435,20 @@ namespace T_HW
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+	struct S_WDT
+	{
+		BF_R16	CTL;		// Watchdog Control Register
+							BF_R16	z__Reserved1;
+		BF_R32	CNT;		// Watchdog Count Register							
+		BF_R32	STAT;		// Watchdog Status Register							
+
+		inline void Update()	{ STAT = 0; }
+		inline void Reset()		{ STAT = 0; }
+		inline void Disable()	{ CTL = WDDIS; }
+	};
+
+	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 }
@@ -481,6 +495,7 @@ namespace HW
 	MK_PTR(PPI,		PPI_CONTROL);
 
 	MK_PTR(TWI,		TWI_CLKDIV);
+	MK_PTR(WDT,		WDOG_CTL);
 
 	//MK_PTR(SUPC,	0X400E1A10);
 	//MK_PTR(RTT,		0X400E1A30);
