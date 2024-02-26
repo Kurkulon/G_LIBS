@@ -62,6 +62,11 @@
 	#define BOOT_COM_POSTTIMEOUT	MS2COM(2)
 	#endif
 
+	#ifndef BOOT_COM_WRITEDELAY			
+	#define BOOT_COM_WRITEDELAY			(US2CTM(10))
+	#endif
+
+
 	static u16 manReqWord = BOOT_MAN_REQ_WORD;
 	static u16 manReqMask = BOOT_MAN_REQ_MASK;
 
@@ -1094,7 +1099,7 @@ static void UpdateCom()
 
 	static bool c = true;
 
-	static TM32 tm;
+	static CTM32 tm;
 
 	static Ptr<MB> mb;
 	static ReqMes *req = 0;
@@ -1103,7 +1108,7 @@ static void UpdateCom()
 	{
 		case 0:
 
-			mb = AllocMemBuffer(sizeof(ReqMes) + ISP_PAGESIZE);
+			mb = AllocMemBuffer(sizeof(ReqMes));
 
 			if (mb.Valid())
 			{
@@ -1135,6 +1140,8 @@ static void UpdateCom()
 
 					c = RequestHandler(mb, rsp);
 					
+					tm.Reset();
+
 					i++;
 				}
 				else
@@ -1151,7 +1158,7 @@ static void UpdateCom()
 
 		case 3:
 
-			if (tm.Check(2))
+			if (tm.Check(BOOT_COM_WRITEDELAY))
 			{
 				wb.data = &rsp.mes;
 				wb.len = rsp.len;
@@ -1248,6 +1255,12 @@ int main()
 	#endif
 
 	CTM32	tm;
+
+	tm64.Reset();
+	
+	#ifdef BOOT_TIMEOUT
+		 timeOut = BOOT_TIMEOUT;
+	#endif
 
 	while(runCom || runEmac)
 	{

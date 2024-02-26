@@ -17,6 +17,12 @@ MEMBS	small_buffer[NUM_SMALL_BUF];
 MEMBM	medium_buffer[NUM_MEDIUM_BUF];
 MEMBH	huge_buffer[NUM_HUGE_BUF];
 
+#ifdef _ADI_COMPILER
+#pragma instantiate MEMBS
+#pragma instantiate MEMBM
+#pragma instantiate MEMBH
+#endif
+
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 MB* AllocSmallBuffer()
