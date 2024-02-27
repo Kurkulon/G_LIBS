@@ -64,6 +64,8 @@ static void WavePack_uLaw_12Bit(u16 *src, byte *dst, u16 len)
 			sample_in = -sample_in;
 		};
 
+		if (sample_in > 2031) sample_in = 2031;
+
 		sample_in += 0x10;
 
 		exponent = ulaw_0816_expenc[(sample_in >> 4) & 0xff];
@@ -108,6 +110,8 @@ static void WavePack_uLaw_16Bit(u16 *src, byte *dst, u16 len)
 			sign = 0x80;
 			sample_in = -sample_in;
 		};
+
+		if (sample_in > 32635) sample_in = 32635;
 
 		sample_in += 0x84;
 
@@ -167,9 +171,9 @@ static void WavePack_ADPCMIMA(u16 *src, byte* dst, u16 len)
 
 		if (newSample & 8) diff = -diff;
 
-		predictedSample += diff;
+		i32 t = predictedSample + diff;
 
-		if (predictedSample > 32767) predictedSample = 32767; else if (predictedSample < -32767) predictedSample = -32767;
+		predictedSample = LIM(t, -32767, 32767);
 
 		index += adpcmima_0416_index_tab[newSample];
 
@@ -208,9 +212,8 @@ static void WaveUnpack_ADPCMIMA(byte* src, u16* dst, u16 len)
 
 		newSample += diff;
 
-		if (newSample > 32767) newSample = 32767;
-		else if (newSample < -32767) newSample = -32767;
-
+		newSample = LIM(newSample, -32767, 32767);
+		
 		index += adpcmima_0416_index_tab[originalSample];
 
 		if (index < 0) index = 0; else if (index > (ArraySize(adpcmima_0416_stepsize_tab)-1)) index = ArraySize(adpcmima_0416_stepsize_tab)-1;
