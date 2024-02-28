@@ -1218,7 +1218,7 @@ static void ManRcvEnd(bool ok)
 	}
 	else
 	{
-		u32 y = (rcvManCount12 - 1) * US2MR(3*3);
+		u32 y = (rcvManCount12 - 1) * US2MR(12*12);
 		u32 e = 100 * rcvManSum12 / y;
 		rcvManQuality = (e < 100) ? (100 - e) : 0;
 	};

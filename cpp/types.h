@@ -33,6 +33,7 @@
 	#define __align(v) __declspec(align(v))
 	#define __attribute__(v)
 	#define __func__ __FUNCTION__
+	#define restrict /**/
 
 	__forceinline void __breakpoint(int v) { __debugbreak(); }
 	__forceinline void __disable_irq() {}

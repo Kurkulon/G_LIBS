@@ -173,7 +173,7 @@ static void WavePack_ADPCMIMA(u16 *src, byte* dst, u16 len)
 
 		i32 t = predictedSample + diff;
 
-		predictedSample = LIM(t, -32767, 32767);
+		predictedSample = (i16)(LIM(t, -32767, 32767));
 
 		index += adpcmima_0416_index_tab[newSample];
 
