@@ -86,6 +86,7 @@ public:
 
 	void Trans(volatile void *stadr, u16 len, u16 ctrl);
 	void Trans(volatile void *stadr1, u16 len1, u16 mdfy1, u16 ctrl1, volatile void *stadr2, u16 len2, u16 mdfy2, u16 ctrl2);
+	void Trans2D(volatile void *stadr1, u16 xcount1, u16 xmdfy1, u16 ycount1, u16 ymdfy1, volatile void *stadr2, u16 xcount2, u16 xmdfy2, u16 ycount2, u16 ymdfy2, u16 ctrl);
 
 	//void Write(const volatile void *src1, u16 len1, const volatile void *src2, u16 len2, u16 ctrl);
 	//void Read(volatile void *dst, u16 len, u16 ctrl);
@@ -118,6 +119,11 @@ public:
 	inline void Read8(	volatile void *dst,  u16 dummy_len, u16 len)	{ Trans(dst, dummy_len, 0, WDSIZE_8|WNR,  dst, len, 1, WDSIZE_8|WNR);	}
 	inline void Read16(	volatile void *dst,  u16 dummy_len, u16 len)	{ Trans(dst, dummy_len, 0, WDSIZE_16|WNR, dst, len, 2, WDSIZE_16|WNR);	}
 	inline void Read32(	volatile void *dst,  u16 dummy_len, u16 len)	{ Trans(dst, dummy_len, 0, WDSIZE_32|WNR, dst, len, 4, WDSIZE_32|WNR);	}
+
+	inline void ReadInterleaved8( volatile void *dst, u16 dummy_len, u16 len) { Trans2D(dst, dummy_len*2, 0, 0, 0, dst, 2, len,   len, 1-len,   WDSIZE_8|WNR);	}
+	inline void ReadInterleaved16(volatile void *dst, u16 dummy_len, u16 len) { Trans2D(dst, dummy_len*2, 0, 0, 0, dst, 2, len*2, len, 2-len*2, WDSIZE_16|WNR);	}
+	inline void ReadInterleaved32(volatile void *dst, u16 dummy_len, u16 len) { Trans2D(dst, dummy_len*2, 0, 0, 0, dst, 2, len*4, len, 4-len*4, WDSIZE_32|WNR);	}
+
 
 #elif defined(CPU_SAME53) //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

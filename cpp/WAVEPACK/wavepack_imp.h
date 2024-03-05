@@ -319,7 +319,9 @@ static u16 WavePack_FDCT_Quant(FDCT_DATA* src, u16 packLen, u16 shift, u16* cons
 
 	*scale = 0;
 
-	if (src[0] > max) max = src[0];
+	FDCT_DATA t = ABS(src[0]);
+
+	if (t > max) max = t;
 
 	while (max > 32000) { max /= 2; *scale += 1; };
 
@@ -357,9 +359,8 @@ static u16 WavePack_FDCT_Quant12(FDCT_DATA* src, u16 packLen, u16 shift, u16* co
 	{
 		FDCT_DATA t = src[i];
 
-		if (t < 0) t = -t;
-
-		if (t > max) max = t;
+		t = ABS(t);				//if (t < 0) t = -t;
+		max = Max32(max, t);	//if (t > max) max = t;
 	};
 
 	FDCT_DATA* p = src + packLen - 1;
@@ -371,7 +372,9 @@ static u16 WavePack_FDCT_Quant12(FDCT_DATA* src, u16 packLen, u16 shift, u16* co
 
 	*scale = 0;
 
-	//if (src[0] > max) max = src[0];
+	FDCT_DATA t = ABS(src[0]);
+
+	max = Max32(max, t); //if (t > max) max = t;
 
 	while (max > 2047) { max /= 2; *scale += 1; };
 
@@ -383,7 +386,7 @@ static u16 WavePack_FDCT_Quant12(FDCT_DATA* src, u16 packLen, u16 shift, u16* co
 	{
 		FDCT_DATA t = *(p--);
 
-		if (t < 0) t = -t;
+		t = ABS(t); //if (t < 0) t = -t;
 
 		if (t > lim)
 		{

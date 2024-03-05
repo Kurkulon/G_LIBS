@@ -71,8 +71,7 @@ static const dword __NAN_dword = 0xFFFFFFFF;
 #define NAN (*((const float*)(&__NAN_dword)))
 #endif
 
-__forceinline float	ABS(float v)	{ *((u32*)&v) &= 0x7FFFFFFF; return v; }
-__forceinline i32	ABS(i32 v)		{ return (v<0) ? -v : v; }
+
 
 //inline bool fIsValid(float v) { return (((u16*)&v)[1] & 0x7F80) != 0x7F80; }
 //inline bool dIsValid(double v) { return (((u32*)&v)[1] & 0x7FF0) != 0x7FF0; }
@@ -90,6 +89,18 @@ __forceinline i32	ABS(i32 v)		{ return (v<0) ? -v : v; }
 
 __forceinline void COPY(const void *src, void *dst, u32 size) { const byte *s = (const byte*)src; byte *d = (byte*)dst;  while(size--) *d++ = *s++; }
 __forceinline void delay(u32 cycles) { while(cycles--) __nop();}
+
+#if defined(CPU_BF592) || defined(__ADSPBLACKFIN__)
+inline i32	ABS(i32 v)			{ return __builtin_abs(v); }
+inline i32	Max32(i32 a, i32 b)	{ return __builtin_max(a,b); }
+inline i32	Min32(i32 a, i32 b)	{ return __builtin_min(a,b); }
+#else
+__forceinline i32	ABS(i32 v)			{ return (v<0) ? -v : v; }
+__forceinline i32	Max32(i32 a, i32 b)	{ return MAX(a,b); }
+__forceinline i32	Min32(i32 a, i32 b)	{ return MIN(a,b); }
+#endif
+
+__forceinline float	ABS(float v)	{ *((u32*)&v) &= 0x7FFFFFFF; return v; }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

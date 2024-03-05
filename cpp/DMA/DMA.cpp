@@ -64,6 +64,47 @@ void DMA_CH::Trans(volatile void *stadr1, u16 len1, u16 mdfy1, u16 ctrl1, volati
 	_dmach->NEXT_DESC_PTR = &_dsc1;
 	_dmach->CONFIG = FLOW_LARGE|NDSIZE_9|DMAEN;
 }
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void DMA_CH::Trans2D(volatile void *stadr1, u16 xcount1, u16 xmdfy1, u16 ycount1, u16 ymdfy1, volatile void *stadr2, u16 xcount2, u16 xmdfy2, u16 ycount2, u16 ymdfy2, u16 ctrl)
+{
+	_dmach->CONFIG = 0;
+
+	u16 ctrl1 = (ctrl&(WDSIZE_16|WDSIZE_32|WNR))|SYNC|DMAEN;
+	u16 ctrl2 = ctrl1;
+
+	if (ycount1 != 0 ) ctrl1 |= DMA2D;
+	if (ycount2 != 0 ) ctrl2 |= DMA2D;
+
+	_dsc1.SA = (void*)stadr1;
+	_dsc1.XCNT = xcount1;
+	_dsc1.XMOD = xmdfy1;
+	_dsc1.YCNT = ycount1;
+	_dsc1.YMOD = ymdfy1;
+
+	if (stadr2 != 0 && xcount2 != 0)
+	{
+		_dsc1.NDP = &_dsc2;
+		_dsc1.DMACFG = FLOW_LARGE|NDSIZE_9|ctrl1;
+
+		_dsc2.SA = (void*)stadr2;
+		_dsc2.XCNT = xcount2;
+		_dsc2.XMOD = xmdfy2;
+		_dsc2.YCNT = ycount2;
+		_dsc2.YMOD = ymdfy2;
+
+		_dsc2.DMACFG = FLOW_STOP|DI_EN|ctrl2;
+	}
+	else
+	{
+		_dsc1.DMACFG = FLOW_STOP|DI_EN|ctrl1;
+	};
+
+	_dmach->IRQ_STATUS = DMA_DONE;
+
+	_dmach->NEXT_DESC_PTR = &_dsc1;
+	_dmach->CONFIG = FLOW_LARGE|NDSIZE_9|DMAEN;
+}
 
 #endif // #ifdef ADSP_BLACKFIN 
 
