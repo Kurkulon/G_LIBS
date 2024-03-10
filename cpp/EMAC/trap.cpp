@@ -527,6 +527,14 @@ static bool TRAP_SendAsknowlege(byte device, u32 on_packet)
 
 void TRAP_HandleRxData(Ptr<MB> &mb)
 {
+	static TM32 tm;
+	static bool cmdReboot = false;
+
+	if (cmdReboot && tm.Check(100))
+	{
+		HW::SystemReset(); //CM4::SCB->AIRCR = 0x05FA0000|SCB_AIRCR_SYSRESETREQ_Msk;
+	};
+
 	EthTrap *et = ((EthTrap*)mb->GetDataPtr());
 
 	Trap *t = &et->trap;
@@ -741,7 +749,9 @@ void TRAP_HandleRxData(Ptr<MB> &mb)
 					case TRAP_BOOTLOADER_COMMAND_START:
 
 						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_BOOTLOADER_DEVICE, TrapRxCounter);
-//						BootLoader_Start_Delay();
+
+						cmdReboot = true;
+						tm.Reset();
 
 						break;
 

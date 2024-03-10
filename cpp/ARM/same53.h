@@ -3119,6 +3119,13 @@ namespace HW
 
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+	inline void SystemReset()
+	{
+		CM4::SCB->AIRCR = 0x05FA0000|SCB_AIRCR_SYSRESETREQ_Msk;
+	}
+
+	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 }; // namespace HW
 
 extern T_HW::AT91_IHP VectorTableInt[16];
