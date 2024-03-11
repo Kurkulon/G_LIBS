@@ -64,6 +64,9 @@ static u64	startAdr = 0;
 static bool stop = false;
 static bool pause = false;
 
+static TM32 tmReboot;
+static bool cmdReboot = false;
+
 
 /******************************************************/
 //static void TRAP_MakePacketHeaders(char *data, bool need_ask, bool is_ask, char device);
@@ -527,14 +530,6 @@ static bool TRAP_SendAsknowlege(byte device, u32 on_packet)
 
 void TRAP_HandleRxData(Ptr<MB> &mb)
 {
-	static TM32 tm;
-	static bool cmdReboot = false;
-
-	if (cmdReboot && tm.Check(100))
-	{
-		HW::SystemReset(); //CM4::SCB->AIRCR = 0x05FA0000|SCB_AIRCR_SYSRESETREQ_Msk;
-	};
-
 	EthTrap *et = ((EthTrap*)mb->GetDataPtr());
 
 	Trap *t = &et->trap;
@@ -751,7 +746,7 @@ void TRAP_HandleRxData(Ptr<MB> &mb)
 						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_BOOTLOADER_DEVICE, TrapRxCounter);
 
 						cmdReboot = true;
-						tm.Reset();
+						tmReboot.Reset();
 
 						break;
 
@@ -1017,40 +1012,47 @@ static bool UpdateSendVector()
 
 			if (flrb.ready)
 			{
-				FR  &ef = *((FR*)mb->GetDataPtr());
-
-				ef.ei.iph.id = ipID;
-				ef.ei.iph.off = (fragOff/8)&0x1FFF;
-
-				fragLen -= flrb.len;
-				fragOff += flrb.len;
-
-				mb->len = sizeof(ef.ei) + flrb.len;
-
-				//crc = CRC_CCITT_DMA(flrb.data, flrb.len, crc); //GetCRC16(flrb.data, flrb.len, crc, 0);
-
-				if (fragLen > 0)
-				{ 
-					ef.ei.iph.off |= 0x2000; 
-				}
-				else if (flrb.crc != 0)
-				{
-					ef.ei.iph.off = 0;
-				}
-				else
-				{
-					mb->len -= 2;
-				};
-
-				SendFragTrap(mb);
-
-				if (fragLen > 0)
-				{
-					i = 3;
-				}
-				else
+				if (flrb.len == 0)
 				{
 					i = 1;
+				}
+				else
+				{
+					FR  &ef = *((FR*)mb->GetDataPtr());
+
+					ef.ei.iph.id = ipID;
+					ef.ei.iph.off = (fragOff/8)&0x1FFF;
+
+					fragLen -= flrb.len;
+					fragOff += flrb.len;
+
+					mb->len = sizeof(ef.ei) + flrb.len;
+
+					//crc = CRC_CCITT_DMA(flrb.data, flrb.len, crc); //GetCRC16(flrb.data, flrb.len, crc, 0);
+
+					if (fragLen > 0)
+					{ 
+						ef.ei.iph.off |= 0x2000; 
+					}
+					else if (flrb.crc != 0)
+					{
+						ef.ei.iph.off = 0;
+					}
+					else
+					{
+						mb->len -= 2;
+					};
+
+					SendFragTrap(mb);
+
+					if (fragLen > 0)
+					{
+						i = 3;
+					}
+					else
+					{
+						i = 1;
+					};
 				};
 			};
 
@@ -1252,6 +1254,8 @@ void TRAP_Init()
 
 void TRAP_Idle()
 {
+	if (cmdReboot && tmReboot.Check(100)) HW::SystemReset(); 
+
 	UpdateSendVector();
 	//UpdateSendVector_Dlya_Vova();
 }
