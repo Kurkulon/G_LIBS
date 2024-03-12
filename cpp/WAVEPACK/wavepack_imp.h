@@ -494,7 +494,7 @@ static u16 WavePack_FDCT12(i16* src, byte* dst, u16 len, u16 shift, u16 OVRLAP, 
 
 u16 WavePack_FDCT(u16 packType, i16* src, byte* dst, u16 len)
 {
-	packType += PACK_DCT0;
+	if (packType < PACK_DCT0) packType = PACK_DCT0;
 
 	u16 OVRLAP = (packType > PACK_DCT0) ? 7 : 3;
 	u16 shift = 4 - (packType - PACK_DCT0);
@@ -516,7 +516,8 @@ u16 WavePack(u16 packType, i16* src, byte* dst, u16 len)
 		case PACK_DCT0:		
 		case PACK_DCT1:		
 		case PACK_DCT2:		
-		case PACK_DCT3:		len = WavePack_FDCT(packType-PACK_DCT0, src, dst, len); break;
+		case PACK_DCT3:		len = WavePack_FDCT(packType, src, dst, len); break;
+		default:			len *= 2;
 	};
 
 	return len;
