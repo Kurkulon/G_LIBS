@@ -405,7 +405,6 @@ static u16 WavePack_FDCT_Quant12(FDCT_DATA* src, u16 packLen, u16 shift, u16* co
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static void WavePack_FDCT_Transform(i16* s, FDCT_DATA *fdct_w)
 {
@@ -492,12 +491,30 @@ static u16 WavePack_FDCT12(i16* src, byte* dst, u16 len, u16 shift, u16 OVRLAP, 
 
 u16 WavePack_FDCT(u16 packType, i16* src, byte* dst, u16 len)
 {
-	if (packType < PACK_DCT0) packType = PACK_DCT0;
+	packType += PACK_DCT0;
 
 	u16 OVRLAP = (packType > PACK_DCT0) ? 7 : 3;
 	u16 shift = 4 - (packType - PACK_DCT0);
 
 	WavePack_FDCT12(src, dst, len, shift, OVRLAP, FDCT_N, &len);
+
+	return len;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+u16 WavePack(u16 packType, i16* src, byte* dst, u16 len)
+{
+	switch (packType)
+	{
+		case PACK_ULAW12: 	len = WavePack_uLaw_12Bit(src, dst, len);	break;
+		case PACK_ULAW16: 	len = WavePack_uLaw_16Bit(src, dst, len);	break;
+		case PACK_ADPCMIMA:	len = WavePack_ADPCMIMA(src, dst, len);		break;
+		case PACK_DCT0:		
+		case PACK_DCT1:		
+		case PACK_DCT2:		
+		case PACK_DCT3:		len = WavePack_FDCT(packType-PACK_DCT0, src, dst, len); break;
+	};
 
 	return len;
 }
