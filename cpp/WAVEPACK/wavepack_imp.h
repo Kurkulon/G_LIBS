@@ -1,10 +1,13 @@
 #ifndef WAVEPACK_IMP_H__08_11_2023__17_02
 #define WAVEPACK_IMP_H__08_11_2023__17_02
 
+#pragma once
+
 #include "wavepack.h"
 #include "types.h"
-#include "fdct.h"
+//#include "fdct.h"
 #include "mdct.h"
+#include "WAVEPACK\fdct_imp.h"
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

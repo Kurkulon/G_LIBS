@@ -1,6 +1,8 @@
 #ifndef FDCT_IMP_H__08_11_2023__15_16
 #define FDCT_IMP_H__08_11_2023__15_16
 
+#pragma once
+
 /* 
  * Fast discrete cosine transform algorithms (C)
  * 
