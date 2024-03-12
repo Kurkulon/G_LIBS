@@ -673,6 +673,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\cpp\WAVEPACK\wavepack.h"
+					>
+				</File>
+				<File
 					RelativePath=".\cpp\WAVEPACK\wavepack_imp.h"
 					>
 				</File>

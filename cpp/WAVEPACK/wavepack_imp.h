@@ -1,6 +1,7 @@
 #ifndef WAVEPACK_IMP_H__08_11_2023__17_02
 #define WAVEPACK_IMP_H__08_11_2023__17_02
 
+#include "wavepack.h"
 #include "types.h"
 #include "fdct.h"
 #include "mdct.h"
@@ -48,7 +49,7 @@ static const u16 adpcmima_0416_stepsize_tab[89] = {
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static void WavePack_uLaw_12Bit(u16 *src, byte *dst, u16 len)
+u16 WavePack_uLaw_12Bit(i16 *src, byte *dst, u16 len)
 {
     byte sign, exponent, mantissa, sample_out;
 
@@ -76,6 +77,8 @@ static void WavePack_uLaw_12Bit(u16 *src, byte *dst, u16 len)
 
 		*(dst++) = sample_out;
 	};
+
+	return len;
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -95,7 +98,7 @@ static void WaveUnpack_uLaw_12Bit(byte* src, u16* dst, u16 len)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static void WavePack_uLaw_16Bit(u16 *src, byte *dst, u16 len)
+u16 WavePack_uLaw_16Bit(i16 *src, byte *dst, u16 len)
 {
     byte sign, exponent, mantissa, sample_out;
 
@@ -123,15 +126,14 @@ static void WavePack_uLaw_16Bit(u16 *src, byte *dst, u16 len)
 
 		*(dst++) = sample_out;
 	};
+
+	return len;
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static void WaveUnpack_uLaw_16Bit(byte* src, u16* dst, u16 len)
 {
-
-	//byte sign, exponent, mantissa;
-
 	for (u32 i = len; i > 0; i--)
 	{
 		byte sample_in = *(src++);
@@ -145,7 +147,7 @@ static void WaveUnpack_uLaw_16Bit(byte* src, u16* dst, u16 len)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static void WavePack_ADPCMIMA(u16 *src, byte* dst, u16 len)
+u16 WavePack_ADPCMIMA(i16 *src, byte* dst, u16 len)
 {
     u16 stepsize = 7;     		/* Quantizer step size */
     i16 predictedSample = 0;	/* Output of ADPCM predictor */
@@ -185,6 +187,8 @@ static void WavePack_ADPCMIMA(u16 *src, byte* dst, u16 len)
 
 		if (i&1) *(dst++) = bits, bits = 0;
 	};
+
+	return len/4;
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -486,6 +490,27 @@ static u16 WavePack_FDCT12(i16* src, byte* dst, u16 len, u16 shift, u16 OVRLAP, 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+u16 WavePack_FDCT(u16 packType, i16* src, byte* dst, u16 len)
+{
+	if (packType < PACK_DCT0) packType = PACK_DCT0;
+
+	u16 OVRLAP = (packType > PACK_DCT0) ? 7 : 3;
+	u16 shift = 4 - (packType - PACK_DCT0);
+
+	WavePack_FDCT12(src, dst, len, shift, OVRLAP, FDCT_N, &len);
+
+	return len;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void WavePack_Init()
+{
+	FDCT_Init();
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 #ifdef _MSC_VER
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -505,7 +530,7 @@ static u16 WaveUnpack_FDCT(byte* src, i16* dst, u16 srcLen, u16 OVRLAP)
 	for (; srcLen > 0; index += FDCT_N - OVRLAP)
 	{
 		byte packDctLen	= *(src++);
-		byte scale			= *(src++);
+		byte scale		= *(src++);
 
 		srcLen -= 2;
 
