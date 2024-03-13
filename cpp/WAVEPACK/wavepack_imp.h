@@ -191,7 +191,7 @@ u16 WavePack_ADPCMIMA(i16 *src, byte* dst, u16 len)
 		if (i&1) *(dst++) = bits, bits = 0;
 	};
 
-	return len/4;
+	return len/2;
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -506,7 +506,7 @@ u16 WavePack_FDCT(u16 packType, i16* src, byte* dst, u16 len)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-u16 WavePack(u16 packType, i16* src, byte* dst, u16 len)
+u16 WavePack(u16 packType, i16* src, byte* dst, u16 len, u16 maxlen)
 {
 	switch (packType)
 	{
@@ -516,7 +516,7 @@ u16 WavePack(u16 packType, i16* src, byte* dst, u16 len)
 		case PACK_DCT0:		
 		case PACK_DCT1:		
 		case PACK_DCT2:		
-		case PACK_DCT3:		len = WavePack_FDCT(packType, src, dst, len); break;
+		case PACK_DCT3:		len = WavePack_FDCT(packType, src, dst, maxlen); break;
 		default:			len *= 2;
 	};
 

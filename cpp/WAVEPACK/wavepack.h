@@ -11,7 +11,7 @@ extern u16 WavePack_uLaw_12Bit(i16* src, byte* dst, u16 len);
 extern u16 WavePack_uLaw_16Bit(i16* src, byte* dst, u16 len);
 extern u16 WavePack_ADPCMIMA(i16* src, byte* dst, u16 len);
 extern u16 WavePack_FDCT(u16 packType, i16* src, byte* dst, u16 len);
-extern u16 WavePack(u16 packType, i16* src, byte* dst, u16 len);
+extern u16 WavePack(u16 packType, i16* src, byte* dst, u16 len, u16 maxlen);
 extern void WavePack_Init();
 
 #endif //WAVEPACK_H__12_03_2024__12_16
