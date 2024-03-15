@@ -302,6 +302,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\cpp\TaskList.h"
+				>
+			</File>
+			<File
 				RelativePath=".\cpp\time.cpp"
 				>
 			</File>
