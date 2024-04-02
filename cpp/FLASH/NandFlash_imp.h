@@ -13,6 +13,10 @@
 
 #include "FLASH\NandFlash_def.h"
 
+#if defined(NAND_READ_CRC_SOFT) || defined(NAND_WRITE_CRC_SOFT)
+#include "CRC\CRC16_CCIT.h"
+#endif
+
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #ifdef NAND_ECC_CHECK
@@ -111,8 +115,6 @@ static ListRef<MB> writeFlBuf;
 
 static List<NANDFLRB> freeFlRdBuf;
 static List<NANDFLRB> readFlBuf;
-
-static NANDFLRB *curRdBuf = 0;
 
 struct PageBuffer { PageBuffer *next; u32 page; u32 prevPage; byte data[NAND_PAGE_SIZE]; SpareArea spare; };
 
@@ -868,9 +870,13 @@ bool Write::Update()
 
 	switch(state)
 	{
+		u16 crc;
+
 		case WAIT:	return false;
 
-		case CRC_START:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++		
+		case CRC_START:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
+		{
+#ifdef NAND_WRITE_CRC_HW
 
 			if (CRC_CCITT_DMA_Async(vector->data, vector->h.dataLen, 0xFFFF))
 			{
@@ -878,12 +884,16 @@ bool Write::Update()
 			};
 
 			break;
+		};
 
 		case CRC_UPDATE:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++		
 		{
-			u16 crc;
-
 			if (CRC_CCITT_DMA_CheckComplete(&crc))
+
+#elif defined(NAND_WRITE_CRC_SOFT)
+
+			crc = GetCRC16_CCIT_refl(vector->data, vector->h.dataLen);
+#endif
 			{
 				DataPointer p(vector->data);
 
@@ -894,11 +904,9 @@ bool Write::Update()
 				vector->h.dataLen += 2;
 
 				state = VECTOR_UPDATE;
-			}
-			else
-			{
-				break;
 			};
+
+			break;
 		};
 
 		case VECTOR_UPDATE:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++		
@@ -1007,7 +1015,7 @@ bool Write::Update()
 
 			ecc_count += 256;
 
-			if (ecc_count >= wr.pg) WRITE_PAGE_0;
+			if (ecc_count >= wr.pg) state = WRITE_PAGE_0;
 
 			break;
 		};
@@ -1303,9 +1311,17 @@ struct ReadSpare
 	SpareArea	*spare;
 	FLADR		*rd;
 
+#ifdef NAND_ECC_CHECK
+	u32		eccErrCount;
+	u32		eccCorrErrCount;
+	u32		eccParityErrCount;
+#endif
+
 	u32			blockTryCount;
 	u32			pageTryCount;
 	u32			badBlocks[8];
+	u16			badPages;
+	u16			badSpare;
 
 	byte state;
 
@@ -1376,9 +1392,7 @@ bool ReadSpare::Update()
 
 					byte *ecc_read = spare->ecc_code + (rd->pg>>8)*3;
 
-					byte ecc_calc[3];
-
-					Nand_ECC_Corr_V2((byte*)&spare, spare->ecc_code - (byte*)spare, ecc_read, 0, 0, 0);
+					Nand_ECC_Corr_V2((byte*)spare, spare->ecc_code - (byte*)spare, ecc_read, &eccErrCount, &eccCorrErrCount, &eccParityErrCount);
 
 				#endif
 
@@ -1404,6 +1418,8 @@ bool ReadSpare::Update()
 				}				
 				else if (spare->validPage != 0xFFFF)
 				{
+					badPages++;
+
 					if (pageTryCount > 0)
 					{
 						pageTryCount--;
@@ -1424,6 +1440,8 @@ bool ReadSpare::Update()
 				{
 					spare->v1.CheckCRC();
 
+					if (spare->v1.fpn != 0xFFFFFFFF && spare->v1.vectorCount != 0xFFFFFFFF && spare->v1.crc != 0) badSpare++;
+
 					state = WAIT;
 
 					return false;
@@ -1438,38 +1456,11 @@ bool ReadSpare::Update()
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-//struct Read
-//{
-//	enum {	WAIT = 0,READ_START,READ_1, /*READ_2,*/ READ_PAGE,READ_PAGE_1,FIND_START,FIND_1,/*FIND_2,*/FIND_3/*,FIND_4*/};
-//
-//	FLADR	rd;
-//	byte*	rd_data;
-//	u16		rd_count;
-//	u16		findTryCount;
-//
-//	u32 	sparePage;
-//
-//	SpareArea spare;	
-//
-//	ReadSpare readSpare;
-//
-//	bool vecStart;
-//
-//	byte state;
-//
-//	Read() : sparePage(~0), rd_data(0), rd_count(0), vecStart(false), state(WAIT) {}
-//
-//	bool Start();
-////	static bool Start(NANDFLRB *flrb, FLADR *adr);
-//	bool Update();
-//	void End() { curRdBuf->ready = true; curRdBuf = 0; state = WAIT; }
-//};
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
 struct Read2
 {
 	enum {	WAIT = 0, READ_START, READ_PAGE, FIND_3, FLUSH_PAGES, CRC_START, CRC_UPDATE};
+
+	NANDFLRB *curRdBuf;
 
 	FLADR	rd;
 	byte*	rd_data;
@@ -1478,6 +1469,12 @@ struct Read2
 
 	u32 	sparePage;
 	u32 	prevSparePage;
+
+#ifdef NAND_ECC_CHECK
+	u32		eccErrCount;
+	u32		eccCorrErrCount;
+	u32		eccParityErrCount;
+#endif
 
 	//SpareArea spare;
 
@@ -1495,7 +1492,7 @@ struct Read2
 
 	PageBuffer *pagebuf;
 
-	Read2() :  rd_data(0), rd_count(0), sparePage(~0), prevSparePage(~0), vecStart(false), state(WAIT), statePage(0), pagebuf(0) {}
+	Read2() :  curRdBuf(0), rd_data(0), rd_count(0), sparePage(~0), prevSparePage(~0), vecStart(false), state(WAIT), statePage(0), pagebuf(0) {}
 	
 	bool Start();
 //	bool Start(NANDFLRB *flrb, FLADR *adr);
@@ -1508,230 +1505,6 @@ struct Read2
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static Read2 read;
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-//bool Read::Start()
-//{
-//	if ((curRdBuf = readFlBuf.Get()) != 0)
-//	{
-//		if (curRdBuf->useAdr) { rd.SetRawAdr(curRdBuf->adr); };
-//
-//		vecStart = curRdBuf->vecStart;
-//
-//		if (vecStart)
-//		{
-//			rd_data = (byte*)&curRdBuf->hdr;
-//			rd_count = sizeof(curRdBuf->hdr);
-//			curRdBuf->len = 0;
-//		}
-//		else
-//		{
-//			rd_data = curRdBuf->data;
-//			rd_count = curRdBuf->maxLen;
-//			curRdBuf->len = 0;	
-//		};
-//
-//		state = READ_START;
-//
-//		return true;
-//	};
-//
-//	return false;
-//}
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-//bool Read::Update()
-//{
-//	switch(state)
-//	{
-//		case WAIT:	return false;
-//
-//		case READ_START:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//
-//			NAND_Chip_Select(rd.GetChip());
-//
-//			if (rd.GetRawPage() != sparePage)
-//			{
-//				readSpare.Start(&spare, &rd);
-//
-//				state = READ_1;
-//			}
-//			else
-//			{
-//				NAND_CmdRandomRead(rd.GetCol());
-//
-//				state = READ_PAGE;
-//			};
-//
-//			break;
-//
-//		case READ_1:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
-//
-//			if (!readSpare.Update())
-//			{
-//				sparePage = rd.GetRawPage();
-//
-//				NAND_CmdRandomRead(rd.GetCol());
-//
-//				state = READ_PAGE;
-//			};
-//
-//			break;
-//
-//		//case READ_2:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
-//
-//
-//		//	break;
-//
-//		case READ_PAGE:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
-//
-//			if(!NAND_BUSY())
-//			{
-//				register u16 c = rd.pg - rd.GetCol();
-//
-//				if (rd_count < c) c = rd_count;
-//
-//				NAND_ReadDataDMA(rd_data, c);
-//
-//				rd_count -= c;
-//				rd.AddRaw(c);
-//				rd_data += c;
-//				curRdBuf->len += c;
-//
-//				state = READ_PAGE_1;
-//			};
-//
-//			break;
-//
-//		case READ_PAGE_1:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
-//
-//			if (NAND_CheckDataComplete())
-//			{
-//				if (rd_count == 0)
-//				{
-//					if (vecStart)
-//					{
-//						curRdBuf->hdr.crc = GetCRC16(&curRdBuf->hdr, sizeof(curRdBuf->hdr));
-//
-//						if (curRdBuf->hdr.crc == 0)
-//						{
-//							rd_data = curRdBuf->data;
-//							rd_count = (curRdBuf->hdr.dataLen > curRdBuf->maxLen) ? curRdBuf->maxLen : curRdBuf->hdr.dataLen;
-//							curRdBuf->len = 0;	
-//							vecStart = false;
-//
-//							if (rd_data == 0 || rd_count == 0)
-//							{
-//								End();
-//
-//								return false;
-//							}
-//							else
-//							{
-//								state = READ_START;
-//							};
-//						}
-//						else
-//						{
-//							// Искать вектор
-//
-//							findTryCount = 1024;
-//
-//							state = FIND_START;
-//						};
-//					}
-//					else
-//					{
-//						End();
-//
-//						return false;
-//					};
-//				}
-//				else
-//				{
-//					state = READ_START;
-//				};
-//			};
-//
-//			break;
-//
-//		case FIND_START:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
-//
-//			if (spare.v1.start == -1 || spare.v1.fpn == -1)
-//			{
-//				if (findTryCount == 0)
-//				{
-//					// Вектора кончились
-//					state = FIND_3;
-//				}
-//				else
-//				{
-//					findTryCount -= 1;
-//
-//					rd.NextPage();
-//
-//					readSpare.Start(&spare, &rd);
-//
-//					state = FIND_1;
-//				};
-//			}
-//			else if (spare.v1.crc != 0 || spare.v1.vecFstOff == 0xFFFF || spare.v1.vecLstOff == 0xFFFF || rd.GetCol() > spare.v1.vecLstOff)
-//			{
-//				rd.NextPage();
-//
-//				readSpare.Start(&spare, &rd);
-//
-//				state = FIND_1;
-//			}
-//			else 
-//			{
-//				if (rd.GetCol() <= spare.v1.vecFstOff)
-//				{
-//					rd.SetCol(spare.v1.vecFstOff);
-//				}
-//				else if (rd.GetCol() <= (spare.v1.vecFstOff+spare.v1.vecFstLen))
-//				{
-//					rd.SetCol(spare.v1.vecFstOff+spare.v1.vecFstLen);
-//				}
-//				else if (rd.GetCol() <= spare.v1.vecLstOff)
-//				{
-//					rd.SetCol(spare.v1.vecLstOff);
-//				};
-//
-//				rd_data = (byte*)&curRdBuf->hdr;
-//				rd_count = sizeof(curRdBuf->hdr);
-//				curRdBuf->len = 0;	
-//
-//				state = READ_START;
-//			};
-//
-//			break;
-//
-//		case FIND_1:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
-//
-//			if (!readSpare.Update())	//(!NAND_BUSY())
-//			{
-//				sparePage = rd.GetRawPage();
-//
-//				state = FIND_START;
-//			};
-//
-//			break;
-//
-//		case FIND_3:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
-//
-//			curRdBuf->len = 0;
-//			curRdBuf->hdr.dataLen = 0;
-//
-//			End();
-//
-//			break;
-//	};
-//
-//	return true;
-//}
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -1799,15 +1572,13 @@ void Read2::UpdatePage()
 				break;
 			};
 
-			if (sparePage != ~0ul)
+			if (state < CRC_START && sparePage != ~0ul)
 			{
 				pb = freePageBuffer.Get();
 
 				if (pb != 0)
 				{
 					padr.SetRawPage(sparePage);
-
-					//NAND_Chip_Select(padr.chip);
 
 					readSpare.Start(&pb->spare, &padr);	
 
@@ -1866,11 +1637,10 @@ void Read2::UpdatePage()
 			#ifdef NAND_ECC_CHECK
 
 				byte *ecc_read = pb->spare.ecc_code + (ecc_count>>8)*3;
-				//byte ecc_calc[3];
 
-				Nand_ECC_Corr_V2(pb->data+ecc_count, 256, ecc_read, 0, 0, 0);
+				Nand_ECC_Corr_V2(pb->data+ecc_count, padr.pg, ecc_read, &eccErrCount, &eccCorrErrCount, &eccParityErrCount);
 
-				ecc_count += 256;
+				ecc_count += padr.pg;
 
 				if (ecc_count >= padr.pg) statePage++;
 
@@ -2067,7 +1837,15 @@ bool Read2::Update()
 					}
 					else if (curRdBuf->data != 0 && curRdBuf->len != 0)
 					{
-						state =  CRC_START; 
+						#ifdef NAND_READ_CRC_SOFT
+							curRdBuf->crc = GetCRC16_CCIT_refl(curRdBuf->data, curRdBuf->len, curRdBuf->crc);
+							End();
+						#elif defined(NAND_READ_CRC_HW)
+							state =  CRC_START; 
+						#else
+							curRdBuf->crc = 0;
+							End();
+						#endif
 					}
 					else
 					{
@@ -2102,7 +1880,7 @@ bool Read2::Update()
 
 		case CRC_START:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
 
-			if (CRC_CCITT_DMA_Async(curRdBuf->data, curRdBuf->len, curRdBuf->crc))
+			if (statePage == 0 && CRC_CCITT_DMA_Async(curRdBuf->data, curRdBuf->len, curRdBuf->crc))
 			{
 				state = CRC_UPDATE;
 			};

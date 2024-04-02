@@ -25,14 +25,14 @@ union RX
 
 	struct
 	{
-		int B0 : 1;
-		int B1 : 1;
-		int B2 : 1;
-		int B3 : 1;
-		int B4 : 1;
-		int B5 : 1;
-		int B6 : 1;
-		int B7 : 1;
+		u32 B0 : 1;
+		u32 B1 : 1;
+		u32 B2 : 1;
+		u32 B3 : 1;
+		u32 B4 : 1;
+		u32 B5 : 1;
+		u32 B6 : 1;
+		u32 B7 : 1;
 	} b;
 };
 
@@ -43,30 +43,30 @@ union UECC
 
 	struct
 	{
-		int B0 : 1;
-		int B1 : 1;
-		int B2 : 1;
-		int B3 : 1;
-		int B4 : 1;
-		int B5 : 1;
-		int B6 : 1;
-		int B7 : 1;
-		int B8 : 1;
-		int B9 : 1;
-		int B10 : 1;
-		int B11 : 1;
-		int B12 : 1;
-		int B13 : 1;
-		int B14 : 1;
-		int B15 : 1;
-		int B16 : 1;
-		int B17 : 1;
-		int B18 : 1;
-		int B19 : 1;
-		int B20 : 1;
-		int B21 : 1;
-		int B22 : 1;
-		int B23 : 1;
+		u32 B0 : 1;
+		u32 B1 : 1;
+		u32 B2 : 1;
+		u32 B3 : 1;
+		u32 B4 : 1;
+		u32 B5 : 1;
+		u32 B6 : 1;
+		u32 B7 : 1;
+		u32 B8 : 1;
+		u32 B9 : 1;
+		u32 B10 : 1;
+		u32 B11 : 1;
+		u32 B12 : 1;
+		u32 B13 : 1;
+		u32 B14 : 1;
+		u32 B15 : 1;
+		u32 B16 : 1;
+		u32 B17 : 1;
+		u32 B18 : 1;
+		u32 B19 : 1;
+		u32 B20 : 1;
+		u32 B21 : 1;
+		u32 B22 : 1;
+		u32 B23 : 1;
 	} b;
 };
 

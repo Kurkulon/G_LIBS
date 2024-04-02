@@ -826,6 +826,9 @@ static bool UpdateSendVector()
 	static NANDFLRB flrb;
 
 	static Ptr<MB> mb;
+
+	static ListPtr<MB> mbList;
+
 //	static VecData::Hdr h;
 
 	static u64 vecCount = 0;
@@ -960,7 +963,252 @@ static bool UpdateSendVector()
 
 					mb->len = sizeof(et.eu) + sizeof(et.tv) + flrb.len;
 
-					//crc = CRC_CCITT_DMA(flrb.data, flrb.len, 0xFFFF);	// GetCRC16(flrb.data, flrb.len, 0xFFFF, 0);
+					if (flrb.hdr.dataLen > flrb.maxLen)
+					{
+						fragOff = mb->len - sizeof(EthIp); //flrb.maxLen;
+						fragLen = flrb.hdr.dataLen - flrb.maxLen;
+
+						et.eu.iph.off |= 0x2000;
+
+						et.eu.udp.len = sizeof(UdpHdr) + sizeof(trap) + flrb.hdr.dataLen - 2;
+
+						mbList.Add(mb);
+
+						i = 3;
+					}
+					else
+					{
+						mb->len -=  (flrb.crc != 0) ? flrb.len : 2;
+
+						SendFragTrap(mb);
+
+						i = 1;
+					};
+
+				};
+			};
+
+			break;
+
+		case 3:
+
+			mb = AllocMemBuffer(sizeof(FR));
+
+			if (mb.Valid())
+			{
+				FR  &ef = *((FR*)mb->GetDataPtr());
+
+				flrb.data = ef.data;
+				flrb.maxLen = sizeof(ef.data);
+				flrb.vecStart = false;
+				flrb.useAdr = false;
+
+				if (flrb.maxLen > fragLen) { flrb.maxLen = fragLen; };
+
+				NandFlash_RequestRead(&flrb);
+
+				i++;
+			};
+
+			break;
+
+		case 4:
+
+			if (flrb.ready)
+			{
+				if (flrb.len == 0)
+				{
+					i = 1;
+				}
+				else
+				{
+					FR  &ef = *((FR*)mb->GetDataPtr());
+
+					ef.ei.iph.id = ipID;
+					ef.ei.iph.off = (fragOff/8)&0x1FFF;
+
+					fragLen -= flrb.len;
+					fragOff += flrb.len;
+
+					mb->len = sizeof(ef.ei) + flrb.len;
+
+					if (fragLen > 0)
+					{ 
+						ef.ei.iph.off |= 0x2000;
+
+						mbList.Add(mb);
+						
+						i = 3;
+					}
+					else 
+					{
+						if (flrb.crc != 0)
+						{
+							while(mb.Valid()) mb = mbList.Get();
+
+							TRAP_TRACE_PrintString("Send vector CRC Error !!!");
+						}
+						else
+						{
+							mb->len -= 2;
+
+							mbList.Add(mb);
+
+							while(mb.Valid()) SendFragTrap(mb = mbList.Get());
+						};
+
+						i = 1;
+					};
+				};
+			};
+
+			break;
+	};
+
+	return true;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static bool UpdateSendVector_old()
+{
+	static byte i = 0;
+	static NANDFLRB flrb;
+
+	static Ptr<MB> mb;
+//	static VecData::Hdr h;
+
+	static u64 vecCount = 0;
+	static u32 fragLen = 0;
+	static u32 fragOff = 0;
+	static u16 ipID = 0;
+	//static u16 crc = 0;
+
+	static TM32 tm;
+
+	static u16 ses = 0;
+	static u64 adr = 0;
+	static u64 size = 0;
+	static u64 flashFullSize = 0x200000000ULL;
+	static bool useadr = false;
+
+	static NandFileDsc *si = 0;
+
+	__packed struct TRP { EthUdp eu; TrapVector tv; byte data[VECTOR_IP_MTU - sizeof(UdpHdr) - sizeof(TrapVector)]; };
+	__packed struct FR  { EthIp  ei; byte data[VECTOR_IP_MTU]; };
+
+	switch (i)
+	{
+		case 0:
+
+			if (startSendVector)
+			{
+				startSendVector = false;
+				adr = startAdr;
+				ses = startSession;
+				useadr = true;
+
+				si = NandFlash_GetSessionInfo(ses, adr);
+
+				if (si != 0)
+				{
+					size = si->size;
+				};
+
+				flashFullSize = NandFlash_Full_Size_Get();
+
+				if (size > flashFullSize)
+				{
+					size = flashFullSize;
+				};
+
+				vecCount = 0;
+
+				NandFlash_SendStatus(0, NANDFL_STAT_READ_VECTOR_IDLE);
+
+				i++;
+			}
+			else
+			{
+				return false;
+			};
+
+			break;
+
+		case 1:
+
+			if (tm.Check(200))
+			{
+				NandFlash_SendStatus(vecCount * (1<<22) / (size/1024), NANDFL_STAT_READ_VECTOR_IDLE);
+			};
+
+			if (stop)
+			{
+				stop = false;
+
+				i = 0;
+			}
+			else if (!pause)
+			{
+				mb = AllocMemBuffer(sizeof(TRP));
+
+				if (mb.Valid())
+				{
+					TRP &et = *((TRP*)mb->GetDataPtr());
+
+					flrb.data = et.data;
+					flrb.maxLen = sizeof(et.data);
+					flrb.vecStart = true;
+					flrb.useAdr = useadr;
+					flrb.adr = adr;
+
+					NandFlash_RequestRead(&flrb);
+
+					useadr = false;
+
+					i++;
+				};
+			};
+
+			break;
+
+		case 2:
+
+			if (flrb.ready)
+			{
+				if (flrb.len == 0 || flrb.hdr.session != ses || vecCount > flashFullSize)
+				{
+					mb->len = 0;
+
+					NandFlash_SendStatus(~0, NANDFL_STAT_READ_VECTOR_READY);
+
+					stop = false;
+					pause = false;
+
+					i = 0;
+				}
+				else // if (flrb.hdr.crc == 0)
+				{
+					TRP &et = *((TRP*)mb->GetDataPtr());
+
+					TrapVector &trap = et.tv;
+
+					MakePacketHeaders(&trap.hdr, TRAP_PACKET_NO_NEED_ASK, TRAP_PACKET_NO_ASK, TRAP_MEMORY_DEVICE);
+
+					trap.hdr.cmd = TRAP_MEMORY_COMMAND_VECTOR;
+					trap.session = flrb.hdr.session;
+					trap.device = flrb.hdr.device;
+					trap.rtc = flrb.hdr.rtc;
+					trap.flags = flrb.hdr.flags;
+
+					vecCount += flrb.hdr.dataLen;
+
+					ipID = GetIpID(); 
+
+					et.eu.iph.id = ipID;
+					et.eu.iph.off = 0;
+
+					mb->len = sizeof(et.eu) + sizeof(et.tv) + flrb.len;
 
 					if (flrb.hdr.dataLen > flrb.maxLen)
 					{
@@ -1027,8 +1275,6 @@ static bool UpdateSendVector()
 					fragOff += flrb.len;
 
 					mb->len = sizeof(ef.ei) + flrb.len;
-
-					//crc = CRC_CCITT_DMA(flrb.data, flrb.len, crc); //GetCRC16(flrb.data, flrb.len, crc, 0);
 
 					if (fragLen > 0)
 					{ 

@@ -12,7 +12,7 @@
 
 word GetCRC16_CCIT(const void *data, u32 len, word init, bool revres)
 {
-	DataCRC CRC = { init };
+	DataCRC CRC = { (revres) ? ReverseWord(init) : init };
 
 	const byte *s = (const byte*)data;
 
@@ -28,7 +28,7 @@ word GetCRC16_CCIT(const void *data, u32 len, word init, bool revres)
 
 word GetCRC16_CCIT_refl(const void *data, u32 len, word init, bool revres)
 {
-	DataCRC CRC = { init };
+	DataCRC CRC = { (revres) ? init : ReverseWord(init) };
 
 	const byte *s = (const byte*)data;
 
