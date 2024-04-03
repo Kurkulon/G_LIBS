@@ -422,7 +422,7 @@ bool TRAP_MEMORY_SendSession(u16 session, i64 size, i64 last_adress, RTC_type st
 
 	SendTrap(mb);
 
-	if (__trace) { TRAP_TRACE_PrintString("TRAP_MEMORY_SendSession ses=%5hu, size=%08X %08X, adr=%08X %08X", session, (u32)(size>>32), (u32)size, (u32)(last_adress>>32), (u32)(last_adress)); };
+	if (__trace) { TRAP_TRACE_PrintString("TRAP_MEMORY_SendSession ses=%5hu, size=%02X %08X, adr=%02X %08X", session, (u32)(size>>32), (u32)size, (u32)(last_adress>>32), (u32)(last_adress)); };
 
 	return true;
 }
@@ -820,6 +820,10 @@ static void StartSendVector(u16 session, u64 adr)
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+//#define UPDATE_SEND_VECTOR_NEW
+
+#ifdef UPDATE_SEND_VECTOR_NEW
+
 static bool UpdateSendVector()
 {
 	static byte i = 0;
@@ -980,6 +984,8 @@ static bool UpdateSendVector()
 					{
 						mb->len -=  (flrb.crc != 0) ? flrb.len : 2;
 
+						if (flrb.crc != 0) TRAP_TRACE_PrintString("Send vector CRC Error !!!");
+
 						SendFragTrap(mb);
 
 						i = 1;
@@ -1070,7 +1076,9 @@ static bool UpdateSendVector()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static bool UpdateSendVector_old()
+#else
+
+static bool UpdateSendVector()
 {
 	static byte i = 0;
 	static NANDFLRB flrb;
@@ -1225,6 +1233,8 @@ static bool UpdateSendVector_old()
 					{
 						mb->len -=  (flrb.crc != 0) ? flrb.len : 2;
 
+						if (flrb.crc != 0) TRAP_TRACE_PrintString("Send vector CRC Error !!!");
+
 						i = 1;
 					};
 
@@ -1279,26 +1289,25 @@ static bool UpdateSendVector_old()
 					if (fragLen > 0)
 					{ 
 						ef.ei.iph.off |= 0x2000; 
+						i = 3;
 					}
-					else if (flrb.crc != 0)
+					else 
 					{
-						ef.ei.iph.off = 0;
-					}
-					else
-					{
-						mb->len -= 2;
+						if (flrb.crc != 0)
+						{
+							mb->len = 0;
+							
+							TRAP_TRACE_PrintString("Send vector CRC Error !!!");
+						}
+						else
+						{
+							mb->len -= 2;
+						};
+
+						i = 1;
 					};
 
 					SendFragTrap(mb);
-
-					if (fragLen > 0)
-					{
-						i = 3;
-					}
-					else
-					{
-						i = 1;
-					};
 				};
 			};
 
@@ -1308,6 +1317,7 @@ static bool UpdateSendVector_old()
 	return true;
 }
 
+#endif
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 /*

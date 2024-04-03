@@ -13,8 +13,22 @@
 
 #include "FLASH\NandFlash_def.h"
 
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 #if defined(NAND_READ_CRC_SOFT) || defined(NAND_WRITE_CRC_SOFT)
 #include "CRC\CRC16_CCIT.h"
+#endif
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#if !defined(NAND_READ_CRC_SOFT) && !defined(NAND_READ_CRC_HW) && !defined(NAND_READ_CRC_PIO)
+#define NAND_READ_CRC_PIO
+#endif
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#if !defined(NAND_WRITE_CRC_SOFT) && !defined(NAND_WRITE_CRC_HW) && !defined(NAND_WRITE_CRC_PIO)
+#define NAND_WRITE_CRC_HW
 #endif
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -890,6 +904,10 @@ bool Write::Update()
 		{
 			if (CRC_CCITT_DMA_CheckComplete(&crc))
 
+#elif defined(NAND_WRITE_CRC_PIO)
+
+			if (CRC_CCITT_PIO(vector->data, vector->h.dataLen, &crc))
+
 #elif defined(NAND_WRITE_CRC_SOFT)
 
 			crc = GetCRC16_CCIT_refl(vector->data, vector->h.dataLen);
@@ -1572,7 +1590,7 @@ void Read2::UpdatePage()
 				break;
 			};
 
-			if (state < CRC_START && sparePage != ~0ul)
+			if (/*state < CRC_START &&*/ sparePage != ~0ul)
 			{
 				pb = freePageBuffer.Get();
 
@@ -1840,7 +1858,7 @@ bool Read2::Update()
 						#ifdef NAND_READ_CRC_SOFT
 							curRdBuf->crc = GetCRC16_CCIT_refl(curRdBuf->data, curRdBuf->len, curRdBuf->crc);
 							End();
-						#elif defined(NAND_READ_CRC_HW)
+						#elif defined(NAND_READ_CRC_HW) || defined(NAND_READ_CRC_PIO)
 							state =  CRC_START; 
 						#else
 							curRdBuf->crc = 0;
@@ -1880,22 +1898,38 @@ bool Read2::Update()
 
 		case CRC_START:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
 
-			if (statePage == 0 && CRC_CCITT_DMA_Async(curRdBuf->data, curRdBuf->len, curRdBuf->crc))
+		#ifdef NAND_READ_CRC_HW
+
+			if (/*statePage == 0 &&*/ CRC_CCITT_DMA_Async(curRdBuf->data, curRdBuf->len, curRdBuf->crc))
 			{
 				state = CRC_UPDATE;
 			};
+	
+		#elif defined(NAND_READ_CRC_PIO)
 
-			break;
-
-		case CRC_UPDATE:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++		
-		{
-			if (CRC_CCITT_DMA_CheckComplete(&curRdBuf->crc))
+			if (CRC_CCITT_PIO(curRdBuf->data, curRdBuf->len, &curRdBuf->crc, curRdBuf->crc))
 			{
 				End();
 			};
 
+		#endif		
+
 			break;
-		};
+
+		#ifdef NAND_READ_CRC_HW
+
+			case CRC_UPDATE:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++		
+			{
+				if (CRC_CCITT_DMA_CheckComplete(&curRdBuf->crc))
+				{
+					End();
+				};
+
+				break;
+			};
+
+		#endif
+
 	};
 
 	return true;

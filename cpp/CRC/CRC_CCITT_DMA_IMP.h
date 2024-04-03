@@ -6,9 +6,15 @@
 #include "CRC\CRC_CCITT_DMA.h"
 #include "DMA\DMA.h"
 
-bool busy_CRC_CCITT_DMA = false;
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static bool busy_CRC_CCITT_DMA = false;
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #ifdef CPU_XMC48
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 u16 CRC_CCITT_PIO(const void *data, u32 len, u16 init)
 {
@@ -101,6 +107,130 @@ static void Init_CRC_CCITT_DMA()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#ifdef CRCDMA_TC
+
+	#define crcdmaTC		HW::CRCDMA_TC
+
+	#ifndef CRCDMA_PER
+	#define CRCDMA_PER		(NS2CLK(1000)-1)
+	#endif
+
+	inline void CRCDMA_ClockEnable()  { HW::GCLK->PCHCTRL[CONCAT2(GCLK_,CRCDMA_TC)] = GCLK_GEN(CONCAT2(GEN_,CRCDMA_TC))|GCLK_CHEN; HW::MCLK->ClockEnable(CONCAT2(PID_,CRCDMA_TC)); }
+
+	#define CRCDMA_TRIGSRC_OVF	CONCAT3(DMCH_TRIGSRC_,CRCDMA_TC,_OVF)
+
+#else
+
+	//#error  Must defined MANT_TC or MANT_TCC
+
+#endif
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#ifdef CRCDMA_TC
+
+static void Init_CRC_CCITT_DMA()
+{
+	SEGGER_RTT_WriteString(0, RTT_CTRL_TEXT_BRIGHT_YELLOW "Init_CRC_CCITT_DMA ... ");
+
+	CRCDMA_ClockEnable();
+
+	crcdmaTC->CTRLA = 0;
+	crcdmaTC->CTRLA = TC_SWRST;
+	while(crcdmaTC->SYNCBUSY & TC_SWRST);
+
+	crcdmaTC->CTRLA		= TC_MODE_COUNT8;
+	crcdmaTC->WAVE		= TC_WAVEGEN_NPWM;
+	crcdmaTC->DRVCTRL	= TC_INVEN0|TC_INVEN1;
+	crcdmaTC->PER8		= CRCDMA_PER;
+	crcdmaTC->CC8[0]	= 0; 
+	crcdmaTC->CC8[1]	= 0; 
+
+	crcdmaTC->EVCTRL = TC_OVFEO;
+
+	crcdmaTC->CTRLA = TC_MODE_COUNT8|TC_ENABLE;
+
+	HW::DMAC->CRCSTATUS = ~0;
+	HW::DMAC->CRCCTRL = 0;
+
+	SEGGER_RTT_WriteString(0, "OK\n");
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+bool CRC_CCITT_DMA_Async(const void* data, u32 len, u16 init)
+{
+	if (HW::DMAC->CRCCTRL != 0) return false;
+
+	HW::DMAC->CRCSTATUS = ~0;
+	HW::DMAC->CRCCTRL = 0;
+	HW::DMAC->CRCCHKSUM = ReverseWord(init);
+	HW::DMAC->CRCCTRL	= DMAC_CRCBEATSIZE_BYTE | DMAC_CRCPOLY_CRC16 | DMAC_CRCMODE_DEFAULT | DMAC_CRCSRC_IO;
+
+	CRC_DMA.WritePeripheral(data, &HW::DMAC->CRCDATAIN, len, DMCH_TRIGACT_BURST|CRCDMA_TRIGSRC_OVF, DMDSC_BEATSIZE_BYTE);
+
+	crcdmaTC->CTRLBSET = TC_CMD_RETRIGGER;
+
+	//CRC_DMA.CRC_CCITT(data, len, init);
+
+	return true;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+bool CRC_CCITT_DMA_CheckComplete(u16* crc)
+{
+	if (CRC_DMA.CheckComplete())
+	{
+		crcdmaTC->CTRLBSET = TC_CMD_STOP;
+
+		*crc = CRC_DMA.Get_CRC_CCITT_Result();
+
+		HW::DMAC->CRCSTATUS = ~0;
+		HW::DMAC->CRCCTRL = 0;
+
+		return true;
+	}
+	else
+	{
+		return false;
+	};
+}
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+bool CRC_CCITT_PIO(const void *data, u32 len, u16 *crc, u16 init)
+{
+	if (HW::DMAC->CRCCTRL != 0) return false;
+
+	HW::DMAC->CRCSTATUS = ~0;
+	HW::DMAC->CRCCTRL = 0;
+	HW::DMAC->CRCCHKSUM = ReverseWord(init);
+	HW::DMAC->CRCCTRL	= DMAC_CRCBEATSIZE_BYTE | DMAC_CRCPOLY_CRC16 | DMAC_CRCMODE_DEFAULT | DMAC_CRCSRC_IO;
+
+	const byte *s = (const byte*)data;
+
+	for ( ; len > 0; len--) HW::DMAC->CRCDATAIN = *(s++);
+
+	__dsb(15);
+
+	*crc = CRC_DMA.Get_CRC_CCITT_Result();
+
+	HW::DMAC->CRCSTATUS = ~0;
+	HW::DMAC->CRCCTRL = 0;
+
+	return true;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#else // #ifdef CRCDMA_TC
+
+static void Init_CRC_CCITT_DMA()
+{
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 u16 CRC_CCITT_DMA(const void *data, u32 len, u16 init)
 {
 	CRC_DMA.CRC_CCITT(data, len, init);
@@ -144,6 +274,39 @@ bool CRC_CCITT_DMA_CheckComplete(u16* crc)
 		return false;
 	};
 }
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+bool CRC_CCITT_PIO(const void *data, u32 len, u16 *crc, u16 init)
+{
+	if (busy_CRC_CCITT_DMA) return false;
+
+	busy_CRC_CCITT_DMA = true;
+
+	HW::DMAC->CRCSTATUS = ~0;
+	HW::DMAC->CRCCTRL = 0;
+	HW::DMAC->CRCCHKSUM = ReverseWord(init);
+	HW::DMAC->CRCCTRL	= DMAC_CRCBEATSIZE_BYTE | DMAC_CRCPOLY_CRC16 | DMAC_CRCMODE_DEFAULT | DMAC_CRCSRC_IO;
+
+	const byte *s = (const byte*)data;
+
+	for ( ; len > 0; len--) HW::DMAC->CRCDATAIN = *(s++);
+
+	__dsb(15);
+
+	*crc = CRC_DMA.Get_CRC_CCITT_Result();
+
+	HW::DMAC->CRCSTATUS = ~0;
+	HW::DMAC->CRCCTRL = 0;
+
+	busy_CRC_CCITT_DMA = false;
+
+	return true;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#endif // #else // #ifdef CRCDMA_TC
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
