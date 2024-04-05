@@ -8,7 +8,7 @@
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static bool busy_CRC_CCITT_DMA = false;
+//static bool busy_CRC_CCITT_DMA = false;
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -236,26 +236,17 @@ static void Init_CRC_CCITT_DMA()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-u16 CRC_CCITT_DMA(const void *data, u32 len, u16 init)
-{
-	CRC_DMA.CRC_CCITT(data, len, init);
-
-	while (!CRC_DMA.CheckComplete());
-
-	__dsb(15);
-
-	return CRC_DMA.Get_CRC_CCITT_Result();
-}
-
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
 bool CRC_CCITT_DMA_Async(const void* data, u32 len, u16 init)
 {
-	if (busy_CRC_CCITT_DMA) return false;
+	if (HW::DMAC->CRCCTRL != 0) return false;
 
-	busy_CRC_CCITT_DMA = true;
+	HW::DMAC->CRCSTATUS = ~0;
+	HW::DMAC->CRCCTRL = 0;
+	HW::DMAC->CRCCHKSUM = ReverseWord(init);
+	HW::DMAC->CRCCTRL	= DMAC_CRCBEATSIZE_BYTE | DMAC_CRCPOLY_CRC16 | DMAC_CRCMODE_DEFAULT | DMAC_CRCSRC_IO;
 
-	CRC_DMA.CRC_CCITT(data, len, init);
+	CRC_DMA.WritePeripheral(data, &HW::DMAC->CRCDATAIN, len, DMCH_TRIGACT_TRANSACTION, DMDSC_BEATSIZE_BYTE);
+	CRC_DMA.SoftwareTrigger();
 
 	return true;
 }
@@ -270,7 +261,8 @@ bool CRC_CCITT_DMA_CheckComplete(u16* crc)
 
 		*crc = CRC_DMA.Get_CRC_CCITT_Result();
 
-		busy_CRC_CCITT_DMA = false;
+		HW::DMAC->CRCSTATUS = ~0;
+		HW::DMAC->CRCCTRL = 0;
 
 		return true;
 	}
@@ -284,9 +276,7 @@ bool CRC_CCITT_DMA_CheckComplete(u16* crc)
 
 bool CRC_CCITT_PIO(const void *data, u32 len, u16 *crc, u16 init)
 {
-	if (busy_CRC_CCITT_DMA) return false;
-
-	busy_CRC_CCITT_DMA = true;
+	if (HW::DMAC->CRCCTRL != 0) return false;
 
 	HW::DMAC->CRCSTATUS = ~0;
 	HW::DMAC->CRCCTRL = 0;
@@ -304,14 +294,25 @@ bool CRC_CCITT_PIO(const void *data, u32 len, u16 *crc, u16 init)
 	HW::DMAC->CRCSTATUS = ~0;
 	HW::DMAC->CRCCTRL = 0;
 
-	busy_CRC_CCITT_DMA = false;
-
 	return true;
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #endif // #else // #ifdef CRCDMA_TC
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+u16 CRC_CCITT_DMA(const void *data, u32 len, u16 init)
+{
+	while (!CRC_CCITT_DMA_Async(data, len, init));
+
+	u16 crc;
+
+	while (!CRC_CCITT_DMA_CheckComplete(&crc));
+
+	return crc;
+}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
