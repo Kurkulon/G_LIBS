@@ -23,7 +23,7 @@ protected:
 
 public:
 
-	static	REQUEST*	Create()	{ REQUEST *p = _freeList.Get(); if (p != 0) {p->tryCount = 0; }; return p; }
+	static	REQUEST*	Create()	{ REQUEST *p = _freeList.Get(); if (p != 0) { p->ready = false; p->tryCount = 0; }; return p; }
 	virtual void		Destroy()	{ if (this != 0) _freeList.Add(this); }
 	virtual	u32			MaxLen()	{ return sizeof(reqData)+sizeof(exData); }
 	virtual	u32			FreeCount() { return _freeList.Count(); }
