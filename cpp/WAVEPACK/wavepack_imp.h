@@ -361,17 +361,22 @@ static u16 WavePack_FDCT_Quant12(FDCT_DATA* src, u16 packLen, u16 shift, u16* co
 	packLen = (packLen + 1) & ~1;
 
 	FDCT_DATA max = 0;
+	FDCT_DATA avrmax = 0;
+	FDCT_DATA sum = 0;
 
 	for (u32 i = 1; i < packLen; i++)
 	{
 		FDCT_DATA t = src[i];
 
 		t = ABS(t);				//if (t < 0) t = -t;
+		sum += t;
 		max = Max32(max, t);	//if (t > max) max = t;
+
+		if ((i&7) == 0) avrmax = Max32(avrmax, sum), sum = 0;
 	};
 
 	FDCT_DATA* p = src + packLen - 1;
-	FDCT_DATA lim = max;
+	FDCT_DATA lim = avrmax/8;
 
 	//if (lim < 64) lim = 64;
 
@@ -475,6 +480,8 @@ static u16 WavePack_FDCT12(i16* src, byte* dst, u16 len, u16 shift, u16 OVRLAP, 
 
 		packLen = WavePack_FDCT_Quant12(fdct_w, maxPackLen, shift, &scale);
 
+		if (packLen > 254) packLen = 254;
+
 		PackDCT* pdct = (PackDCT*)(dst + wpLen);
 
 		WavePack_uLaw12_FDCT(fdct_w, pdct->data, packLen, scale);
@@ -512,7 +519,7 @@ u16 WavePack(u16 packType, i16* src, byte* dst, u16 len, u16 maxlen)
 	{
 		case PACK_ULAW12: 	len = WavePack_uLaw_12Bit(src, dst, len);	break;
 		case PACK_ULAW16: 	len = WavePack_uLaw_16Bit(src, dst, len);	break;
-		case PACK_ADPCMIMA:	len = WavePack_ADPCMIMA(src, dst, len);		break;
+		case PACK_ADPCMIMA:	len = WavePack_ADPCMIMA(src, dst, len);	break;
 		case PACK_DCT0:		
 		case PACK_DCT1:		
 		case PACK_DCT2:		
