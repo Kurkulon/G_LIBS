@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<VisualStudioProject
+	ProjectType="Visual C++"
+	Version="8,00"
+	Name="ADSP_AFP"
+	ProjectGUID="{78AB4CA0-E665-4E3C-98EB-BB35E12CD5F9}"
+	RootNamespace="ADSP_AFP"
+	>
+	<Platforms>
+		<Platform
+			Name="Win32"
+		/>
+	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
+	<Configurations>
+		<Configuration
+			Name="BF592_Debug|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="0"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="make -h version=Debug targetcpu=BF592"
+				ReBuildCommandLine="make -h -a version=Debug targetcpu=BF592"
+				CleanCommandLine="@del /Q .\Debug\*.*"
+				Output="$(OutDir)\BF592_AFP.dxe"
+				PreprocessorDefinitions="__DEBUG,CPU_BF592,_ADI_COMPILER"
+				IncludeSearchPath="..\G_LIBS\cpp;$(ADI_CCES)\Blackfin\include;"
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="BF706_Debug|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="0"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="make -h version=Debug targetcpu=BF706"
+				ReBuildCommandLine="make -h -a version=Debug targetcpu=BF706"
+				CleanCommandLine="@del /Q .\Debug\*.*"
+				Output="$(OutDir)\BF706_AFP.dxe"
+				PreprocessorDefinitions="__DEBUG,CPU_BF706,_ADI_COMPILER,__ADSPBF70x__"
+				IncludeSearchPath="..\G_LIBS\cpp;$(ADI_CCES)\Blackfin\include;"
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+	</Configurations>
+	<References>
+	</References>
+	<Files>
+		<Filter
+			Name="Source Files"
+			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
+			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
+			>
+			<File
+				RelativePath=".\cpp\main.cpp"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Header Files"
+			Filter="h;hpp;hxx;hm;inl;inc;xsd"
+			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
+			>
+		</Filter>
+		<File
+			RelativePath=".\makeobj"
+			>
+		</File>
+	</Files>
+	<Globals>
+	</Globals>
+</VisualStudioProject>

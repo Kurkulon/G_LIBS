@@ -54,7 +54,22 @@
 #define	CORETYPE_BF592
 #define ADSP_BLACKFIN
 
+#ifndef __ADSPBF59x__
+#define __ADSPBF59x__
+#endif
+
 #include "ADSP\bf592.h"
+
+#elif defined(CPU_BF706)
+
+#define	CORETYPE_BF706
+#define ADSP_BLACKFIN
+
+#ifndef __ADSPBF70x__
+#define __ADSPBF70x__
+#endif
+
+#include "ADSP\bf706.h"
 
 #endif
 

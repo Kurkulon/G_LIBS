@@ -10,7 +10,7 @@ version = Release
 curdir = $+ $(%cdrive):$(%cwd) $-
 cppdir = cpp
 !ifneq version Win32_Debug
-objdir = build\$(targetcpu)_$(version)
+objdir = $(targetcpu)_$(version)
 !else
 objdir = $(version)
 !endif

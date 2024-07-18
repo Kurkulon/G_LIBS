@@ -16,8 +16,8 @@
 	<Configurations>
 		<Configuration
 			Name="SAME53_Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)buil\$(ConfigurationName)"
+			IntermediateDirectory="build\$(ConfigurationName)"
 			ConfigurationType="0"
 			>
 			<Tool
@@ -36,8 +36,8 @@
 		</Configuration>
 		<Configuration
 			Name="SAME53_Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)buil\$(ConfigurationName)"
+			IntermediateDirectory="build\$(ConfigurationName)"
 			ConfigurationType="0"
 			>
 			<Tool
@@ -56,8 +56,8 @@
 		</Configuration>
 		<Configuration
 			Name="XMC48_Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)buil\$(ConfigurationName)"
+			IntermediateDirectory="build\$(ConfigurationName)"
 			ConfigurationType="0"
 			>
 			<Tool
@@ -76,8 +76,8 @@
 		</Configuration>
 		<Configuration
 			Name="XMC48_Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)buil\$(ConfigurationName)"
+			IntermediateDirectory="build\$(ConfigurationName)"
 			ConfigurationType="0"
 			>
 			<Tool
@@ -96,8 +96,8 @@
 		</Configuration>
 		<Configuration
 			Name="Win32_Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)buil\$(ConfigurationName)"
+			IntermediateDirectory="build\$(ConfigurationName)"
 			ConfigurationType="0"
 			>
 			<Tool
@@ -116,8 +116,8 @@
 		</Configuration>
 		<Configuration
 			Name="LPC824_Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)buil\$(ConfigurationName)"
+			IntermediateDirectory="build\$(ConfigurationName)"
 			ConfigurationType="0"
 			>
 			<Tool
@@ -136,8 +136,8 @@
 		</Configuration>
 		<Configuration
 			Name="LPC824_Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)buil\$(ConfigurationName)"
+			IntermediateDirectory="build\$(ConfigurationName)"
 			ConfigurationType="0"
 			>
 			<Tool
@@ -156,8 +156,8 @@
 		</Configuration>
 		<Configuration
 			Name="LPC812_Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)buil\$(ConfigurationName)"
+			IntermediateDirectory="build\$(ConfigurationName)"
 			ConfigurationType="0"
 			>
 			<Tool
@@ -176,8 +176,8 @@
 		</Configuration>
 		<Configuration
 			Name="LPC812_Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)buil\$(ConfigurationName)"
+			IntermediateDirectory="build\$(ConfigurationName)"
 			ConfigurationType="0"
 			>
 			<Tool
@@ -196,8 +196,8 @@
 		</Configuration>
 		<Configuration
 			Name="BF592_Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)buil\$(ConfigurationName)"
+			IntermediateDirectory="build\$(ConfigurationName)"
 			ConfigurationType="0"
 			>
 			<Tool
@@ -216,8 +216,8 @@
 		</Configuration>
 		<Configuration
 			Name="BF592_Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)buil\$(ConfigurationName)"
+			IntermediateDirectory="build\$(ConfigurationName)"
 			ConfigurationType="0"
 			>
 			<Tool
@@ -227,6 +227,26 @@
 				CleanCommandLine="@del /Q $(OutDir)\*.*"
 				Output="$(ProjectDir)\BF592_d.dlb"
 				PreprocessorDefinitions="CPU_BF592,_ADI_COMPILER"
+				IncludeSearchPath="$(ADI_CCES)\Blackfin\include;"
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="BF706_Debug|Win32"
+			OutputDirectory="$(SolutionDir)buil\$(ConfigurationName)"
+			IntermediateDirectory="build\$(ConfigurationName)"
+			ConfigurationType="0"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="wmake -h version=Debug targetcpu=BF706"
+				ReBuildCommandLine="wmake -h -a version=Debug targetcpu=BF706"
+				CleanCommandLine="@del /Q $(OutDir)\*.*"
+				Output="$(ProjectDir)\BF706_d.dlb"
+				PreprocessorDefinitions="_DEBUG,CPU_BF706,_ADI_COMPILER,__ADSPBF70x__"
 				IncludeSearchPath="$(ADI_CCES)\Blackfin\include;"
 				ForcedIncludes=""
 				AssemblySearchPath=""
@@ -649,7 +669,15 @@
 				Name="ADSP"
 				>
 				<File
+					RelativePath=".\cpp\ADSP\AFP_imp.h"
+					>
+				</File>
+				<File
 					RelativePath=".\cpp\ADSP\BF592.h"
+					>
+				</File>
+				<File
+					RelativePath=".\cpp\ADSP\BF706.h"
 					>
 				</File>
 				<File

@@ -96,7 +96,12 @@ cpu_link_options = --cpu Cortex-M0plus
 !else ifeq targetcpu BF592
 
 buildtool = ADSP
-adsp_cpu_options = -proc ADSP-BF592-A -DCPU_$(targetcpu)
+adsp_cpu_options = -proc ADSP-BF592-A -si-revision 0.2 -DCPU_$(targetcpu)
+
+!else ifeq targetcpu BF706
+
+buildtool = ADSP
+adsp_cpu_options = -proc ADSP-BF706 -si-revision 1.1 -DCPU_$(targetcpu)
 
 !else
 
@@ -176,19 +181,19 @@ win32_compiler_options = -nologo -DWIN32 -D_DEBUG -c -Z7 -Zp -I$(curdir)\cpp
 ##################################################################################################
 
 adsp_compiler_options = $(debug_compiler_options) -c -c++11 -g++ -g -structs-do-not-overlap -no-multiline &
-	-double-size-32 -decls-strong -warn-protos -si-revision 0.2 $(adsp_cpu_options) -Wterse -I$(curdir)\cpp
+	-double-size-32 -decls-strong -warn-protos  $(adsp_cpu_options) -Wterse -I$(curdir)\cpp
 
 ##################################################################################################
 
-adsp_asm_options = $(adsp_cpu_options) -g -si-revision 0.2 -DADI_CCES
+adsp_asm_options = $(adsp_cpu_options) -g -DADI_CCES
 
 ##################################################################################################
 
-adsp_link_options = -build-lib $(adsp_cpu_options) -si-revision 0.2
+adsp_link_options = -build-lib $(adsp_cpu_options) 
 
 ##################################################################################################
 
-adsp_link_options_initcode = $(adsp_cpu_options) -si-revision 0.2 -flags-link -e,-MDADI_CCES
+adsp_link_options_initcode = $(adsp_cpu_options) -flags-link -e,-MDADI_CCES
 
 ##################################################################################################
 #
@@ -288,7 +293,7 @@ $(objdir)\initcode_osc16.dxe : $(objdir)\initcode_osc16.doj
 
 .cpp.doj: .AUTODEPEND
 	@echo Compiling $[. ...
-	@ccbl.bat $(adsp_compiler_options) -save-temps -path-output $^: -i -gnu-style-dependencies -absolute-path-dependencies -MD -Mo="$^*.d" -o "$^@" $[@
+	@ccbl.bat $(adsp_compiler_options) -save-temps -path-output $^: -i -absolute-path-dependencies -MD -Mo="$^*.d" -o "$^@" $[@
 
 ##################################################################################################
 ##################################################################################################
