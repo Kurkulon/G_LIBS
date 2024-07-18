@@ -75,7 +75,7 @@ may be suppressed by defining the LDF macro NO_UTILITY_ROM.
 $LIBRARIES = 
 
 	libcc.dlb
-	,libio.dlb
+	//,libio.dlb
 	,libc.dlb
 	//,librt_fileio.dlb
 	,libcpp.dlb
