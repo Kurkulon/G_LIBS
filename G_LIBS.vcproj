@@ -689,6 +689,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\cpp\ADSP\startup_BF706.s"
+					>
+				</File>
+				<File
 					RelativePath=".\cpp\ADSP\system_imp.h"
 					>
 				</File>
@@ -802,6 +806,10 @@
 			>
 			<File
 				RelativePath=".\LDF\BF592A.ldf"
+				>
+			</File>
+			<File
+				RelativePath=".\LDF\BF706.ldf"
 				>
 			</File>
 			<File
