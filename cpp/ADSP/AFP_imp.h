@@ -335,7 +335,7 @@ u32 GetSectorSize()
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#pragma optimize_for_speed
+//#pragma optimize_for_speed
 
 //////////////////////////////////////////////////////////////
 // void Wait_For_SPIF(void)
@@ -640,8 +640,8 @@ static void GlobalUnProtect()
 
 	SetupSPI();
 
-	WriteFlash(SPI_WRSR);
-	WriteFlash(0);
+	WriteFlashByte(SPI_WRSR);
+	WriteFlashByte(0);
 
 	SPI_OFF();
 }
@@ -761,11 +761,11 @@ ERROR_CODE EraseBlock(int nBlock)
 	SetupSPI();
 
 	//send the erase block command to the flash
-	WriteFlash(SPI_SE );
+	WriteFlashByte(SPI_SE );
 
-	WriteFlash(GB(&ulSectStart, 2));
-	WriteFlash(GB(&ulSectStart, 1));
-	WriteFlash(GB(&ulSectStart, 0));
+	WriteFlashByte(GB(&ulSectStart, 2));
+	WriteFlashByte(GB(&ulSectStart, 1));
+	WriteFlashByte(GB(&ulSectStart, 0));
 
 	SPI_OFF();
 
@@ -871,7 +871,7 @@ ERROR_CODE GetCodes(int *pnManCode, int *pnDevCode)
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#pragma optimize_for_speed
+//#pragma optimize_for_speed
 
 ERROR_CODE GetSectorNumber( unsigned long ulAddr, int *pnSector )
 {
@@ -1037,6 +1037,8 @@ byte WriteFlash(byte usValue)
 #ifdef __ADSPBF59x__
 
 	HW::SPI0->TDBR = usValue;
+
+	delay(DELAY);
 	
 	//while((HW::SPI0->Stat & RXS) == 0) PIO_TST->Set = TST, PIO_TST->Clear = TST;
 	while((HW::SPI0->Stat & (SPIF|RXS)) != (SPIF|RXS)) PIO_TST->Set = TST, PIO_TST->Clear = TST;
@@ -1047,6 +1049,8 @@ byte WriteFlash(byte usValue)
 
 	HW::SPI2->TFIFO = usValue;
 	
+	delay(DELAY);
+
 	while((HW::SPI2->STAT & (STAT_SPIF|STAT_RFE)) != STAT_SPIF) PIO_TST->DATA_SET = TST, PIO_TST->DATA_CLR = TST;// HW::PORTB->NOT(PB5);
 
 	return HW::SPI2->RFIFO;
@@ -1434,7 +1438,9 @@ int main(void)
 	if( AFP_Error == NO_ERR )
 	{
 		AFP_Error = GetFlashInfo();
-	}
+	};
+
+	byte stat = ReadStatusRegister();
 
 	// get the number of sectors for this device
 	if( AFP_Error == NO_ERR )

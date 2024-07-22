@@ -5,71 +5,116 @@
 
 #ifdef CPU_SAME53
 
-#define	CORETYPE_SAME53
-#define CORTEX_M4
+	#define	CORETYPE_SAME53
+	#define CORTEX_M4
 
-#ifndef __TARGET_ARCH_ARM
-#define __TARGET_ARCH_ARM		0
-#endif
+	#ifndef __TARGET_ARCH_ARM
+	#define __TARGET_ARCH_ARM		0
+	#endif
 
-#ifndef __TARGET_ARCH_THUMB
-#define __TARGET_ARCH_THUMB		4
-#endif
+	#ifndef __TARGET_ARCH_THUMB
+	#define __TARGET_ARCH_THUMB		4
+	#endif
 
-#include "ARM\same53.h"
+	#include "ARM\same53.h"
 
 #elif defined(CPU_XMC48)
 
-#define	CORETYPE_XMC4800
-#define CORTEX_M4
+	#define	CORETYPE_XMC4800
+	#define CORTEX_M4
 
-#ifndef __TARGET_ARCH_ARM
-#define __TARGET_ARCH_ARM		0
-#endif
+	#ifndef __TARGET_ARCH_ARM
+	#define __TARGET_ARCH_ARM		0
+	#endif
 
-#ifndef __TARGET_ARCH_THUMB
-#define __TARGET_ARCH_THUMB		4
-#endif
+	#ifndef __TARGET_ARCH_THUMB
+	#define __TARGET_ARCH_THUMB		4
+	#endif
 
-#include "ARM\XMC4800.h"
+	#include "ARM\XMC4800.h"
 
 #elif defined(CPU_LPC824)
 
-#define	CORETYPE_LPC8XX
-#define	CORETYPE_LPC82X
-#define CORTEX_M0
+	#define	CORETYPE_LPC8XX
+	#define	CORETYPE_LPC82X
+	#define CORTEX_M0
 
-#include "ARM\lpc82x.h"
+	#include "ARM\lpc82x.h"
 
 #elif defined(CPU_LPC812)
 
-#define	CORETYPE_LPC8XX
-#define	CORETYPE_LPC81X
-#define CORTEX_M0
+	#define	CORETYPE_LPC8XX
+	#define	CORETYPE_LPC81X
+	#define CORTEX_M0
 
-#include "ARM\lpc81x.h"
+	#include "ARM\lpc81x.h"
 
-#elif defined(CPU_BF592)
+#elif defined(CPU_BF592) || defined(CPU_BF706)
 
-#define	CORETYPE_BF592
-#define ADSP_BLACKFIN
+	#ifndef _ADI_COMPILER
+	#define _ADI_COMPILER
+	#endif
 
-#ifndef __ADSPBF59x__
-#define __ADSPBF59x__
-#endif
+	#ifndef __ADSPBLACKFIN__
+	#define __ADSPBLACKFIN__
+	#endif
 
-#include "ADSP\bf592.h"
+	#ifndef __cplusplus
+	#define __cplusplus
+	#endif
 
-#elif defined(CPU_BF706)
+	#ifndef _LANGUAGE_C
+	#define _LANGUAGE_C
+	#endif
 
-#define	CORETYPE_BF706
-#define ADSP_BLACKFIN
+	#ifndef __NUM_CORES__
+	#define __NUM_CORES__ 1
+	#endif
 
-#ifndef __ADSPBF70x__
-#define __ADSPBF70x__
-#endif
+	#ifdef CPU_BF592
 
-#include "ADSP\bf706.h"
+		#define	CORETYPE_BF592
+		#define ADSP_BLACKFIN
+
+		#ifndef __ADSPBF59x__
+		#define __ADSPBF59x__
+		#endif
+
+		#ifndef __ADSPLPBLACKFIN__
+		#define __ADSPLPBLACKFIN__ 1
+		#endif
+
+
+		#ifndef __SILICON_REVISION__
+		#define __SILICON_REVISION__ 0x0002
+		#endif
+
+		#include "ADSP\bf592.h"
+
+	#elif defined(CPU_BF706)
+
+		#define	CORETYPE_BF706
+		#define ADSP_BLACKFIN
+
+		#ifndef __ADSPBF70x__
+		#define __ADSPBF70x__
+		#endif
+
+		#ifndef __ADSPBF7xx__
+		#define __ADSPBF7xx__
+		#endif
+
+		#ifndef __ADSPLPBLACKFIN__
+		#define __ADSPLPBLACKFIN__ 0x220
+		#endif
+
+		#ifndef __SILICON_REVISION__
+		#define __SILICON_REVISION__ 0x101
+		#endif
+
+		#include "ADSP\bf706.h"
+
+	#endif
 
 #endif
 

@@ -246,7 +246,7 @@
 				ReBuildCommandLine="wmake -h -a version=Debug targetcpu=BF706"
 				CleanCommandLine="@del /Q $(OutDir)\*.*"
 				Output="$(ProjectDir)\BF706_d.dlb"
-				PreprocessorDefinitions="_DEBUG,CPU_BF706,_ADI_COMPILER,__ADSPBF70x__"
+				PreprocessorDefinitions="_DEBUG,CPU_BF706,_ADI_COMPILER,__ADSPBF70x__,__ADSPBF706__"
 				IncludeSearchPath="$(ADI_CCES)\Blackfin\include;"
 				ForcedIncludes=""
 				AssemblySearchPath=""
