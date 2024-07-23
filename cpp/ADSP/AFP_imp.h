@@ -24,7 +24,7 @@
 #define BAUD_RATE_DIVISOR 	2
 #endif
 
-#define COMMON_SPI_SETTINGS (SPI_EN|SPI_MSTR|SPI_CPOL|SPI_CPHA|SPI_FMODE)  /* settings to the SPI_CTL */
+#define COMMON_SPI_SETTINGS (SPI_EN|SPI_MSTR|SPI_CPOL|SPI_CPHA)  /* settings to the SPI_CTL */
 
 #define SPI_CS	PB15
 
@@ -225,6 +225,9 @@ static int		gNumSectors = NUM_SECTORS;
 #define WEL					(0x2)	//Check the write enable bit of the SPI status register
 #define SPI_UPS				(0x39)  //Unprotect Sector 
 #define SPI_PRS				(0x36)  //Protect Sector 
+#define SPI_RDRP			(0x61)  //READ READ PARAMETERS OPERATION  
+#define SPI_RDERP			(0x81)  //READ EXTENDED READ PARAMETERS OPERATION  
+#define SPI_RDFR			(0x48)  //READ FUNCTION REGISTER OPERATION 
 
 
 #define SPI_PAGE_SIZE		(256)
@@ -257,8 +260,8 @@ void SendSingleCommand( const int iCommand );
 
 static ERROR_CODE PollToggleBit(void);
 static byte ReadFlash();
-static byte WriteFlash(byte usValue);
-static void WriteFlashByte(byte usValue);
+//static void WriteFlash(byte usValue);
+//static void WriteFlashByte(byte usValue);
 static unsigned long GetFlashStartAddress( unsigned long ulAddr);
 static void GlobalUnProtect();
 
@@ -335,7 +338,8 @@ u32 GetSectorSize()
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//#pragma optimize_for_speed
+
+#pragma optimize_for_space
 
 //////////////////////////////////////////////////////////////
 // void Wait_For_SPIF(void)
@@ -346,20 +350,34 @@ u32 GetSectorSize()
 // returns- none
 //
 //////////////////////////////////////////////////////////////
-inline void Wait_For_SPIF(void)
+
+void Wait_For_SPIF(void)
 {
 	delay(DELAY);
 
+	u32 temp;
+
 #ifdef __ADSPBF59x__
 
-	while((*pSPI0_STAT & SPIF) == 0) PIO_TST->Set = TST, PIO_TST->Clear = TST;
+	while((*pSPI0_STAT & (SPIF|TXS|RXS)) != SPIF)
+	{
+		PIO_TST->Set = TST;
+
+		asm("%0 = W[%1];" : "=D" (temp) : "p" (pSPI0_RDBR));
+
+		PIO_TST->Clear = TST;
+	};
 
 #elif defined(__ADSPBF70x__)
 
-	while((HW::SPI2->STAT & STAT_SPIF) == 0) PIO_TST->DATA_SET = TST, PIO_TST->DATA_CLR = TST;// HW::PORTB->NOT(PB5);
+	//while((HW::SPI2->STAT & STAT_SPIF) == 0) PIO_TST->DATA_SET = TST, PIO_TST->DATA_CLR = TST;// HW::PORTB->NOT(PB5);
 
-	//asm("R0 = W[%0];" : : "p" (&(HW::SPI2->RFIFO)));
-	//asm("R0 = W[%0];" : : "p" (&(HW::SPI2->RFIFO)));
+	while((HW::SPI2->STAT & (STAT_SPIF|STAT_RFE)) != (STAT_SPIF|STAT_RFE))
+	{
+		PIO_TST->DATA_SET = TST;
+		asm("%0 = W[%1];" : "=D" (temp) : "p" (&(HW::SPI2->RFIFO)));
+		PIO_TST->DATA_CLR = TST;
+	};
 
 #endif
 
@@ -367,7 +385,100 @@ inline void Wait_For_SPIF(void)
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-inline void Wait_For_RXS_SPIF(void)
+//////////////////////////////////////////////////////////////
+// Sets up the SPI for mode specified in spi_setting
+// Inputs - spi_setting
+// returns- none
+//////////////////////////////////////////////////////////////
+
+void SetupSPI()
+{
+    volatile int i;
+
+#ifdef __ADSPBF59x__
+
+	/* PF8 - SPI0_SSEL2 */
+
+	*pPORTF_FER   |= (PF13 | PF14 | PF15);
+	*pPORTF_FER   &= ~(PF8);
+	*pPORTF_MUX   &= ~(PF13 | PF14 | PF15);
+   	*pPORTFIO_SET = PF8;
+  	*pPORTFIO_DIR |= PF8;
+   	*pPORTFIO_SET = PF8;
+
+ //  	for(i=0; i<DELAY; i++)
+	//{
+		asm("nop;");
+		asm("nop;");
+		asm("nop;");
+		asm("nop;");
+		asm("nop;");
+//	}
+
+	*pSPI0_BAUD = BAUD_RATE_DIVISOR;
+	*pSPI0_CTL = COMMON_SPI_SETTINGS|TIMOD01;	
+	*pPORTFIO_CLEAR = PF8;
+
+#elif defined(__ADSPBF70x__)
+
+	HW::PORTB->FER_SET = PB10|PB11|PB12;
+	HW::PORTB->MUX &= ~(PB10|PB11|PB12);
+	HW::PORTB->DATA_SET = PB15;
+	HW::PORTB->DIR_SET = PB15;
+	HW::PORTB->DATA_SET = PB15;
+
+	delay(10);
+
+	HW::SPI2->CLK = BAUD_RATE_DIVISOR;
+	HW::SPI2->CTL = COMMON_SPI_SETTINGS;
+	HW::SPI2->TXCTL = TXCTL_TEN|TXCTL_TTI;
+	HW::SPI2->RXCTL = RXCTL_REN/*|RXCTL_RTI*/;
+	HW::SPI2->DLY = 0x01;
+	HW::SPI2->SLVSEL = 0xFC00;
+
+	HW::PORTB->CLR(PB15);
+
+#endif
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+//////////////////////////////////////////////////////////////
+// Turns off the SPI
+// Inputs - none
+// returns- none
+//
+//////////////////////////////////////////////////////////////
+
+void SPI_OFF(void)
+{
+	volatile int i;
+
+	Wait_For_SPIF();
+
+#ifdef __ADSPBF59x__
+
+	*pPORTFIO_SET = PF8;
+	*pSPI0_CTL = CPHA|CPOL;	// disable SPI
+	*pSPI0_BAUD = 0;
+
+#elif defined(__ADSPBF70x__)
+
+	HW::PORTB->SET(PB15);
+	//HW::SPI2->CTL &= ~1;
+	//HW::SPI2->CLK = 0;
+	//HW::SPI2->TXCTL = 0;
+	//HW::SPI2->RXCTL = 0;
+	HW::SPI2->SLVSEL = 0xFE00;
+
+#endif	
+
+	delay(10);
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void Wait_For_RXS_SPIF(void)
 {
 	//volatile int n;
 
@@ -387,6 +498,380 @@ inline void Wait_For_RXS_SPIF(void)
 	//HW::PORTB->CLR(PB5);
 
 #endif
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+//----------- R e a d F l a s h ( ) ----------//
+//
+//  PURPOSE
+//  	Reads a value from an address in flash.
+//
+//  INPUTS
+// 		unsigned long ulAddr - the address to read from
+// 		int pnValue - pointer to store value read from flash
+//
+//	RETURN VALUE
+//  	ERROR_CODE - value if any error occurs
+//  	NO_ERR     - otherwise
+
+byte ReadFlash()
+{
+#ifdef __ADSPBF59x__
+
+	//u32 temp; asm("%0 = W[%1];" : "=D" (temp) : "p" (pSPI0_RDBR));
+	//Wait_For_SPIF();
+
+	//*pSPI0_TDBR = 0;
+	//Wait_For_RXS_SPIF();
+
+	//return *pSPI0_RDBR;	
+
+	HW::SPI0->TDBR = 0;
+
+	while((HW::SPI0->Stat & RXS) == 0) PIO_TST->Set = TST, PIO_TST->Clear = TST;
+	//while((HW::SPI0->Stat & (SPIF|RXS)) != (SPIF|RXS)) PIO_TST->Set = TST, PIO_TST->Clear = TST;
+
+	return HW::SPI0->RDBR;
+
+#elif defined(__ADSPBF70x__)
+
+	//u32 temp; asm("%0 = W[%1];" : "=D" (temp) : "p" (&(HW::SPI2->RFIFO)));
+	//Wait_For_SPIF();
+
+	HW::SPI2->TFIFO = 0;
+
+	while((HW::SPI2->STAT & STAT_RFE) != 0) PIO_TST->DATA_SET = TST, PIO_TST->DATA_CLR = TST;// HW::PORTB->NOT(PB5);
+
+	return HW::SPI2->RFIFO;
+
+#endif
+}
+
+byte ReadFlash_old()
+{
+#ifdef __ADSPBF59x__
+
+	u32 temp; asm("%0 = W[%1];" : "=D" (temp) : "p" (pSPI0_RDBR));
+	Wait_For_SPIF();
+
+	*pSPI0_TDBR = 0;
+	Wait_For_RXS_SPIF();
+
+	return *pSPI0_RDBR;	
+
+#elif defined(__ADSPBF70x__)
+
+	u32 temp; asm("%0 = W[%1];" : "=D" (temp) : "p" (&(HW::SPI2->RFIFO)));
+	Wait_For_SPIF();
+
+	HW::SPI2->TFIFO = 0;
+	Wait_For_RXS_SPIF();
+
+	return HW::SPI2->RFIFO;
+
+#endif
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+//----------- W r i t e F l a s h ( ) ----------//
+//
+//  PURPOSE
+//  	Write a value to an address in flash.
+//
+//  INPUTS
+//	 	unsigned long  ulAddr - address to write to
+//		unsigned short nValue - value to write
+//
+//	RETURN VALUE
+//  	ERROR_CODE - value if any error occurs
+//  	NO_ERR     - otherwise
+
+byte WriteFlash(byte usValue)
+{
+#ifdef __ADSPBF59x__
+
+	HW::SPI0->TDBR = usValue;
+
+	delay(DELAY);
+	
+	//while((HW::SPI0->Stat & RXS) == 0) PIO_TST->Set = TST, PIO_TST->Clear = TST;
+	while((HW::SPI0->Stat & (SPIF|RXS)) != (SPIF|RXS)) PIO_TST->Set = TST, PIO_TST->Clear = TST;
+
+	return HW::SPI0->RDBR;
+
+#elif defined(__ADSPBF70x__)
+
+	HW::SPI2->TFIFO = usValue;
+	
+	delay(DELAY);
+
+	while((HW::SPI2->STAT & (STAT_SPIF|STAT_RFE)) != STAT_SPIF) PIO_TST->DATA_SET = TST, PIO_TST->DATA_CLR = TST;// HW::PORTB->NOT(PB5);
+
+	return HW::SPI2->RFIFO;
+
+#endif	
+}
+
+void WriteFlash_old(byte usValue )
+{
+#ifdef __ADSPBF59x__
+	*pSPI0_TDBR = usValue;
+#elif defined(__ADSPBF70x__)
+	HW::SPI2->TFIFO = usValue;
+#endif
+	Wait_For_SPIF();
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static void WriteFlashByte(byte usValue)
+{
+#ifdef __ADSPBF59x__
+
+	while((HW::SPI0->Stat & TXS) != 0) PIO_TST->Set = TST, PIO_TST->Clear = TST;
+	
+	HW::SPI0->TDBR = usValue;
+	
+	//while((HW::SPI0->Stat & RXS) == 0) PIO_TST->Set = TST, PIO_TST->Clear = TST;
+	//while((HW::SPI0->Stat & (SPIF|RXS)) != (SPIF|RXS)) PIO_TST->Set = TST, PIO_TST->Clear = TST;
+
+	//return HW::SPI0->RDBR;
+
+#elif defined(__ADSPBF70x__)
+
+	while((HW::SPI2->STAT & STAT_TFF) != 0) PIO_TST->DATA_SET = TST, PIO_TST->DATA_CLR = TST;// HW::PORTB->NOT(PB5);
+
+	HW::SPI2->TFIFO = usValue;
+	
+	//Wait_For_SPIF();
+
+#endif	
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+byte ReadReg(byte reg)
+{
+	SetupSPI(); // Turn on the SPI
+
+	//send instruction to read status register
+	WriteFlash(reg);
+
+	// receive the status register
+	byte usStatus = ReadFlash();
+
+	SPI_OFF();		// Turn off the SPI
+
+	return usStatus;
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+//////////////////////////////////////////////////////////////
+// int ReadStatusRegister(void)
+//
+// Returns the 8-bit value of the status register.
+// Inputs - none
+// returns- second location of status_register[2],
+//         first location is garbage.
+// Core sends the command
+//
+//////////////////////////////////////////////////////////////
+
+byte ReadStatusRegister(void)
+{
+	SetupSPI(); // Turn on the SPI
+
+	//send instruction to read status register
+	WriteFlash(SPI_RDSR);
+
+	// receive the status register
+	byte usStatus = ReadFlash();
+
+	SPI_OFF();		// Turn off the SPI
+
+	return usStatus;
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+//////////////////////////////////////////////////////////////
+// Wait_For_WEL(void)
+//
+// Polls the WEL (Write Enable Latch) bit of the Flash's status
+// register.
+// Inputs - none
+// returns- none
+//
+//////////////////////////////////////////////////////////////
+
+ERROR_CODE Wait_For_WEL(void)
+{
+	volatile int n, i;
+	char status_register = 0;
+	ERROR_CODE ErrorCode = NO_ERR;	// tells us if there was an error erasing flash
+
+	for(i = 0; i < 35; i++)
+	{
+		status_register = ReadStatusRegister();
+		if( (status_register & WEL) )
+		{
+			ErrorCode = NO_ERR;	// tells us if there was an error erasing flash
+			break;
+		}
+
+		for(n=0; n<DELAY; n++)
+			asm("nop;");
+		ErrorCode = POLL_TIMEOUT;	// Time out error
+	}
+
+
+	return ErrorCode;
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+//////////////////////////////////////////////////////////////
+// Wait_For_Status(void)
+//
+// Polls the Status Register of the Flash's status
+// register until the Flash is finished with its access. Accesses
+// that are affected by a latency are Page_Program, Sector_Erase,
+// and Block_Erase.
+// Inputs - Statusbit
+// returns- none
+//
+//////////////////////////////////////////////////////////////
+
+ERROR_CODE Wait_For_Status( char Statusbit )
+{
+	volatile int n, i;
+	char status_register = 0xFF;
+	ERROR_CODE ErrorCode = NO_ERR;	// tells us if there was an error erasing flash
+
+	for(i = 0; i < TIMEOUT; i++)
+	{
+		status_register = ReadStatusRegister();
+		if( !(status_register & Statusbit) )
+		{
+			ErrorCode = NO_ERR;	// tells us if there was an error erasing flash
+			break;
+		}
+
+		for(n=0; n<DELAY; n++)
+			asm("nop;");
+		ErrorCode = POLL_TIMEOUT;	// Time out error
+	}
+
+
+	return ErrorCode;
+
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+//////////////////////////////////////////////////////////////
+// void SendSingleCommand( const int iCommand )
+//
+// Sends a single command to the SPI flash
+// inputs - the 8-bit command to send
+// returns- none
+//
+//////////////////////////////////////////////////////////////
+void SendSingleCommand( const int iCommand )
+{
+	volatile int n;
+
+	//turns on the SPI in single write mode
+	SetupSPI();
+
+	//sends the actual command to the SPI TX register
+
+	WriteFlash(iCommand);
+
+//#ifdef __ADSPBF59x__
+//	*pSPI0_TDBR = iCommand;
+//#elif defined(__ADSPBF70x__)
+//	HW::SPI2->TFIFO = iCommand;
+//#endif
+//	//The SPI status register will be polled to check the SPIF bit
+//	Wait_For_SPIF();
+
+	//The SPI will be turned off
+	SPI_OFF();
+
+	//Pause before continuing
+	for(n=0; n<DELAY; n++)
+	{
+		asm("nop;");
+	}
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+//////////////////////////////////////////////////////////////
+// Wait_For_nStatus(void)
+//
+// Polls the WEL (Write Enable Latch) bit of the Flash's status
+// register.
+// Inputs - none
+// returns- none
+//
+//////////////////////////////////////////////////////////////
+ERROR_CODE Wait_For_nStatus(void)
+{
+	volatile int i;
+	char status_register = 0;
+	ERROR_CODE ErrorCode = NO_ERR;	// tells us if there was an error erasing flash
+
+	for(i = 0; i < 500; i++)
+	{
+		status_register = ReadStatusRegister();
+		if( (status_register & WEL) )
+		{
+			ErrorCode = NO_ERR;
+			return ErrorCode;
+		}
+		ErrorCode = POLL_TIMEOUT;	// Time out error
+	}
+
+	return ErrorCode;
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+ERROR_CODE GetEraseProgramStatus(void)
+{
+	ERROR_CODE ErrorCode = NO_ERR;	// tells us if there was an error erasing flash
+	byte status_register = 0;
+
+	if (AFP_ManCode == 0x1F && AFP_DevCode == 0x4300) // Atmel AT25DF021 2-Mbit
+	{
+		status_register = ReadStatusRegister();
+
+		if (status_register & 0x20)
+		{
+			ErrorCode = PROCESS_COMMAND_ERR;
+		};
+	}
+	else if (AFP_ManCode == 0x9D || AFP_DevCode == 0x6014) // ISSI IS25LP080D 8-Mbit
+	{
+		status_register = ReadReg(SPI_RDERP);
+
+		if (status_register & 0xE)
+		{
+			ErrorCode = PROCESS_COMMAND_ERR;
+
+			if (status_register & 2) printf("Protection Error\n");
+			if (status_register & 4) printf("Program Error\n");
+			if (status_register & 8) printf("Erase Error\n");
+		};
+	};
+
+	return ErrorCode;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -466,7 +951,14 @@ ERROR_CODE WritePage(byte *data, u32 stAdr, u16 count )
         SPI_OFF();
     };
 
-	return Wait_For_Status(WIP);
+	Result = Wait_For_Status(WIP);
+
+	if (Result == NO_ERR)
+	{
+		Result = GetEraseProgramStatus();
+	};
+
+	return Result;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -483,10 +975,10 @@ ERROR_CODE VerifyPage(byte *data, u32 stAdr, u16 count )
 	SetupSPI();
 
         /* send the bulk erase command to the flash */
-    WriteFlashByte(SPI_FAST_READ);
-    WriteFlashByte((stAdr) >> 16);
-    WriteFlashByte((stAdr) >> 8);
-    WriteFlashByte(stAdr);
+    WriteFlash(SPI_FAST_READ);
+    WriteFlash((stAdr) >> 16);
+    WriteFlash((stAdr) >> 8);
+    WriteFlash(stAdr);
     WriteFlash(0);
 
 	for ( ; count > 0; count--)
@@ -640,8 +1132,8 @@ static void GlobalUnProtect()
 
 	SetupSPI();
 
-	WriteFlashByte(SPI_WRSR);
-	WriteFlashByte(0);
+	WriteFlash(SPI_WRSR);
+	WriteFlash(0);
 
 	SPI_OFF();
 }
@@ -689,8 +1181,11 @@ ERROR_CODE EraseFlash()
 
 		printf("Error Code: %d", ErrorCode);
 
-
-	}
+		if (ErrorCode == NO_ERR)
+		{
+			ErrorCode = GetEraseProgramStatus();
+		};
+	};
 
 	// erase should be complete
 	return ErrorCode;
@@ -753,16 +1248,25 @@ ERROR_CODE EraseBlock(int nBlock)
 
 	SetupSPI();
 
-	// send the write enable instruction
-	WriteFlash(SPI_WREN );
+	//send the erase block command to the flash
+	WriteFlashByte(0x26);
+	WriteFlashByte(GB(&ulSectStart, 2));
+	WriteFlashByte(GB(&ulSectStart, 1));
+	WriteFlashByte(GB(&ulSectStart, 0));
 
 	SPI_OFF();
+
+	SendSingleCommand(SPI_WREN);
+
+	delay(1000);
+
+	//The status register will be polled to check the write enable latch "WREN"
+	ErrorCode = Wait_For_WEL();
 
 	SetupSPI();
 
 	//send the erase block command to the flash
-	WriteFlashByte(SPI_SE );
-
+	WriteFlashByte(SPI_SE);
 	WriteFlashByte(GB(&ulSectStart, 2));
 	WriteFlashByte(GB(&ulSectStart, 1));
 	WriteFlashByte(GB(&ulSectStart, 0));
@@ -771,9 +1275,15 @@ ERROR_CODE EraseBlock(int nBlock)
 
 	// Poll the status register to check the Write in Progress bit
 	// Sector erase takes time
+
+	delay(100000);
+
 	ErrorCode = Wait_For_Status(WIP);
 
-
+	if (ErrorCode == NO_ERR)
+	{
+		ErrorCode = GetEraseProgramStatus();
+	};
 
  	// block erase should be complete
 	return ErrorCode;
@@ -970,391 +1480,6 @@ unsigned long GetFlashStartAddress( unsigned long ulAddr)
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-//----------- R e a d F l a s h ( ) ----------//
-//
-//  PURPOSE
-//  	Reads a value from an address in flash.
-//
-//  INPUTS
-// 		unsigned long ulAddr - the address to read from
-// 		int pnValue - pointer to store value read from flash
-//
-//	RETURN VALUE
-//  	ERROR_CODE - value if any error occurs
-//  	NO_ERR     - otherwise
-
-byte ReadFlash()
-{
-#ifdef __ADSPBF59x__
-
-	//asm("R0 = W[%0];" : : "p" (pSPI0_RDBR));
-	//Wait_For_SPIF();
-
-	//*pSPI0_TDBR = 0;
-	//Wait_For_RXS_SPIF();
-
-	//return *pSPI0_RDBR;	
-
-	HW::SPI0->TDBR = 0;
-
-	while((HW::SPI0->Stat & RXS) == 0) PIO_TST->Set = TST, PIO_TST->Clear = TST;
-	//while((HW::SPI0->Stat & (SPIF|RXS)) != (SPIF|RXS)) PIO_TST->Set = TST, PIO_TST->Clear = TST;
-
-	return HW::SPI0->RDBR;
-
-#elif defined(__ADSPBF70x__)
-
-
-	//asm("R0 = W[%0];" : : "p" (&(HW::SPI2->RFIFO)));
-	//Wait_For_SPIF();
-
-	HW::SPI2->TFIFO = 0;
-
-	while((HW::SPI2->STAT & STAT_RFE) != 0) PIO_TST->DATA_SET = TST, PIO_TST->DATA_CLR = TST;// HW::PORTB->NOT(PB5);
-
-	return HW::SPI2->RFIFO;
-
-#endif
-}
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-//----------- W r i t e F l a s h ( ) ----------//
-//
-//  PURPOSE
-//  	Write a value to an address in flash.
-//
-//  INPUTS
-//	 	unsigned long  ulAddr - address to write to
-//		unsigned short nValue - value to write
-//
-//	RETURN VALUE
-//  	ERROR_CODE - value if any error occurs
-//  	NO_ERR     - otherwise
-
-byte WriteFlash(byte usValue)
-{
-#ifdef __ADSPBF59x__
-
-	HW::SPI0->TDBR = usValue;
-
-	delay(DELAY);
-	
-	//while((HW::SPI0->Stat & RXS) == 0) PIO_TST->Set = TST, PIO_TST->Clear = TST;
-	while((HW::SPI0->Stat & (SPIF|RXS)) != (SPIF|RXS)) PIO_TST->Set = TST, PIO_TST->Clear = TST;
-
-	return HW::SPI0->RDBR;
-
-#elif defined(__ADSPBF70x__)
-
-	HW::SPI2->TFIFO = usValue;
-	
-	delay(DELAY);
-
-	while((HW::SPI2->STAT & (STAT_SPIF|STAT_RFE)) != STAT_SPIF) PIO_TST->DATA_SET = TST, PIO_TST->DATA_CLR = TST;// HW::PORTB->NOT(PB5);
-
-	return HW::SPI2->RFIFO;
-
-#endif	
-}
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-static void WriteFlashByte(byte usValue)
-{
-#ifdef __ADSPBF59x__
-
-	while((HW::SPI0->Stat & TXS) != 0) PIO_TST->Set = TST, PIO_TST->Clear = TST;
-	
-	HW::SPI0->TDBR = usValue;
-	
-	//while((HW::SPI0->Stat & RXS) == 0) PIO_TST->Set = TST, PIO_TST->Clear = TST;
-	//while((HW::SPI0->Stat & (SPIF|RXS)) != (SPIF|RXS)) PIO_TST->Set = TST, PIO_TST->Clear = TST;
-
-	//return HW::SPI0->RDBR;
-
-#elif defined(__ADSPBF70x__)
-
-	while((HW::SPI2->STAT & STAT_TFF) != 0) PIO_TST->DATA_SET = TST, PIO_TST->DATA_CLR = TST;// HW::PORTB->NOT(PB5);
-
-	HW::SPI2->TFIFO = usValue;
-	
-	//Wait_For_SPIF();
-
-#endif	
-}
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-//////////////////////////////////////////////////////////////
-// int ReadStatusRegister(void)
-//
-// Returns the 8-bit value of the status register.
-// Inputs - none
-// returns- second location of status_register[2],
-//         first location is garbage.
-// Core sends the command
-//
-//////////////////////////////////////////////////////////////
-
-byte ReadStatusRegister(void)
-{
-	SetupSPI(); // Turn on the SPI
-
-	//send instruction to read status register
-	WriteFlash(SPI_RDSR);
-
-	// receive the status register
-	byte usStatus = ReadFlash();
-
-	SPI_OFF();		// Turn off the SPI
-
-	return usStatus;
-}
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-
-//////////////////////////////////////////////////////////////
-// Wait_For_WEL(void)
-//
-// Polls the WEL (Write Enable Latch) bit of the Flash's status
-// register.
-// Inputs - none
-// returns- none
-//
-//////////////////////////////////////////////////////////////
-
-ERROR_CODE Wait_For_WEL(void)
-{
-	volatile int n, i;
-	char status_register = 0;
-	ERROR_CODE ErrorCode = NO_ERR;	// tells us if there was an error erasing flash
-
-	for(i = 0; i < 35; i++)
-	{
-		status_register = ReadStatusRegister();
-		if( (status_register & WEL) )
-		{
-			ErrorCode = NO_ERR;	// tells us if there was an error erasing flash
-			break;
-		}
-
-		for(n=0; n<DELAY; n++)
-			asm("nop;");
-		ErrorCode = POLL_TIMEOUT;	// Time out error
-	}
-
-
-	return ErrorCode;
-}
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-//////////////////////////////////////////////////////////////
-// Wait_For_Status(void)
-//
-// Polls the Status Register of the Flash's status
-// register until the Flash is finished with its access. Accesses
-// that are affected by a latency are Page_Program, Sector_Erase,
-// and Block_Erase.
-// Inputs - Statusbit
-// returns- none
-//
-//////////////////////////////////////////////////////////////
-
-ERROR_CODE Wait_For_Status( char Statusbit )
-{
-	volatile int n, i;
-	char status_register = 0xFF;
-	ERROR_CODE ErrorCode = NO_ERR;	// tells us if there was an error erasing flash
-
-	for(i = 0; i < TIMEOUT; i++)
-	{
-		status_register = ReadStatusRegister();
-		if( !(status_register & Statusbit) )
-		{
-			ErrorCode = NO_ERR;	// tells us if there was an error erasing flash
-			break;
-		}
-
-		for(n=0; n<DELAY; n++)
-			asm("nop;");
-		ErrorCode = POLL_TIMEOUT;	// Time out error
-	}
-
-
-	return ErrorCode;
-
-}
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-//////////////////////////////////////////////////////////////
-// void SendSingleCommand( const int iCommand )
-//
-// Sends a single command to the SPI flash
-// inputs - the 8-bit command to send
-// returns- none
-//
-//////////////////////////////////////////////////////////////
-void SendSingleCommand( const int iCommand )
-{
-	volatile int n;
-
-	//turns on the SPI in single write mode
-	SetupSPI();
-
-	//sends the actual command to the SPI TX register
-
-	WriteFlash(iCommand);
-
-//#ifdef __ADSPBF59x__
-//	*pSPI0_TDBR = iCommand;
-//#elif defined(__ADSPBF70x__)
-//	HW::SPI2->TFIFO = iCommand;
-//#endif
-//	//The SPI status register will be polled to check the SPIF bit
-//	Wait_For_SPIF();
-
-	//The SPI will be turned off
-	SPI_OFF();
-
-	//Pause before continuing
-	for(n=0; n<DELAY; n++)
-	{
-		asm("nop;");
-	}
-}
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-//////////////////////////////////////////////////////////////
-// Sets up the SPI for mode specified in spi_setting
-// Inputs - spi_setting
-// returns- none
-//////////////////////////////////////////////////////////////
-void SetupSPI()
-{
-    volatile int i;
-
-#ifdef __ADSPBF59x__
-
-	/* PF8 - SPI0_SSEL2 */
-
-	*pPORTF_FER   |= (PF13 | PF14 | PF15);
-	*pPORTF_FER   &= ~(PF8);
-	*pPORTF_MUX   &= ~(PF13 | PF14 | PF15);
-   	*pPORTFIO_SET = PF8;
-  	*pPORTFIO_DIR |= PF8;
-   	*pPORTFIO_SET = PF8;
-
- //  	for(i=0; i<DELAY; i++)
-	//{
-		asm("nop;");
-		asm("nop;");
-		asm("nop;");
-		asm("nop;");
-		asm("nop;");
-//	}
-
-	*pSPI0_BAUD = BAUD_RATE_DIVISOR;
-	*pSPI0_CTL = COMMON_SPI_SETTINGS|TIMOD01;	
-	*pPORTFIO_CLEAR = PF8;
-
-#elif defined(__ADSPBF70x__)
-
-	HW::PORTB->FER_SET = PB10|PB11|PB12;
-	HW::PORTB->MUX &= ~(PB10|PB11|PB12);
-	HW::PORTB->DATA_SET = PB15;
-	HW::PORTB->DIR_SET = PB15;
-	HW::PORTB->DATA_SET = PB15;
-
-	delay(10);
-
-	HW::SPI2->CLK = BAUD_RATE_DIVISOR;
-	HW::SPI2->CTL = COMMON_SPI_SETTINGS;
-	HW::SPI2->TXCTL = TXCTL_TEN|TXCTL_TTI;
-	HW::SPI2->RXCTL = RXCTL_REN/*|RXCTL_RTI*/;
-	HW::SPI2->DLY = 0x01;
-	HW::SPI2->SLVSEL = 0xFC00;
-
-	HW::PORTB->CLR(PB15);
-
-#endif
-}
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-//////////////////////////////////////////////////////////////
-// Turns off the SPI
-// Inputs - none
-// returns- none
-//
-//////////////////////////////////////////////////////////////
-
-void SPI_OFF(void)
-{
-	volatile int i;
-
-	Wait_For_SPIF();
-
-#ifdef __ADSPBF59x__
-
-	*pPORTFIO_SET = PF8;
-	*pSPI0_CTL = CPHA|CPOL;	// disable SPI
-	*pSPI0_BAUD = 0;
-
-#elif defined(__ADSPBF70x__)
-
-	HW::PORTB->SET(PB15);
-	HW::SPI2->CTL &= ~1;
-	HW::SPI2->CLK = 0;
-	HW::SPI2->TXCTL = 0;
-	HW::SPI2->RXCTL = 0;
-	HW::SPI2->SLVSEL = 0xFE00;
-
-#endif	
-
-	delay(10);
-}
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-
-//////////////////////////////////////////////////////////////
-// Wait_For_nStatus(void)
-//
-// Polls the WEL (Write Enable Latch) bit of the Flash's status
-// register.
-// Inputs - none
-// returns- none
-//
-//////////////////////////////////////////////////////////////
-ERROR_CODE Wait_For_nStatus(void)
-{
-	volatile int i;
-	char status_register = 0;
-	ERROR_CODE ErrorCode = NO_ERR;	// tells us if there was an error erasing flash
-
-	for(i = 0; i < 500; i++)
-	{
-		status_register = ReadStatusRegister();
-		if( (status_register & WEL) )
-		{
-			ErrorCode = NO_ERR;
-			return ErrorCode;
-		}
-		ErrorCode = POLL_TIMEOUT;	// Time out error
-	}
-
-	return ErrorCode;
-}
-
-#pragma optimize_as_cmd_line
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
 /////////////////////////////////////////////////////////////////
 // unsigned long DataFlashAddress()
 //
@@ -1440,7 +1565,31 @@ int main(void)
 		AFP_Error = GetFlashInfo();
 	};
 
-	byte stat = ReadStatusRegister();
+	byte rdfr	= ReadReg(SPI_RDFR);
+
+	AFP_Error = EraseBlock(0);
+
+	byte status	= ReadStatusRegister();
+	byte rdrp	= ReadReg(SPI_RDRP);
+	byte rderp	= ReadReg(SPI_RDERP);
+
+	//AFP_Error = EraseBlock(1);
+
+	//status	= ReadStatusRegister();
+	//rdrp	= ReadReg(SPI_RDRP);
+	//rderp	= ReadReg(SPI_RDERP);
+
+	//AFP_Error = EraseBlock(2);
+
+	//status	= ReadStatusRegister();
+	//rdrp	= ReadReg(SPI_RDRP);
+	//rderp	= ReadReg(SPI_RDERP);
+
+	//AFP_Error = EraseBlock(3);
+
+	//status	= ReadStatusRegister();
+	//rdrp	= ReadReg(SPI_RDRP);
+	//rderp	= ReadReg(SPI_RDERP);
 
 	// get the number of sectors for this device
 	if( AFP_Error == NO_ERR )
@@ -1748,6 +1897,9 @@ ERROR_CODE GetFlashInfo()
 				case 0x7013:	str = "ISSI IS25WP040D 4-Mbit"; gNumSectors = 256; break;
 				case 0x7012:	str = "ISSI IS25WP020D 2-Mbit"; gNumSectors = 128; break;
 			};
+
+			SendSingleCommand(0x66);
+			SendSingleCommand(0x99);
 
 		};
 		
