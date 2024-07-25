@@ -263,7 +263,7 @@ static byte ReadFlash();
 //static void WriteFlash(byte usValue);
 //static void WriteFlashByte(byte usValue);
 static unsigned long GetFlashStartAddress( unsigned long ulAddr);
-static void GlobalUnProtect();
+static ERROR_CODE GlobalUnProtect();
 
 #ifndef TRUE
 #define TRUE (1)
@@ -1120,22 +1120,42 @@ ERROR_CODE ResetFlash()
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static void GlobalUnProtect()
+static ERROR_CODE GlobalUnProtect()
 {
 	ERROR_CODE 	  ErrorCode   = NO_ERR;	
 
-	SetupSPI();
+	bool c = true;
 
-	WriteFlash(SPI_WREN );
+	if (AFP_ManCode == 0x1F && AFP_DevCode == 0x4300) // Atmel AT25DF021 2-Mbit
+	{
+		c = true;
+	}
+	else if (AFP_ManCode == 0x9D || AFP_DevCode == 0x6014) // ISSI IS25LP080D 8-Mbit
+	{
+		byte status = ReadStatusRegister();
 
-	SPI_OFF();
+		c = (status & 0x3C) != 0;
+	};
 
-	SetupSPI();
+	if (c)
+	{
+		SetupSPI();
 
-	WriteFlash(SPI_WRSR);
-	WriteFlash(0);
+		WriteFlash(SPI_WREN );
 
-	SPI_OFF();
+		SPI_OFF();
+
+		SetupSPI();
+
+		WriteFlashByte(SPI_WRSR);
+		WriteFlashByte(0);
+
+		SPI_OFF();
+
+		ErrorCode = Wait_For_Status(WIP);
+	};
+
+	return ErrorCode;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1157,8 +1177,10 @@ ERROR_CODE EraseFlash()
 	ERROR_CODE ErrorCode = NO_ERR;	// tells us if there was an error erasing flash
 //	int nBlock = 0;					// index for each block to erase
 
-	GlobalUnProtect();
-	GlobalUnProtect();
+	//GlobalUnProtect();
+	ErrorCode = GlobalUnProtect();
+
+	if (ErrorCode != NO_ERR) return ErrorCode;
 
 	//A write enable instruction must previously have been executed
 	SendSingleCommand(SPI_WREN);
@@ -1234,7 +1256,6 @@ ERROR_CODE UnProtectBlock(u32 adr)
 
 ERROR_CODE EraseBlock(int nBlock)
 {
-
 	ERROR_CODE 	  ErrorCode   = NO_ERR;		//tells us if there was an error erasing flash
  	unsigned long ulSectStart = 0x0;		//stores the sector start offset
  	unsigned long ulSectEnd   = 0x0;		//stores the sector end offset(however we do not use it here)
@@ -1243,25 +1264,18 @@ ERROR_CODE EraseBlock(int nBlock)
 	// we get the end offset too however we do not actually use it for Erase sector
 	GetSectorStartEnd( &ulSectStart, &ulSectEnd, nBlock );
 
-	GlobalUnProtect();
-	GlobalUnProtect();
+	//GlobalUnProtect();
 
-	SetupSPI();
+	ErrorCode = GlobalUnProtect();
 
-	//send the erase block command to the flash
-	WriteFlashByte(0x26);
-	WriteFlashByte(GB(&ulSectStart, 2));
-	WriteFlashByte(GB(&ulSectStart, 1));
-	WriteFlashByte(GB(&ulSectStart, 0));
-
-	SPI_OFF();
+	if (ErrorCode != NO_ERR) return ErrorCode;
 
 	SendSingleCommand(SPI_WREN);
 
-	delay(1000);
-
 	//The status register will be polled to check the write enable latch "WREN"
 	ErrorCode = Wait_For_WEL();
+
+	if (ErrorCode != NO_ERR) return ErrorCode;
 
 	SetupSPI();
 
@@ -1276,7 +1290,7 @@ ERROR_CODE EraseBlock(int nBlock)
 	// Poll the status register to check the Write in Progress bit
 	// Sector erase takes time
 
-	delay(100000);
+	//delay(100000);
 
 	ErrorCode = Wait_For_Status(WIP);
 
@@ -1565,13 +1579,13 @@ int main(void)
 		AFP_Error = GetFlashInfo();
 	};
 
-	byte rdfr	= ReadReg(SPI_RDFR);
+	//byte rdfr	= ReadReg(SPI_RDFR);
 
-	AFP_Error = EraseBlock(0);
+	//AFP_Error = EraseBlock(0);
 
-	byte status	= ReadStatusRegister();
-	byte rdrp	= ReadReg(SPI_RDRP);
-	byte rderp	= ReadReg(SPI_RDERP);
+	//byte status	= ReadStatusRegister();
+	//byte rdrp	= ReadReg(SPI_RDRP);
+	//byte rderp	= ReadReg(SPI_RDERP);
 
 	//AFP_Error = EraseBlock(1);
 

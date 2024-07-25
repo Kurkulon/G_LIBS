@@ -49,7 +49,7 @@ loader_opt	=
 !else ifeq targetcpu BF706
 
 cpu_opt		= -proc ADSP-BF706 -si-revision 1.1
-loader_opt	= -bcode 0xA
+loader_opt	= -bcode 14
 
 !endif
 
