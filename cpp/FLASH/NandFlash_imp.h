@@ -192,6 +192,8 @@ __packed struct NVSI // NonVolatileSessionInfo
 	NandFileDsc f;
 
 	u16 crc;
+
+	void UpdateCRC() { crc = GetCRC16(this, sizeof(timeStamp) + sizeof(f)); }
 };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -210,7 +212,7 @@ byte eraseSessionsCount = 0;
 
 //static TWI	twi;
 
-static void SaveVars();
+static void NandFlash_SaveVars();
 
 static bool loadVarsOk = false;
 static bool loadSessionsOk = false;
@@ -448,28 +450,40 @@ bool NandFlash_RequestRead(NANDFLRB* b)
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void NAND_FullErase()
+void NandFlash_FullErase()
 {
 	cmdFullErase = true;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void NAND_NextSession()
+void NandFlash_UnErase()
+{
+	for (u16 n = 0; n < ArraySize(nvsi); n++)
+	{
+		NVSI &d = nvsi[n];
+
+		if (d.f.size != 0) d.f.ClrErased();
+	};
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static void NAND_NextSession()
 {
 	cmdCreateNextFile = true;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void ResetNandState()
+static void ResetNandState()
 {
 	nandState = NAND_STATE_WAIT;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-NandState GetNandState()
+static NandState GetNandState()
 {
 	return nandState;
 }
@@ -2161,7 +2175,7 @@ static void InitSessionsNew()
 			};
 		};
 
-		flashUsedSize += f.size;
+		if (!f.Erased()) flashUsedSize += f.size;
 	}; 
 
 	u64 fullSize = NandFlash_Full_Size_Get();
@@ -2169,6 +2183,28 @@ static void InitSessionsNew()
 	if (flashUsedSize > fullSize) flashUsedSize = fullSize;
 
 	NAND_Chip_Disable();
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+bool NandFlash_AddSessionInfo(NandFileDsc *dsc)
+{
+	if (dsc == 0) return false;
+
+	if (NandFlash_GetSessionInfo(dsc->session, 0) != 0) return false;
+
+	u16 ind = nvv.index;
+
+	for (u16 i = 128; i > 0; i--)
+	{
+		NandFileDsc &s = nvsi[ind].f;
+
+		if (s.size == 0) { nvsi[ind].f = *dsc; return true; };
+
+		ind = (ind-1)&127;
+	};
+
+	return 0;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -2462,6 +2498,24 @@ static bool UpdateBlackBoxSendSessions()
 
 			if (TRAP_MEMORY_SendSession(sendedFileNum = findFileNum, (findFileEndAdr - findFileStartAdr) & rd.RAWADR_MASK, findFileStartAdr, start_rtc, stop_rtc, 0))
 			{
+				NandFileDsc dsc;
+
+				dsc.session		= findFileNum;
+				dsc.size		= (findFileEndAdr - findFileStartAdr) & rd.RAWADR_MASK;
+				dsc.start_rtc	= start_rtc;
+				dsc.stop_rtc	= stop_rtc;
+
+				adr.SetRawAdr(findFileStartAdr);
+				dsc.startPage	= adr.GetRawPage();
+				adr.SetRawAdr(findFileEndAdr);
+				dsc.lastPage	= adr.GetRawPage();
+				
+				dsc.flags		= 0;
+
+				dsc.SetErased();
+
+				NandFlash_AddSessionInfo(&dsc);
+
 				if (count == 0 || rd.CheckOverflow())
 				{
 					state++;
@@ -2569,6 +2623,7 @@ static bool UpdateSendSession()
 	NandFileDsc &s = nvsi[ind].f;
 
 	__packed const u32* const pe = nvv.pageError;
+	__packed const u32* const bb = nvv.badBlocks;
 
 	switch (i)
 	{
@@ -2591,7 +2646,7 @@ static bool UpdateSendSession()
 
 		case 1:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-			if (s.size > 0)
+			if (s.size > 0 /*&& !s.Erased()*/)
 			{
 				if (!TRAP_MEMORY_SendSession(s.session, s.size, (u64)s.startPage * FLADR::pg, s.start_rtc, s.stop_rtc, s.flags))
 				{
@@ -2651,14 +2706,23 @@ static bool UpdateSendSession()
 
 		case 5:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-			if (TRAP_TRACE_PrintString("NAND chip mask: 0x%02hX; NAND Page Error: %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu", nandSize.mask,pe[0],pe[1],pe[2],pe[3],pe[4],pe[5],pe[6],pe[7]))
+			if (TRAP_TRACE_PrintString("NAND chip mask: 0x%02hX; Bad Blocks: %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu", nandSize.mask, bb[0], bb[1], bb[2], bb[3], bb[4], bb[5], bb[6], bb[7]))
 			{
 				i++;
 			};
 
 			break;
 
-		case 6:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		case 6:
+
+			if (TRAP_TRACE_PrintString("NAND Page Error: %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu", pe[0],pe[1],pe[2],pe[3],pe[4],pe[5],pe[6],pe[7]))
+			{
+				i++;
+			};
+
+			break;
+
+		case 7:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 			const byte* p = nandSize.chipDataBusMask;
 
@@ -2707,7 +2771,8 @@ void NAND_Idle()
 	static TM32 tm;
 	static FLADR er(0);
 	static EraseBlock eraseBlock;
-	static bool blackBox = false;
+	//static bool blackBox = false;
+	static byte blackBoxCount = 0;
 
 	switch (nandState)
 	{
@@ -2841,11 +2906,11 @@ void NAND_Idle()
 
 		case NAND_STATE_SEND_SESSION:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-			if (blackBox)
+			if (blackBoxCount >= 10)
 			{
 				if (!UpdateBlackBoxSendSessions())
 				{
-					blackBox = !blackBox;
+					blackBoxCount = 0;
 
 					nandState = NAND_STATE_WAIT;
 				};
@@ -2854,7 +2919,7 @@ void NAND_Idle()
 			{
 				if (!UpdateSendSession())
 				{
-					blackBox = !blackBox;
+					blackBoxCount += 1;
 
 					nandState = NAND_STATE_WAIT;
 				};
@@ -3032,7 +3097,7 @@ byte NandFlash_Status()
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static void LoadVars()
+static void NandFlash_LoadVars()
 {
 	SEGGER_RTT_WriteString(0, RTT_CTRL_TEXT_BRIGHT_GREEN "Flash Load Vars ... ");
 
@@ -3149,7 +3214,7 @@ static void LoadVars()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static void SaveVars()
+static void NandFlash_SaveVars()
 {
 	const u16 sa = 0x100;
 
@@ -3184,17 +3249,12 @@ static void SaveVars()
 
 					for (u16 n = 0; n < ArraySize(nvsi); n++)
 					{
-						nvsi[n].timeStamp = 0;
-						nvsi[n].f.size = 0;
-						nvsi[n].crc = 0;
+						NVSI &d = nvsi[n];
+
+						if (d.f.size != 0) d.f.SetErased(), d.UpdateCRC();
 					};
 
-					nvv.f.session += 1;
-					nvv.f.size = 0;
-					//nvv.f.startPage = 0;
-					//nvv.f.lastPage = 0;
-					nvv.index = 0;
-					nvv.timeStamp = 0;
+					if (nvv.f.size != 0) nvv.f.SetErased();
 
 					savesCount = 1;
 
@@ -3362,7 +3422,7 @@ static void SaveVars()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static void LoadSessions()
+static void NandFlash_LoadSessions()
 {
 	SEGGER_RTT_WriteString(0, RTT_CTRL_TEXT_BRIGHT_YELLOW "Flash Load Sessions ... ");
 
@@ -3460,7 +3520,8 @@ static void LoadSessions()
 				si.f.stop_rtc.date = 0;
 				si.f.stop_rtc.time = 0;
 				si.timeStamp = 0;
-				si.crc = GetCRC16(&si, sizeof(si) - 2);
+				//si.crc = GetCRC16(&si, sizeof(si) - 2);
+				si.UpdateCRC();
 
 				dsc.wdata2 = &si;
 				dsc.wlen2 = sizeof(si);
@@ -3536,9 +3597,9 @@ void NandFlash_Init()
 //	FRAM_SPI_SESSIONS_ADR = Get_FRAM_SPI_SessionsAdr();
 //	FRAM_I2C_SESSIONS_ADR = Get_FRAM_I2C_SessionsAdr();
 
-	LoadVars();
+	NandFlash_LoadVars();
 
-	LoadSessions();
+	NandFlash_LoadSessions();
 
 	InitFlashBuffer();
 
@@ -3549,7 +3610,7 @@ void NandFlash_Init()
 
 void NandFlash_Update()
 {
-	SaveVars();
+	NandFlash_SaveVars();
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

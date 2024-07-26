@@ -718,15 +718,17 @@ void TRAP_HandleRxData(Ptr<MB> &mb)
 
 						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_MEMORY_DEVICE, TrapRxCounter);	
 
-						NAND_FullErase();
+						NandFlash_FullErase();
 
 //						Mode_Ethernet_Flash_Erase();
 						break;
 
 					case TRAP_MEMORY_COMMAND_UNERASE:
 
-						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_MEMORY_DEVICE, TrapRxCounter);					
-//						Mode_Ethernet_Flash_UnErase();
+						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_MEMORY_DEVICE, TrapRxCounter);
+
+						NandFlash_UnErase();
+
 						break;
 
 					default: 

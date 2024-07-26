@@ -457,7 +457,7 @@ enum { TRAP_MEMORY_COMMAND_STOP		= TRAPCMD('C','A') };
 enum { TRAP_MEMORY_COMMAND_PAUSE	= TRAPCMD('P','A') };
 enum { TRAP_MEMORY_COMMAND_RESUME	= TRAPCMD('R','E') };
 enum { TRAP_MEMORY_COMMAND_ERASE	= TRAPCMD('E','R') };
-enum { TRAP_MEMORY_COMMAND_UNERASE	= TRAPCMD('E','U') };
+enum { TRAP_MEMORY_COMMAND_UNERASE	= TRAPCMD('U','E') };
 
 /*************** BOOTLOADER **************************************/
 enum { TRAP_BOOTLOADER_COMMAND_START = ('B'<<8) + 'L' };	

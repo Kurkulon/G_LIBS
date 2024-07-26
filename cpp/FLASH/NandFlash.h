@@ -93,7 +93,11 @@ __packed struct NandFileDsc
 	RTC_type	stop_rtc;  
 	u32			startPage; 
 	u32			lastPage;
-	byte		flags;
+	byte		flags;		// 1 - Сессия удалена
+
+	void		SetErased()	{ flags |= 1; }
+	void		ClrErased()	{ flags &= ~1; }
+	bool		Erased()	{ return flags & 1; }
 };	
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -108,7 +112,8 @@ extern void			NandFlash_StartSendSession();
 extern NandFileDsc* NandFlash_GetSessionInfo(u16 session, u64 adr);
 
 extern void NAND_Idle();
-extern void NAND_FullErase();
+extern void NandFlash_FullErase();
+extern void NandFlash_UnErase();
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
