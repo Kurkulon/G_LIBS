@@ -16,6 +16,10 @@
 	#define __TARGET_ARCH_THUMB		4
 	#endif
 
+	#ifndef __CC_ARM
+	#define __CC_ARM		
+	#endif
+
 	#include "ARM\same53.h"
 
 #elif defined(CPU_XMC48)
@@ -31,6 +35,10 @@
 	#define __TARGET_ARCH_THUMB		4
 	#endif
 
+	#ifndef __CC_ARM
+	#define __CC_ARM		
+	#endif
+
 	#include "ARM\XMC4800.h"
 
 #elif defined(CPU_LPC824)
@@ -39,6 +47,10 @@
 	#define	CORETYPE_LPC82X
 	#define CORTEX_M0
 
+	#ifndef __CC_ARM
+	#define __CC_ARM		
+	#endif
+
 	#include "ARM\lpc82x.h"
 
 #elif defined(CPU_LPC812)
@@ -46,6 +58,10 @@
 	#define	CORETYPE_LPC8XX
 	#define	CORETYPE_LPC81X
 	#define CORTEX_M0
+
+	#ifndef __CC_ARM
+	#define __CC_ARM		
+	#endif
 
 	#include "ARM\lpc81x.h"
 

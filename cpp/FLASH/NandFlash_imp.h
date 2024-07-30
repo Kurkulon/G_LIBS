@@ -2495,26 +2495,33 @@ static bool UpdateBlackBoxSendSessions()
 			break;
 
 		case 8: //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		{
+			u64 xsize = (findFileEndAdr - findFileStartAdr) & rd.RAWADR_MASK;
 
-			if (TRAP_MEMORY_SendSession(sendedFileNum = findFileNum, (findFileEndAdr - findFileStartAdr) & rd.RAWADR_MASK, findFileStartAdr, start_rtc, stop_rtc, 0))
+			NandFileDsc *sd = NandFlash_GetSessionInfo(findFileNum, findFileStartAdr);
+
+			NandFileDsc dsc;
+			dsc.flags		= 0;
+			dsc.SetErased();
+
+			if (sd != 0) dsc.flags = sd->flags;
+
+			if (TRAP_MEMORY_SendSession(sendedFileNum = findFileNum, xsize, findFileStartAdr, start_rtc, stop_rtc, dsc.flags))
 			{
-				NandFileDsc dsc;
+				if (sd == 0)
+				{
+					dsc.session		= findFileNum;
+					dsc.size		= xsize;
+					dsc.start_rtc	= start_rtc;
+					dsc.stop_rtc	= stop_rtc;
 
-				dsc.session		= findFileNum;
-				dsc.size		= (findFileEndAdr - findFileStartAdr) & rd.RAWADR_MASK;
-				dsc.start_rtc	= start_rtc;
-				dsc.stop_rtc	= stop_rtc;
+					adr.SetRawAdr(findFileStartAdr);
+					dsc.startPage	= adr.GetRawPage();
+					adr.SetRawAdr(findFileEndAdr);
+					dsc.lastPage	= adr.GetRawPage();
 
-				adr.SetRawAdr(findFileStartAdr);
-				dsc.startPage	= adr.GetRawPage();
-				adr.SetRawAdr(findFileEndAdr);
-				dsc.lastPage	= adr.GetRawPage();
-				
-				dsc.flags		= 0;
-
-				dsc.SetErased();
-
-				NandFlash_AddSessionInfo(&dsc);
+					NandFlash_AddSessionInfo(&dsc);
+				};
 
 				if (count == 0 || rd.CheckOverflow())
 				{
@@ -2531,6 +2538,7 @@ static bool UpdateBlackBoxSendSessions()
 			};
 				
 			break;
+		};
 
 		case 9: //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

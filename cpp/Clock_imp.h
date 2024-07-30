@@ -447,13 +447,13 @@ static __irq void Clock_IRQ()
 
 static void InitClock()
 {
-	if (rv3129.Init())
-	{
-		clock = &rv3129;
-	}
-	else if (ds3232.Init())
+	if (ds3232.Init())
 	{
 		clock = &ds3232;
+	}
+	else if (rv3129.Init())
+	{
+		clock = &rv3129;
 	};
 
 	SEGGER_RTT_WriteString(0, RTT_CTRL_TEXT_BRIGHT_WHITE "Clock Init ... ");

@@ -263,7 +263,7 @@ bool S_SPIM::Connect(u32 baudrate)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void S_SPIM::WritePIO(void *data, u16 count)
+void S_SPIM::WritePIO(const void *data, u16 count)
 {
 	byte *p = (byte*)data;
 
@@ -300,7 +300,7 @@ void S_SPIM::WritePIO(void *data, u16 count)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void S_SPIM::WriteAsyncDMA(void *data, u16 count)
+void S_SPIM::WriteAsyncDMA(const void *data, u16 count)
 {
 #ifdef ADSP_BLACKFIN
 
@@ -351,7 +351,7 @@ void S_SPIM::WriteAsyncDMA(void *data, u16 count)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void S_SPIM::WriteSyncDMA(void *data, u16 count)
+void S_SPIM::WriteSyncDMA(const void *data, u16 count)
 {
 #ifndef WIN32
 
@@ -373,30 +373,44 @@ void S_SPIM::WriteSyncDMA(void *data, u16 count)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+void S_SPIM::WriteAsyncDMA(const void *data1, u16 count1, const void *data2, u16 count2)
+{
 #ifdef ADSP_BLACKFIN
 
-void S_SPIM::WriteAsyncDMA(void *data1, u16 count1, void *data2, u16 count2)
-{
 	_hw->Ctl = GM|MSTR|TDBR_DMA|(_spimode&(CPOL|CPHA|LSBF));
 
 	_DMA.Write8(data1, count1, data2, count2);
 
 	_hw->Ctl |= SPE;
+
+#elif defined(CPU_SAME53)
+
+	_uhw.spi->INTFLAG = ~0;
+	_uhw.spi->INTENCLR = ~0;
+	_uhw.spi->CTRLB &= ~SPI_RXEN; while(_uhw.spi->SYNCBUSY);
+
+	_DMATX->WritePeripheral(data1, &_uhw.spi->DATA, count1, data2, count2, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_TX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
+
+#endif
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void S_SPIM::WriteSyncDMA(void *data1, u16 count1, void *data2, u16 count2)
+void S_SPIM::WriteSyncDMA(const void *data1, u16 count1, const void *data2, u16 count2)
 {
 	WriteAsyncDMA(data1, count1, data2, count2);
 
 	while (!CheckWriteComplete());
 
-	_hw->Ctl = 0;
-	_DMA.Disable();
+	#ifdef ADSP_BLACKFIN
+		_hw->Ctl = 0;
+		_DMA.Disable();
+	#elif defined(CPU_SAME53)
+		_DMATX->Disable();
+	#elif defined(CPU_XMC48)
+		_DMA->Disable();
+	#endif
 }
-
-#endif // #ifdef ADSP_BLACKFIN
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

@@ -182,9 +182,6 @@ public:
 
 	inline void SetMode(u16 mode) { _spimode = mode & (CPOL|CPHA|LSBF); }
 
-	void WriteAsyncDMA(void *data1, u16 count1, void *data2, u16 count2);
-	void WriteSyncDMA(void *data1, u16 count1, void *data2, u16 count2);
-
 #elif defined(CPU_SAME53)
 
 	S_SPIM(byte num, T_HW::S_PORT* pspck, T_HW::S_PORT* pmosi, T_HW::S_PORT* pmiso, T_HW::S_PORT* pcs, 
@@ -237,13 +234,16 @@ public:
 			
 			byte WriteReadByte(byte v);
 
-			void WritePIO(void *data, u16 count);
-			void WriteAsyncDMA(void *data, u16 count);
-			void WriteSyncDMA(void *data, u16 count);
+			void WritePIO(const void *data, u16 count);
+			void WriteAsyncDMA(const void *data, u16 count);
+			void WriteSyncDMA(const void *data, u16 count);
 
 			void ReadPIO(void *data, u16 count);
 			void ReadAsyncDMA(void *data, u16 count);
 			void ReadSyncDMA(void *data, u16 count);
+
+			void WriteAsyncDMA(const void *data1, u16 count1, const void *data2, u16 count2);
+			void WriteSyncDMA(const void *data1, u16 count1, const void *data2, u16 count2);
 
 	virtual	void InitHW();
 };

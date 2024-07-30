@@ -29,6 +29,10 @@
 #define ISP_DATASIZE TFTP_DATA_CHUNK_SIZE
 #endif
 
+#ifndef BOOT_EMAC_TIMEOUT
+#define BOOT_EMAC_TIMEOUT 10000
+#endif
+
 #endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1279,7 +1283,7 @@ int main()
 				UpdateEMAC();
 				runEmac = TFTP_Idle();
 
-				if (!TFTP_Connected() && tm64.Check(10000))
+				if (!TFTP_Connected() && tm64.Check(BOOT_EMAC_TIMEOUT))
 				{
 					runEmac = false;
 				};
