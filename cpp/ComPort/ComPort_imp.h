@@ -72,8 +72,13 @@ extern dword millisecondsCount;
 
 #ifdef ADSP_BLACKFIN //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#if defined(PIO_RTS) && defined(MASK_RTS)
 inline void	Set_RTS() { PIO_RTS->SET(MASK_RTS); }
 inline void	Clr_RTS() { PIO_RTS->CLR(MASK_RTS); }
+#else
+inline void	Set_RTS() { }
+inline void	Clr_RTS() { }
+#endif
 inline void Usic_Lock() {}
 inline void Usic_Unlock() {}
 
@@ -112,9 +117,13 @@ bool ComPort::Connect(CONNECT_TYPE ct, dword speed, byte parity, byte stopBits)
 	HW::PIOF->ClrMUX(PF11|PF12);		// *pPORTF_MUX	&= ~(PF11|PF12);	
 	HW::PIOF->SetFER(PF11|PF12);		// *pPORTF_FER |= PF11|PF12;	
 
-	PIO_RTS->ClrFER(MASK_RTS);			// PIO_RTS_FER &= ~MASK_RTS;
-	PIO_RTS->DirSet(MASK_RTS);			//PIO_RTS_DIR |= MASK_RTS;
-	PIO_RTS->CLR(MASK_RTS);				//PIO_RTS_CLR  = MASK_RTS;
+	#if defined(PIO_RTS) && defined(MASK_RTS)
+
+		PIO_RTS->ClrFER(MASK_RTS);			// PIO_RTS_FER &= ~MASK_RTS;
+		PIO_RTS->DirSet(MASK_RTS);			//PIO_RTS_DIR |= MASK_RTS;
+		PIO_RTS->CLR(MASK_RTS);				//PIO_RTS_CLR  = MASK_RTS;
+
+	#endif
 
 	_status485 = READ_END;
 
