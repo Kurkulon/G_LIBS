@@ -19,6 +19,7 @@
 
 #ifdef BOOT_EMAC
 
+#include <EMAC\emac.h>
 #include <EMAC\tftp.h>
 
 #ifndef TFTP_DATA_CHUNK_SIZE
@@ -852,7 +853,7 @@ static bool HandShake()
 					{
 						runCom = c = true;
 
-						timeOut.Reset();
+						tm64.Reset();
 					};
 
 					break;

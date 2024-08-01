@@ -112,6 +112,98 @@
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#elif defined(CPU_LPC824)	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	#define PAGESIZE 64
+	#define ISP_PAGESIZE PAGESIZE
+	#define FRDY 1
+	#define FCMDE 2
+	#define FLOCKE 4
+	#define PAGEDWORDS (PAGESIZE>>2)
+	#define PAGES_IN_SECTOR 16
+	#define SECTORSIZE (PAGESIZE*PAGES_IN_SECTOR)
+	#define SECTORDWORDS (SECTORSIZE>>2)
+	#define SECTORMASK (~(SECTORSIZE-1))
+
+	u32 PLANESIZE = 0x1000;
+
+	#ifndef BOOT_START_SECTOR
+		#ifdef CPU_LPC824
+			#define BOOT_START_SECTOR 8
+		#elif defined(CPU_LPC812)
+			#define BOOT_START_SECTOR 4
+		#endif
+	#endif
+
+	#define START_PAGE (BOOT_START_SECTOR*PAGES_IN_SECTOR)
+
+	#define BOOTSIZE (SECTORSIZE*BOOT_START_SECTOR)
+	#define FLASH0 0x000000
+	#define FLASH_START (FLASH0+BOOTSIZE)
+
+	//#define FLASH1 (FLASH0+PLANESIZE)
+
+	#define FLASH_END (FLASH0+PLANESIZE)
+	#define FLASH_SIZE (FLASH_END-FLASH_START)
+
+	#define IAP_LOCATION 0X1FFF1FF1
+	static u32 command_param[5];
+	static u32 status_result[4];
+	typedef void (*IAP)(unsigned int [],unsigned int[]);
+	#define iap_entry ((void(*)(u32[],u32[]))IAP_LOCATION)
+	//#define iap_entry ((IAP)IAP_LOCATION);
+
+	enum IAP_STATUS { CMD_SUCCESS = 0,  INVALID_COMMAND,  SRC_ADDR_ERROR,  DST_ADDR_ERROR,  SRC_ADDR_NOT_MAPPED,  DST_ADDR_NOT_MAPPED,  COUNT_ERROR,  INVALID_SECTOR,  SECTOR_NOT_BLANK, 
+	 SECTOR_NOT_PREPARED_FOR_WRITE_OPERATION, COMPARE_ERROR, BUSY, ERR_ISP_IRC_NO_POWER , ERR_ISP_FLASH_NO_POWER,  ERR_ISP_FLASH_NO_CLOCK  };
+
+	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	static bool IAP_PrepareSector(u32 sector)
+	{
+		sector += BOOT_START_SECTOR;
+
+		command_param[0] = 50;
+		command_param[1] = sector;
+		command_param[2] = sector;
+		command_param[3] = 0;
+
+		__disable_irq(); iap_entry(command_param, status_result); __enable_irq();
+
+		return status_result[0] == 0;
+	}
+
+	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	static bool IAP_WritePage(u32 pagenum, __packed u32 *pbuf)
+	{
+		command_param[0] = 51;
+		command_param[1] = FLASH_START + pagenum*PAGESIZE;
+		command_param[2] = (u32)pbuf;
+		command_param[3] = PAGESIZE;
+		command_param[4] = MCK/1000;
+
+		__disable_irq(); iap_entry(command_param, status_result); __enable_irq();
+
+		return status_result[0] == 0;
+	}
+
+	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	static bool IAP_EraseSector(u32 sector)
+	{
+		sector += BOOT_START_SECTOR;
+
+		command_param[0] = 52;
+		command_param[1] = sector;
+		command_param[2] = sector;
+		command_param[3] = MCK/1000;
+
+		__disable_irq(); iap_entry(command_param, status_result); __enable_irq();
+
+		return status_result[0] == 0;
+	}
+
+	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #endif	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -260,6 +352,12 @@ u32 FlashInt::GetSectorAdrLen(u32 sadr, u32 *radr)
 			break;
 		};
 	};
+
+#elif defined(CPU_LPC824)
+
+	u32 len = SECTORSIZE;
+	sadr -= BOOTSIZE;
+	sadr &= SECTORMASK;
 
 #endif
 
@@ -484,6 +582,18 @@ bool FlashInt::REQ_WritePage(u32 pa, __packed u32 *pbuf, u32 len)
 
 	return (HW::FLASH0->FSR & (FLASH_FSR_PROG_Msk|FLASH_FSR_SQER_Msk)) == FLASH_FSR_PROG_Msk;
 
+#elif defined(CPU_LPC824)
+
+	if (!IAP_PrepareSector(pa/SECTORSIZE))
+	{
+		return false;
+	};
+
+	if (!IAP_WritePage(pa/PAGESIZE, pbuf))
+	{
+		return false;
+	};
+
 #endif
 }
 
@@ -510,6 +620,19 @@ bool FlashInt::REQ_EraseSector(u32 sa)
 	while ((HW::FLASH0->FSR & (FLASH_FSR_ERASE_Msk|FLASH_FSR_SQER_Msk)) == 0);// { HW::WDT->Update(); };
 
 	return (HW::FLASH0->FSR & (FLASH_FSR_ERASE_Msk|FLASH_FSR_SQER_Msk)) == FLASH_FSR_ERASE_Msk;
+
+#elif defined(CPU_LPC824)
+
+	if (!IAP_PrepareSector(sa/SECTORSIZE))
+	{
+		return false;
+	};
+
+	if (!IAP_EraseSector(sa/SECTORSIZE))
+	{
+		return false;
+	};
+
 #endif
 }
 

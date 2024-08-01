@@ -1,4 +1,4 @@
-#if !defined(CPU_LPC812) && !defined(_ADI_COMPILER)
+#if !defined(CORETYPE_LPC8XX) && !defined(_ADI_COMPILER)
 
 #include "types.h"
 

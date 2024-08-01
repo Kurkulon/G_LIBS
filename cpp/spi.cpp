@@ -306,7 +306,7 @@ void S_SPIM::WriteAsyncDMA(const void *data, u16 count)
 
 	_hw->Ctl = GM|MSTR|TDBR_DMA|(_spimode&(CPOL|CPHA|LSBF));
 
-	_DMA.Write8(data, count);
+	_DMA.Write8((volatile void*)data, count);
 
 	_hw->Ctl |= SPE;
 
@@ -379,7 +379,7 @@ void S_SPIM::WriteAsyncDMA(const void *data1, u16 count1, const void *data2, u16
 
 	_hw->Ctl = GM|MSTR|TDBR_DMA|(_spimode&(CPOL|CPHA|LSBF));
 
-	_DMA.Write8(data1, count1, data2, count2);
+	_DMA.Write8((volatile void*)data1, count1, (volatile void*)data2, count2);
 
 	_hw->Ctl |= SPE;
 

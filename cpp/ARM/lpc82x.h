@@ -848,6 +848,9 @@ namespace T_HW
 		LPC_REG z_RESERVED;             /*!< Offset: 0x010 RESERVED                          */
 		LPC_REG WARNINT;                /*!< Offset: 0x014 Watchdog timer warning int. register (R/W) */
 		LPC_REG WINDOW;                 /*!< Offset: 0x018 Watchdog timer window value register (R/W) */
+
+		inline void Reset()		{ __disable_irq(); FEED = 0xAA; __nop(); FEED = 0x55; __enable_irq(); }
+		inline void Update()	{ __disable_irq(); FEED = 0xAA; __nop(); FEED = 0x55; __enable_irq(); }
 	};
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

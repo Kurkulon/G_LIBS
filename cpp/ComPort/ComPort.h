@@ -312,13 +312,14 @@ class ComPort : public USIC
 
 #endif
 
+	bool	Connect(CONNECT_TYPE ct, dword speed, byte parity, byte stopBits = 1);
+	bool	Connect(dword speed, byte parity) { return Connect(ASYNC, speed, parity, 1); }
+
 #ifdef ADSP_BLACKFIN
 
-	bool		Connect(CONNECT_TYPE ct, dword speed, byte parity, byte stopBits);
-	bool		Connect(dword speed, byte parity) { return Connect(ASYNC, speed, parity, 1); }
+	//bool		Connect(CONNECT_TYPE ct, dword speed, byte parity, byte stopBits);
 
 #else
-				bool	Connect(CONNECT_TYPE ct, dword speed, byte parity, byte stopBits = 1);
 	virtual		void	InitHW();
 
 #endif
