@@ -35,6 +35,7 @@ Heap_Size			EQU     0x00000000
 VecTableIntSize		EQU		16*4	
 VecTableExtSize		EQU		137*4	
 SCB_VTOR			EQU		0xE000ED08
+SCB_CCR				EQU		0xE000ED14
 SeggerRttCB_size	EQU		0x2000
 
  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -125,8 +126,12 @@ Reset_Handler   PROC
                 EXPORT  Reset_Handler             [WEAK]
                 IMPORT  SystemInit
                 IMPORT  __main
-                
-                
+               
+                LDR		R0, =SCB_CCR 
+				LDR		R1, [R0]
+				BIC		R1, #0x18		; Disable DIV_0_TRP
+                STR		R1, [R0]		; Enable unaligned memory access - SCB_CCR.UNALIGN_TRP = 0 
+
                 MOVS	R0, #(VecTableIntSize+VecTableExtSize-4)
                 LDR		R1, =VectorTableInt
                 LDR		R2, =Dummy_Handler
@@ -181,7 +186,7 @@ Reset_Handler   PROC
                 SUBS	R0, #4
 				STR		R2, [R1,R0]
                 BNE		|L1.17|
-                
+
                 LDR     R0, =SystemInit
                 BLX     R0
 

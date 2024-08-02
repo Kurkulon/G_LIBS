@@ -380,10 +380,30 @@
 
 #ifdef MAN_TRANSMIT_V1
 
-	inline void ManDisable()	{ PIO_MANCH->CLR(L1|L2);	PIO_MANCH->SET(H1|H2);							} 
-	inline void ManZero()		{ PIO_MANCH->CLR(L2);		PIO_MANCH->SET(L1|H1);		PIO_MANCH->CLR(H2);	} 
-	inline void ManOne()		{ PIO_MANCH->CLR(L1);		PIO_MANCH->SET(L2|H2);		PIO_MANCH->CLR(H1);	} 
-	inline void ManDischarge()	{ PIO_MANCH->CLR(L1|L2);	PIO_MANCH->CLR(H1|H2);							} 
+	#if !defined(H1) || !defined(H2)
+
+		#define PIO_MANCH_SET_H1_H2()
+		#define PIO_MANCH_SET_L1_H1()	PIO_MANCH->SET(L1)
+		#define PIO_MANCH_SET_L2_H2()	PIO_MANCH->SET(L2)
+		#define PIO_MANCH_CLR_H1_H2()
+		#define PIO_MANCH_CLR_H1()
+		#define PIO_MANCH_CLR_H2()
+
+	#else
+
+		#define PIO_MANCH_SET_H1_H2()	PIO_MANCH->SET(H1|H2)
+		#define PIO_MANCH_SET_L1_H1()	PIO_MANCH->SET(L1|H1)
+		#define PIO_MANCH_SET_L2_H2()	PIO_MANCH->SET(L2|H2)
+		#define PIO_MANCH_CLR_H1_H2()	PIO_MANCH->CLR(H1|H2)
+		#define PIO_MANCH_CLR_H1()		PIO_MANCH->CLR(H1)
+		#define PIO_MANCH_CLR_H2()		PIO_MANCH->CLR(H2)
+
+	#endif
+
+	inline void ManDisable()	{ PIO_MANCH->CLR(L1|L2);	PIO_MANCH_SET_H1_H2();						} 
+	inline void ManZero()		{ PIO_MANCH->CLR(L2);		PIO_MANCH_SET_L1_H1();	PIO_MANCH_CLR_H2();	} 
+	inline void ManOne()		{ PIO_MANCH->CLR(L1);		PIO_MANCH_SET_L2_H2();	PIO_MANCH_CLR_H1();	} 
+	inline void ManDischarge()	{ PIO_MANCH->CLR(L1|L2);	PIO_MANCH_CLR_H1_H2();						} 
 
 #elif defined(MAN_TRANSMIT_V2)
 
