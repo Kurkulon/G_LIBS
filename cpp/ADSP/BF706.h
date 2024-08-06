@@ -7,7 +7,7 @@
 
 //#include <blackfin.h>
 #include <bfrom.h>
-//#include <sys\exception.h>
+#include <sys\exception.h>
 #include <sysreg.h>
 
 #include "types.h"
@@ -995,6 +995,64 @@ namespace T_HW
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+	#define DMA_HSDA                (1UL<<31)       					/* High Speed Descriptor Array Mode */
+	#define DMA_DBURST              (1UL<<30)       					/* Descriptor Bursting (HSDA Mode) */
+	#define DMA_PDRF                (1UL<<28)       					/* Peripheral Data Request Forward */
+	#define DMA_TWOD                (1UL<<26)       					/* Two Dimension Addressing Enable */
+	#define DMA_DESCIDCPY           (1UL<<25)       					/* Descriptor ID Copy Control */
+	#define DMA_TOVEN               (1UL<<24)       					/* Trigger Overrun Error Enable */
+	#define DMA_TRIG_NO				(0UL<<22)							/* Generate Outgoing Trigger */
+	#define DMA_TRIG_XCNT			(1UL<<22)							/* Generate Outgoing Trigger */
+	#define DMA_TRIG_YCNT			(2UL<<22)							/* Generate Outgoing Trigger */
+	#define DMA_INT_NO				(0UL<<20)							/* Generate Interrupt */
+	#define DMA_INT_XCNT			(1UL<<20)							/* Generate Interrupt */
+	#define DMA_INT_YCNT			(2UL<<20)							/* Generate Interrupt */
+	#define DMA_INT_PERIPH			(3UL<<20)							/* Generate Interrupt */
+	#define DMA_NDSIZE              (((v)&7)<<16)   					/* Next Descriptor Set Size */
+	#define DMA_NDSIZE1             (0UL<<16)							/* Next Descriptor Set Size */
+	#define DMA_NDSIZE2             (1UL<<16)							/* Next Descriptor Set Size */
+	#define DMA_NDSIZE3             (2UL<<16)							/* Next Descriptor Set Size */
+	#define DMA_NDSIZE4             (3UL<<16)							/* Next Descriptor Set Size */
+	#define DMA_NDSIZE5             (4UL<<16)							/* Next Descriptor Set Size */
+	#define DMA_NDSIZE6             (5UL<<16)							/* Next Descriptor Set Size */
+	#define DMA_NDSIZE7             (6UL<<16)							/* Next Descriptor Set Size */
+	#define DMA_TWAIT               (1UL<<15)       					/* Wait for Trigger */
+	#define DMA_FLOW                (((v)&7)<<12)   					/* Next Operation */
+	#define DMA_FLOW_STOP			(0UL<<12)   						/* Next Operation */
+	#define DMA_FLOW_AUTO			(1UL<<12)   						/* Next Operation */
+	#define DMA_FLOW_DSCLIST		(4UL<<12)   						/* Next Operation */
+	#define DMA_FLOW_DSCARRAY		(5UL<<12)   						/* Next Operation */
+	#define DMA_FLOW_DODLIST 		(6UL<<12)   						/* Next Operation */
+	#define DMA_FLOW_DODARRAY		(7UL<<12)   						/* Next Operation */
+	#define DMA_MSIZE               (((v)&7)<<8)    					/* Memory Transfer Word Size */
+	#define DMA_MSIZE8              (0UL<<8)	    					/* Memory Transfer Word Size */
+	#define DMA_MSIZE16             (1UL<<8)	    					/* Memory Transfer Word Size */
+	#define DMA_MSIZE32             (2UL<<8)	    					/* Memory Transfer Word Size */
+	#define DMA_MSIZE64             (3UL<<8)	    					/* Memory Transfer Word Size */
+	#define DMA_MSIZE128            (4UL<<8)	    					/* Memory Transfer Word Size */
+	#define DMA_MSIZE256            (5UL<<8)	    					/* Memory Transfer Word Size */
+	#define DMA_PSIZE(v)			(((v)&7)<<4)						/* Peripheral Transfer Word Size */
+	#define DMA_PSIZE8				(0UL<<4)							/* Peripheral Transfer Word Size */
+	#define DMA_PSIZE16				(1UL<<4)							/* Peripheral Transfer Word Size */
+	#define DMA_PSIZE32				(2UL<<4)							/* Peripheral Transfer Word Size */
+	#define DMA_PSIZE64				(3UL<<4)							/* Peripheral Transfer Word Size */
+	#define DMA_CADDR            	(1UL<<3)        					/* Use Current Address */
+	#define DMA_SYNC             	(1UL<<2)        					/* Synchronize Work Unit Transitions */
+	#define DMA_WNR              	(1UL<<1)        					/* Write/Read Channel Direction */
+	#define DMA_EN					(1UL<<0)        					/* DMA Channel Enable */
+
+	#define DMA_STAT_TWAIT				(1UL<<20)							/* Trigger Wait Status */
+	//#define DMA_STAT_FIFOFILL               16  							/* FIFO Fill Status */
+	//#define DMA_STAT_MBWID                  14  							/* Memory Bus Width */
+	//#define DMA_STAT_PBWID                  12  							/* Peripheral Bus Width */
+	//#define DMA_STAT_RUN                     8  							/* Run Status */
+	//#define DMA_STAT_ERRC                    4  							/* Error Cause */
+	#define DMA_STAT_PIRQ    			(1UL<<2) 							/* Peripheral Interrupt Request */
+	#define DMA_STAT_IRQERR  			(1UL<<1) 							/* Error Interrupt */
+	#define DMA_STAT_IRQDONE 			(1UL<<0) 							/* Work Unit/Row Done Interrupt */
+
+	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 	/*!
 	 * \struct ADI_CRC_TypeDef
 	 * \brief  Cyclic Redundancy Check Unit
@@ -1327,12 +1385,15 @@ namespace T_HW
 
 		inline void 	DirSet(u16 m) 		{ DIR_SET = m; }
 		inline void 	DirClr(u16 m) 		{ DIR_CLR = m; }
-		
+
+		inline void		SetFER(u16 m)		{ FER_SET = m; }
+		inline void		ClrFER(u16 m)		{ FER_CLR = m; }
+
 		inline void		SetMUX(byte pin, byte v) { MUX = (MUX & ~(3UL<<pin)) | ((v&3)<<pin); }
 
 	};
 
-	typedef S_PORT S_PORTA, S_PORTB, S_PORTC, S_PIOA, S_PIOB, S_PIOC;
+	typedef S_PORT S_PORTA, S_PORTB, S_PORTC, S_PIO, S_PIOA, S_PIOB, S_PIOC;
 
 	#define PA0 	(1UL<<0)
 	#define PA1 	(1UL<<1)

@@ -98,7 +98,7 @@ compiler_options = $(debug_compiler_options) -c -c++11 -g++ -g -structs-do-not-o
 
 ####################################################################################################################################################################################################
 
-link_options = $(cpu_opt) -no-mem -flags-link -e,-MDADI_CCES,-MD__cplusplus -add-debug-libpaths -flags-link @$(objdir)\link_input.txt
+link_options = $(cpu_opt) -no-mem -flags-link -e,-MDADI_CCES,-MD__cplusplus,-MDNO_UTILITY_ROM -add-debug-libpaths -flags-link @$(objdir)\link_input.txt
   
 ####################################################################################################################################################################################################
 
