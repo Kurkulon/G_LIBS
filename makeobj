@@ -193,7 +193,7 @@ adsp_link_options = -build-lib $(adsp_cpu_options)
 
 ##################################################################################################
 
-adsp_link_options_initcode = $(adsp_cpu_options) -flags-link -e,-MDADI_CCES
+adsp_link_options_initcode = $(adsp_cpu_options) -flags-link -e,-MDADI_CCES,-MDCPU_$(targetcpu)
 
 ##################################################################################################
 #

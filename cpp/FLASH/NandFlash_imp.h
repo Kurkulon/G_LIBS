@@ -166,6 +166,7 @@ static SessionInfo lastSessionInfo;
 u16 deviceID = 0;
 
 static u64 flashUsedSize = 0;
+static u64 flashStartAdr = 0;
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -501,9 +502,10 @@ struct EraseBlock
 	byte state;
 	bool force;		// стереть полюбасу
 	bool check;		// ѕроверить результат стирани€
-	u16	errBlocks;
+	u16	 errBlocks;
+	u16  errErase;
 
-	EraseBlock() : er(~0), state(WAIT), force(false), check(true), errBlocks(0) {}
+	EraseBlock() : er(~0), state(WAIT), force(false), check(true), errBlocks(0), errErase(0) {}
 
 	void Start(const FLADR &rd, bool frc, bool chk);
 	bool Update();
@@ -606,12 +608,11 @@ bool EraseBlock::Update()
 				byte status = NAND_CmdReadStatus();
 
 				if ((status & (NAND_SR_FAIL|NAND_SR_RDY)) != NAND_SR_RDY && check) // erase error																	
-				{																												
+				{				
+					errErase += 1;
 					errBlocks += 1;	
 					nvv.badBlocks[er.GetChip()] += 1;
 
-//					__breakpoint(0);																							
-																																
 					NAND_CmdWritePage(er.pg, er.GetBlock(), 0);																			
 																																
 					NAND_WRITE(0);NAND_WRITE(0);NAND_WRITE(0);NAND_WRITE(0);//*(u32*)FLD = 0;		// spareErase.validPage = 0; spareErase.validBlock = 0;																
@@ -2137,6 +2138,7 @@ static void InitSessionsNew()
 	bool c = false;
 
 	flashUsedSize = 0;
+	flashStartAdr = write.wr.GetRawAdr();
 
 	for (u16 i = 128, ind = nvv.index; i > 0; i--, ind = (ind-1)&127)
 	{
@@ -2990,15 +2992,23 @@ u64 NandFlash_Full_Size_Get()
 
 u64 NandFlash_Used_Size_Get()
 {
-	return flashUsedSize;
+	FLADR adr(0);
+
+	adr.SetRawAdr(write.wr.GetRawAdr() - flashStartAdr);
+
+	u64 t = flashUsedSize + adr.GetRawAdr();
+
+	if (t > nandSize.fl) t = nandSize.fl;
+
+	return t;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-i64 FLASH_Empty_Size_Get()
-{
-	return NandFlash_Full_Size_Get() - NandFlash_Used_Size_Get();
-}
+//i64 FLASH_Empty_Size_Get()
+//{
+//	return NandFlash_Full_Size_Get() - NandFlash_Used_Size_Get();
+//}
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -3007,26 +3017,38 @@ u16 NandFlash_Chip_Mask_Get()
 	return nandSize.mask;
 }
 
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+u16 NandFlash_BlockErr_Get()
+{
+	return write.eraseBlock.errErase;
+}
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-// удалить 
-bool FLASH_Erase_Full()
+u16 NandFlash_PageErr_Get()
 {
-	//if(flash_status_operation != NANDFL_STAT_OPERATION_WAIT) return false;
-	//FRAM_Memory_Start_Adress_Set(FRAM_Memory_Current_Adress_Get());
-	return true;
+	return write.spare.v1.fbp;
 }
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// удалить 
+//bool FLASH_Erase_Full()
+//{
+//	//if(flash_status_operation != NANDFL_STAT_OPERATION_WAIT) return false;
+//	//FRAM_Memory_Start_Adress_Set(FRAM_Memory_Current_Adress_Get());
+//	return true;
+//}
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 // восстановить
-bool FLASH_UnErase_Full()
-{
-	//if(flash_status_operation != NANDFL_STAT_OPERATION_WAIT) return false;
-	//FRAM_Memory_Start_Adress_Set(-1);
-	return true;
-}
+//bool FLASH_UnErase_Full()
+//{
+//	//if(flash_status_operation != NANDFL_STAT_OPERATION_WAIT) return false;
+//	//FRAM_Memory_Start_Adress_Set(-1);
+//	return true;
+//}
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

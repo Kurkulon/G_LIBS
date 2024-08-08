@@ -18,7 +18,7 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#ifdef ADSP_BLACKFIN 
+#ifdef __ADSPBF59x__ 
 
 void DMA_CH::Trans(volatile void *src, u16 len, u16 ctrl)
 {
@@ -104,6 +104,94 @@ void DMA_CH::Trans2D(volatile void *stadr1, u16 xcount1, u16 xmdfy1, u16 ycount1
 
 	_dmach->NEXT_DESC_PTR = &_dsc1;
 	_dmach->CONFIG = FLOW_LARGE|NDSIZE_9|DMAEN;
+}
+
+#elif defined(__ADSPBF70x__) //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void DMA_CH::Trans(volatile void *src, u16 len, u16 ctrl)
+{
+	_dmach->CFG = 0;
+	_dmach->ADDRSTART = (void*)src;
+	_dmach->XCNT = len;
+	_dmach->XMOD = 1UL<<((ctrl>>4)&3);
+
+	_dmach->STAT = ~0;
+	_dmach->CFG = DMA_FLOW_STOP|(ctrl&(DMA_PSIZE(~0)|DMA_WNR))|DMA_SYNC|DMA_EN;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void DMA_CH::Trans(volatile void *stadr1, u16 len1, u16 mdfy1, u16 ctrl1, volatile void *stadr2, u16 len2, u16 mdfy2, u16 ctrl2)
+{
+	_dmach->CFG = 0;
+
+	ctrl1 = (ctrl1&(DMA_PSIZE(~0)|DMA_WNR))|DMA_SYNC|DMA_EN;
+	ctrl2 = (ctrl2&(DMA_PSIZE(~0)|DMA_WNR))|DMA_SYNC|DMA_EN;
+
+	_dsc1.ADDRSTART	= (void*)stadr1;
+	_dsc1.XCNT		= len1;
+	_dsc1.XMOD		= mdfy1;
+
+	if (stadr2 != 0 && len2 != 0)
+	{
+		_dsc1.DSCPTR_NXT = &_dsc2;
+		_dsc1.DMACFG = DMA_FLOW_DSCLIST|DMA_NDSIZE5|ctrl1;
+
+		_dsc2.ADDRSTART = (void*)stadr2;
+		_dsc2.XCNT = len2;
+		_dsc2.XMOD = mdfy2;
+		_dsc2.DMACFG = DMA_FLOW_STOP|ctrl2;
+	}
+	else
+	{
+		_dsc1.DMACFG = DMA_FLOW_STOP|ctrl1;
+	};
+
+	_dmach->STAT = ~0;
+
+	_dmach->DSCPTR_NXT = &_dsc1;
+	_dmach->CFG = DMA_FLOW_DSCLIST|DMA_NDSIZE5|DMA_EN;
+}
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void DMA_CH::Trans2D(volatile void *stadr1, u16 xcount1, u16 xmdfy1, u16 ycount1, u16 ymdfy1, volatile void *stadr2, u16 xcount2, u16 xmdfy2, u16 ycount2, u16 ymdfy2, u16 ctrl)
+{
+	_dmach->CFG = 0;
+
+	ctrl = (ctrl&(DMA_PSIZE(~0)|DMA_WNR))|DMA_SYNC|DMA_EN;
+	u16 ctrl2 = ctrl;
+
+	if (ycount1 != 0 ) ctrl  |= DMA_TWOD;
+	if (ycount2 != 0 ) ctrl2 |= DMA_TWOD;
+
+	_dsc1.ADDRSTART	= (void*)stadr1;
+	_dsc1.XCNT		= xcount1;
+	_dsc1.XMOD		= xmdfy1;
+	_dsc1.YCNT		= ycount1;
+	_dsc1.YMOD		= ymdfy1;
+
+	if (stadr2 != 0 && xcount2 != 0)
+	{
+		_dsc1.DSCPTR_NXT = &_dsc2;
+		_dsc1.DMACFG	 = DMA_FLOW_DSCLIST|DMA_NDSIZE7|ctrl;
+
+		_dsc2.ADDRSTART = (void*)stadr2;
+		_dsc2.XCNT		= xcount2;
+		_dsc2.XMOD		= xmdfy2;
+		_dsc2.YCNT		= ycount2;
+		_dsc2.YMOD		= ymdfy2;
+
+		_dsc2.DMACFG = DMA_FLOW_STOP|ctrl2;
+	}
+	else
+	{
+		_dsc1.DMACFG = DMA_FLOW_STOP|ctrl;
+	};
+
+	_dmach->STAT = ~0;
+
+	_dmach->DSCPTR_NXT = &_dsc1;
+	_dmach->CFG = DMA_FLOW_DSCLIST|DMA_NDSIZE7|DMA_EN;
 }
 
 #endif // #ifdef ADSP_BLACKFIN 

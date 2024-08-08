@@ -5,8 +5,9 @@
 *  (c) Analog Devices Inc. 2007                                               *
 *                                                                             *
 ******************************************************************************/
+#ifdef CPU_BF592
 
-ARCHITECTURE(ADSP-BF592-A)
+//ARCHITECTURE(ADSP-BF592-A)
 
 #define     CODE_BASE       0xFFA00000
 
@@ -60,3 +61,56 @@ PROCESSOR p0
 /***************************************************************
  EOF
 ***************************************************************/
+
+#elif defined(CPU_BF706)
+
+#define     CODE_BASE       0x11A00000
+
+#define     DATA_BASE       0x11800000
+
+#define     BANK_LENGTH     0x4000
+
+#ifdef ADI_CCES
+#define INITCODE_FUNC_NAME	__Z8initcodeP20_ADI_ROM_BOOT_CONFIG
+#else
+//#define INITCODE_FUNC_NAME	_initcode__FP13ADI_BOOT_DATA
+#endif
+
+$OBJECTS = $COMMAND_LINE_OBJECTS;
+$LIBRARIES = $COMMAND_LINE_OBJECTS;
+
+
+MEMORY
+{
+    MEM_INITCODE { TYPE(RAM) WIDTH(8) START(CODE_BASE) LENGTH(BANK_LENGTH) }
+    MEM_INITDATA { TYPE(RAM) WIDTH(8) START(DATA_BASE) LENGTH(BANK_LENGTH) }
+}
+
+
+PROCESSOR p0
+{
+    RESOLVE( INITCODE_FUNC_NAME, CODE_BASE )
+    KEEP(INITCODE_FUNC_NAME)
+
+    OUTPUT( $COMMAND_LINE_OUTPUT_FILE )
+
+    SECTIONS
+    {
+        L1_CODE
+        {
+            INPUT_SECTION_ALIGN(4)
+            INPUT_SECTIONS( $OBJECTS(L1_code) $LIBRARIES(L1_code) )
+            INPUT_SECTIONS( $OBJECTS(program) $LIBRARIES(program) )
+        } > MEM_INITCODE
+
+        L1_DATA
+        {
+            INPUT_SECTION_ALIGN(4)       
+            INPUT_SECTIONS( $OBJECTS(L1_data) $LIBRARIES(L1_data) )
+            INPUT_SECTIONS( $OBJECTS(data1)   $LIBRARIES(data1) )
+        } > MEM_INITDATA
+    }
+}
+
+
+#endif

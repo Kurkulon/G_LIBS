@@ -150,6 +150,13 @@ namespace T_HW
 		BF_RW32 DCPLB_DATA[16];                /*!< Data Memory CPLB Data Registers */
 	}; 
 
+	#define DCTL_ENX					(1UL<<16)                               /* Enable Extended Data Access */
+	#define DCTL_RDCHK              	(1UL<<9)                               /* Read Parity Check */
+	#define DCTL_CBYPASS            	(1UL<<8)                               /* Cache Bypass */
+	#define DCTL_DCBS               	(1UL<<4)                               /* Data Cache Bank Select */
+	#define DCTL_CFG                	(1UL<<2)                               /* Configure as Cache or SRAM */
+	#define DCTL_ENCPLB             	(1UL<<1)                               /* Enable CPLB Operations */
+
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 	/*!
@@ -170,6 +177,12 @@ namespace T_HW
     												BF_RO8                  z__RESERVED2[192];
 		BF_RW32 ICPLB_DATA[16];                /*!< Instruction Memory CPLB Data Registers */
 	};
+
+	#define ICTL_CPRIORST               (1UL<<13)                              /* Cache Line Priority Reset */
+	#define ICTL_RDCHK                  (1UL<<9)                               /* Read Parity Checking */
+	#define ICTL_CBYPASS                (1UL<<8)                               /* Cache Bypass */
+	#define ICTL_CFG                    (1UL<<2)                               /* Configure L1 code memory as cache */
+	#define ICTL_ENCPLB                 (1UL<<1)                               /* Enable ICPLB */
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -255,7 +268,30 @@ namespace T_HW
 	struct S_RCU
 	{
 		BF_RW32 CTL;                           /*!< Control Register */
-		BF_RW32 STAT;                          /*!< Status Register */
+
+		struct
+		{
+			BF_RW32 HWRST		:1;     /* Hardware Reset */
+			BF_RW32 HBRST		:1;     /* Hibernate Reset */
+			BF_RW32 SSRST		:1;     /* System Source Reset */
+			BF_RW32	SWRST		:1;		/* Software Reset */ 
+			BF_RW32				:1;     
+			BF_RW32 RSTOUT		:1;		/* Reset Out Status */  
+			BF_RW32				:2;     
+			BF_RW32 BMODE		:4;		/* Boot Mode */  
+			BF_RW32				:4;     
+			BF_RW32 ADDRERR		:1;		/* Address Error */   
+			BF_RW32 LWERR		:1;     /* Lock Write Error */
+			BF_RW32 RSTOUTERR	:1;     /* Reset Out Error */
+
+			operator u32() { return *((u32*)this); }
+			u32 operator=(u32 v) { return *((u32*)this) = v; }
+
+			u32 Bits() { return *((u32*)this); } 
+
+		} STAT;	//RW16	STATUS;	/**< \brief Offset: 0x1A (R/W 16) I2CM Status */
+
+		//BF_RW32 STAT;                          /*!< Status Register */
 		BF_RW32 CRCTL;                         /*!< Core Reset Control Register */
 		BF_RW32 CRSTAT;                        /*!< Core Reset Status Register */
 		BF_RW32 SIDIS;                         /*!< System Interface Disable Register */
@@ -271,6 +307,16 @@ namespace T_HW
 		BF_RO32 REVID;                         /*!< Revision ID Register */
 	};
 
+	#define RCU_STAT_RSTOUTERR              (1UL<<18)                               /* Reset Out Error */
+	#define RCU_STAT_LWERR                  (1UL<<17)                               /* Lock Write Error */
+	#define RCU_STAT_ADDRERR                (1UL<<16)                               /* Address Error */
+	#define RCU_STAT_BMODE(v)                (((v)&0xF)<<8)                         /* Boot Mode */
+	#define RCU_STAT_RSTOUT                  (1UL<<5)                               /* Reset Out Status */
+	#define RCU_STAT_SWRST                   (1UL<<3)                               /* Software Reset */
+	#define RCU_STAT_SSRST                   (1UL<<2)                               /* System Source Reset */
+	#define RCU_STAT_HBRST                   (1UL<<1)                               /* Hibernate Reset */
+	#define RCU_STAT_HWRST                   (1UL<<0)                               /* Hardware Reset */
+											
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 	/*!
@@ -318,6 +364,31 @@ namespace T_HW
     												BF_RO8                  z__RESERVED2[8];
 		BF_RO32 REVID;                         /*!< Revision ID Register */
 	};
+
+	#define CGU_CTL_LOCK                     (1UL<<31)                               /* Lock */
+	#define CGU_CTL_WFI                      (1UL<<30)                               /* Wait For Idle */
+	#define CGU_CTL_MSEL(v)                  (((v)&0x7F)<<8)                               /* Multiplier Select */
+	#define CGU_CTL_DF                       (1UL<<0)                               /* Divide Frequency */
+
+	#define CGU_STAT_PCFGERR                (1UL<<21)                               /* PLL Configuration Error */
+	#define CGU_STAT_WDIVERR                (1UL<<20)                               /* Write to DIV Error */
+	#define CGU_STAT_WDFMSERR               (1UL<<19)                               /* Write to DF or MSEL Error */
+	#define CGU_STAT_LWERR                  (1UL<<17)                               /* Lock Write Error */
+	#define CGU_STAT_ADDRERR                (1UL<<16)                               /* Address Error */
+	#define CGU_STAT_CLKSALGN                (1UL<<3)                               /* Clock Alignment */
+	#define CGU_STAT_PLOCK                   (1UL<<2)                               /* PLL Lock */
+	#define CGU_STAT_PLLBP                   (1UL<<1)                               /* PLL Bypass */
+	#define CGU_STAT_PLLEN                   (1UL<<0)                               /* PLL Enable */
+
+	#define CGU_DIV_LOCK                    (1UL<<31)                               /* Lock */
+	#define CGU_DIV_UPDT                    (1UL<<30)                               /* Update Clock Divisors */
+	#define CGU_DIV_ALGN                    (1UL<<29)                               /* Align */
+	#define CGU_DIV_OSEL(v)                	(((v)&0x7F)<<22)                               /* OUTCLK Divisor */
+	#define CGU_DIV_DSEL(v)                	(((v)&0x1F)<<16)                               /* DCLK Divisor */
+	#define CGU_DIV_S1SEL(v)               	(((v)&0x07)<<13)                               /* SCLK 1 Divisor */
+	#define CGU_DIV_SYSSEL(v)              	(((v)&0x1F)<<8)                               /* SYSCLK Divisor */
+	#define CGU_DIV_S0SEL(v)               	(((v)&0x07)<<5)                               /* SCLK 0 Divisor */
+	#define CGU_DIV_CSEL(v)                	(((v)&0x1F)<<0)                               /* CCLK Divisor */
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
