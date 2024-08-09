@@ -2992,11 +2992,9 @@ u64 NandFlash_Full_Size_Get()
 
 u64 NandFlash_Used_Size_Get()
 {
-	FLADR adr(0);
+	u64 t = write.wr.raw - flashStartAdr;
 
-	adr.SetRawAdr(write.wr.GetRawAdr() - flashStartAdr);
-
-	u64 t = flashUsedSize + adr.GetRawAdr();
+	t += flashUsedSize;
 
 	if (t > nandSize.fl) t = nandSize.fl;
 
@@ -3285,6 +3283,8 @@ static void NandFlash_SaveVars()
 					};
 
 					if (nvv.f.size != 0) nvv.f.SetErased();
+
+					flashUsedSize = 0;
 
 					savesCount = 1;
 

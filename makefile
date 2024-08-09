@@ -12,7 +12,7 @@ cppdir = cpp
 !ifneq version Win32_Debug
 objdir = build\$(targetcpu)_$(version)
 !else
-objdir = $(version)
+objdir = build\$(version)
 !endif
 
 ##################################################################################################

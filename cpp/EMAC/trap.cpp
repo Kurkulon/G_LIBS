@@ -1512,7 +1512,9 @@ void TRAP_Init()
 
 void TRAP_Idle()
 {
-	if (cmdReboot && tmReboot.Check(100)) HW::SystemReset(); 
+	#ifndef WIN32
+					if (cmdReboot && tmReboot.Check(100)) HW::SystemReset(); 
+	#endif
 
 	UpdateSendVector();
 	//UpdateSendVector_Dlya_Vova();

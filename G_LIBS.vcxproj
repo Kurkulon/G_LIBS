@@ -143,7 +143,7 @@
     <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
     <NMakeOutput>$(ProjectDir)\SAME53_d.a</NMakeOutput>
     <NMakePreprocessorDefinitions>_DEBUG;__softfp=;CPU_SAME53;</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ARMCC50INC);</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>.\cpp;$(ARMCC50INC);</NMakeIncludeSearchPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='SAME53_Release|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
@@ -153,7 +153,7 @@
     <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
     <NMakeOutput>$(ProjectDir)\SAME53_r.a</NMakeOutput>
     <NMakePreprocessorDefinitions>__softfp=;CPU_SAME53;</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ARMCC50INC);</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>.\cpp;$(ARMCC50INC);</NMakeIncludeSearchPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='XMC48_Debug|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
@@ -248,7 +248,10 @@
   <ItemDefinitionGroup>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="cpp\ADSP\AFP_imp.h" />
+    <ClInclude Include="cpp\ADSP\AFP_imp_v2.h" />
     <ClInclude Include="cpp\ADSP\BF592.h" />
+    <ClInclude Include="cpp\ADSP\BF706.h" />
     <ClInclude Include="cpp\ADSP\system_imp.h" />
     <ClInclude Include="cpp\ARM\cm0.h" />
     <ClInclude Include="cpp\ARM\cm4.h" />
@@ -258,6 +261,7 @@
     <ClInclude Include="cpp\ARM\system_imp.h" />
     <ClInclude Include="cpp\ARM\XMC4800.h" />
     <ClInclude Include="cpp\BOOT\boot_com_emac_imp.h" />
+    <ClInclude Include="cpp\BOOT\boot_com_emac_imp_v2.h" />
     <ClInclude Include="cpp\BOOT\boot_imp.h" />
     <ClInclude Include="cpp\BOOT\boot_isp.h" />
     <ClInclude Include="cpp\BOOT\BOOT_LPC824_IMP.h" />
@@ -291,9 +295,16 @@
     <ClInclude Include="cpp\FLASH\at25df021_imp.h" />
     <ClInclude Include="cpp\FLASH\at25df021_imp_v2.h" />
     <ClInclude Include="cpp\FLASH\flash.h" />
+    <ClInclude Include="cpp\FLASH\FlashInt_imp.h" />
+    <ClInclude Include="cpp\FLASH\FlashMem.h" />
+    <ClInclude Include="cpp\FLASH\FlashSPI_imp.h" />
     <ClInclude Include="cpp\FLASH\flash_def.h" />
     <ClInclude Include="cpp\FLASH\flash_imp.h" />
     <ClInclude Include="cpp\FLASH\hw_nand_imp.h" />
+    <ClInclude Include="cpp\FLASH\NandFlash.h" />
+    <ClInclude Include="cpp\FLASH\NandFlash_def.h" />
+    <ClInclude Include="cpp\FLASH\NandFlash_imp.h" />
+    <ClInclude Include="cpp\FLASH\nand_ecc.h" />
     <ClInclude Include="cpp\I2C.h" />
     <ClInclude Include="cpp\list.h" />
     <ClInclude Include="cpp\MANCH\manch.h" />
@@ -308,6 +319,7 @@
     <ClInclude Include="cpp\SPI.h" />
     <ClInclude Include="cpp\SPIS.h" />
     <ClInclude Include="cpp\SPIS_imp.h" />
+    <ClInclude Include="cpp\TaskList.h" />
     <ClInclude Include="cpp\time.h" />
     <ClInclude Include="cpp\types.h" />
     <ClInclude Include="cpp\usic.h" />
@@ -315,6 +327,7 @@
     <ClInclude Include="cpp\WAVEPACK\fdct_imp.h" />
     <ClInclude Include="cpp\WAVEPACK\mdct.h" />
     <ClInclude Include="cpp\WAVEPACK\mdct_imp.h" />
+    <ClInclude Include="cpp\WAVEPACK\wavepack.h" />
     <ClInclude Include="cpp\WAVEPACK\wavepack_imp.h" />
   </ItemGroup>
   <ItemGroup>
@@ -333,6 +346,7 @@
     <ClCompile Include="cpp\DMA\DMA_DSC.cpp" />
     <ClCompile Include="cpp\EMAC\trap.cpp" />
     <ClCompile Include="cpp\EMAC\xtrap.cpp" />
+    <ClCompile Include="cpp\FLASH\nand_ecc.cpp" />
     <ClCompile Include="cpp\i2c.cpp" />
     <ClCompile Include="cpp\PointerCRC.cpp" />
     <ClCompile Include="cpp\SEGGER_RTT\SEGGER_RTT.cpp" />
@@ -345,6 +359,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp\ADSP\startup_BF592A.s" />
+    <None Include="cpp\ADSP\startup_BF706.s" />
     <None Include="cpp\ARM\startup_CM0.s" />
     <None Include="cpp\ARM\startup_CM4.s" />
     <None Include="LDF\BF592A.ldf" />

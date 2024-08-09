@@ -268,6 +268,8 @@ public:
 
 	S_SPIM() : USIC(0) {}
 
+	bool CheckWriteComplete() { return true; }
+
 #endif
 
 			bool Connect(u32 baudrate);

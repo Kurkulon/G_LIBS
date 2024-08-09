@@ -257,6 +257,45 @@
     <ClInclude Include="cpp\WAVEPACK\wavepack_imp.h">
       <Filter>CPP\WAVEPACK</Filter>
     </ClInclude>
+    <ClInclude Include="cpp\TaskList.h">
+      <Filter>CPP</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\ADSP\AFP_imp.h">
+      <Filter>CPP\ADSP</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\ADSP\AFP_imp_v2.h">
+      <Filter>CPP\ADSP</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\ADSP\BF706.h">
+      <Filter>CPP\ADSP</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\BOOT\boot_com_emac_imp_v2.h">
+      <Filter>CPP\BOOT</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\WAVEPACK\wavepack.h">
+      <Filter>CPP\WAVEPACK</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\FLASH\FlashInt_imp.h">
+      <Filter>CPP\FLASH</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\FLASH\FlashMem.h">
+      <Filter>CPP\FLASH</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\FLASH\FlashSPI_imp.h">
+      <Filter>CPP\FLASH</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\FLASH\nand_ecc.h">
+      <Filter>CPP\FLASH</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\FLASH\NandFlash.h">
+      <Filter>CPP\FLASH</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\FLASH\NandFlash_def.h">
+      <Filter>CPP\FLASH</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\FLASH\NandFlash_imp.h">
+      <Filter>CPP\FLASH</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpp\i2c.cpp">
@@ -331,6 +370,9 @@
     <ClCompile Include="initcode\initcode_osc25.cpp">
       <Filter>Initcode</Filter>
     </ClCompile>
+    <ClCompile Include="cpp\FLASH\nand_ecc.cpp">
+      <Filter>CPP\FLASH</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp\ARM\startup_CM0.s">
@@ -391,5 +433,8 @@
       <Filter>LDF</Filter>
     </None>
     <None Include="makeobj" />
+    <None Include="cpp\ADSP\startup_BF706.s">
+      <Filter>CPP\ADSP</Filter>
+    </None>
   </ItemGroup>
 </Project>

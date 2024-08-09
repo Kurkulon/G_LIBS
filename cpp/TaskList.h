@@ -13,9 +13,12 @@
 #endif
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+class TaskList;
 
 class Task
 {
+	friend class TaskList;
+
 public:
 
 	typedef void TaskProc(void);

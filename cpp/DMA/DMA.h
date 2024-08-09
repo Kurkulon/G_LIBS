@@ -5,6 +5,7 @@
 
 #include "types.h"
 #include "core.h"
+#include "time.h"
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -40,8 +41,9 @@ protected:
 
 	const u32					_act_mask;
 
-
 	static T_HW::DMADESC		_wr_dmadsc[32];
+
+	//CTM32	tm;
 	
 #elif defined(CPU_XMC48)
 
@@ -178,7 +180,7 @@ public:
 	void Reset() { _dmach->CTRLA = DMCH_SWRST; }
 	void Suspend() { _dmach->CTRLB = DMCH_CMD_SUSPEND; }
 
-	bool CheckComplete() { if (_dmach->STATUS & DMCH_FERR) _dmach->CTRLB = DMCH_CMD_RESUME; return (_dmach->CTRLA & DMCH_ENABLE) == 0 /*|| (_dmach->INTFLAG & DMCH_TCMPL)*/; }
+	bool CheckComplete() { if ((_dmach->STATUS & DMCH_FERR) || _dmach->INTFLAG & DMCH_SUSP) _dmach->INTFLAG = DMCH_SUSP, _dmach->CTRLB = DMCH_CMD_RESUME; return (_dmach->CTRLA & DMCH_ENABLE) == 0 /*|| (_dmach->INTFLAG & DMCH_TCMPL)*/; }
 	void Update() { if (_dmach->STATUS & DMCH_FERR) _dmach->CTRLB = DMCH_CMD_RESUME; }
 	
 	void MemCopy(volatile void *src, volatile void *dst, u16 len)		{ _MemCopy((byte*)src+len, (byte*)dst+len, len, DMDSC_VALID|DMDSC_BEATSIZE_BYTE|DMDSC_DSTINC|DMDSC_SRCINC); }
@@ -202,13 +204,13 @@ public:
 
 	u16 Get_CRC_CCITT_Result() { return ReverseWord(HW::DMAC->CRCCHKSUM); }
 
-	void CRC_CCITT(const void* data, u16 len, u16 init)
-	{
-		init = ReverseWord(init);
-		HW::DMAC->CRCCTRL = DMAC_CRCBEATSIZE_BYTE | DMAC_CRCPOLY_CRC16 | DMAC_CRCMODE_CRCGEN | DMAC_CRCSRC(0x20 + _chnum);
-		WritePeripheral(data, (void*)init, len, DMCH_TRIGACT_TRANSACTION, DMDSC_BEATSIZE_BYTE);
-		SoftwareTrigger(); //HW::DMAC->SWTRIGCTRL = 1UL << CRC_DMACH;
-	}
+	//void CRC_CCITT(const void* data, u16 len, u16 init)
+	//{
+	//	init = ReverseWord(init);
+	//	HW::DMAC->CRCCTRL = DMAC_CRCBEATSIZE_BYTE | DMAC_CRCPOLY_CRC16 | DMAC_CRCMODE_CRCGEN | DMAC_CRCSRC(0x20 + _chnum);
+	//	WritePeripheral(data, (void*)init, len, DMCH_TRIGACT_TRANSACTION, DMDSC_BEATSIZE_BYTE);
+	//	SoftwareTrigger(); //HW::DMAC->SWTRIGCTRL = 1UL << CRC_DMACH;
+	//}
 
 #elif defined(CPU_XMC48)	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

@@ -207,7 +207,7 @@ void DMA_CH::_MemCopy(const volatile void *src, volatile void *dst, u16 len, u32
 	_dmadsc->SRCADDR = src;
 	_dmadsc->DSTADDR = dst;
 	_dmadsc->DESCADDR = 0;
-	_dmadsc->BTCNT = len;
+	_dmadsc->BTCNT = _dmawrb->BTCNT =len;
 	_dmadsc->BTCTRL = ctrl;
 
 	_dmach->INTENCLR = ~0;
@@ -278,7 +278,7 @@ void DMA_CH::WritePeripheral(const volatile void *src, volatile void *dst, u16 l
 	_dmadsc->SRCADDR = (byte*)src+(len<<((ctrl2>>8)&3));
 	_dmadsc->DSTADDR = dst;
 	_dmadsc->DESCADDR = 0;
-	_dmadsc->BTCNT = len;
+	_dmadsc->BTCNT = _dmawrb->BTCNT = len;
 	_dmadsc->BTCTRL = ctrl2 | DMDSC_VALID|DMDSC_SRCINC;//|DMDSC_BEATSIZE_BYTE;
 
 	_dmach->INTENCLR = ~0;
