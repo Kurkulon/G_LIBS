@@ -43,7 +43,9 @@ protected:
 
 	static T_HW::DMADESC		_wr_dmadsc[32];
 
-	//CTM32	tm;
+	CTM32	tm;
+
+	u16 _prevBTCNT;
 	
 #elif defined(CPU_XMC48)
 
@@ -180,7 +182,20 @@ public:
 	void Reset() { _dmach->CTRLA = DMCH_SWRST; }
 	void Suspend() { _dmach->CTRLB = DMCH_CMD_SUSPEND; }
 
-	bool CheckComplete() { if ((_dmach->STATUS & DMCH_FERR) || _dmach->INTFLAG & DMCH_SUSP) _dmach->INTFLAG = DMCH_SUSP, _dmach->CTRLB = DMCH_CMD_RESUME; return (_dmach->CTRLA & DMCH_ENABLE) == 0 /*|| (_dmach->INTFLAG & DMCH_TCMPL)*/; }
+	bool CheckComplete(u32 timeout = 200000)
+	{
+		if ((_dmach->STATUS & DMCH_FERR) || _dmach->INTFLAG & DMCH_SUSP) _dmach->INTFLAG = DMCH_SUSP, _dmach->CTRLB = DMCH_CMD_RESUME; 
+
+		if (_prevBTCNT != _dmawrb->BTCNT)
+		{
+			_prevBTCNT = _dmawrb->BTCNT;
+			tm.Reset();
+		}
+		else if (tm.Check(timeout)) _dmach->CTRLB = DMCH_CMD_SUSPEND;
+		
+		return (_dmach->CTRLA & DMCH_ENABLE) == 0 /*|| (_dmach->INTFLAG & DMCH_TCMPL)*/; 
+	}
+
 	void Update() { if (_dmach->STATUS & DMCH_FERR) _dmach->CTRLB = DMCH_CMD_RESUME; }
 	
 	void MemCopy(volatile void *src, volatile void *dst, u16 len)		{ _MemCopy((byte*)src+len, (byte*)dst+len, len, DMDSC_VALID|DMDSC_BEATSIZE_BYTE|DMDSC_DSTINC|DMDSC_SRCINC); }

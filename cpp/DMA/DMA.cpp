@@ -207,7 +207,7 @@ void DMA_CH::_MemCopy(const volatile void *src, volatile void *dst, u16 len, u32
 	_dmadsc->SRCADDR = src;
 	_dmadsc->DSTADDR = dst;
 	_dmadsc->DESCADDR = 0;
-	_dmadsc->BTCNT = _dmawrb->BTCNT =len;
+	_dmadsc->BTCNT = _dmawrb->BTCNT = _prevBTCNT = len;
 	_dmadsc->BTCTRL = ctrl;
 
 	_dmach->INTENCLR = ~0;
@@ -215,6 +215,8 @@ void DMA_CH::_MemCopy(const volatile void *src, volatile void *dst, u16 len, u32
 	_dmach->CTRLA = DMCH_ENABLE|DMCH_TRIGACT_TRANSACTION;
 
 	SoftwareTrigger();
+
+	tm.Reset();
 
 #elif defined(CPU_XMC48)
 
@@ -278,14 +280,16 @@ void DMA_CH::WritePeripheral(const volatile void *src, volatile void *dst, u16 l
 	_dmadsc->SRCADDR = (byte*)src+(len<<((ctrl2>>8)&3));
 	_dmadsc->DSTADDR = dst;
 	_dmadsc->DESCADDR = 0;
-	_dmadsc->BTCNT = _dmawrb->BTCNT = len;
+	_dmadsc->BTCNT = _dmawrb->BTCNT = _prevBTCNT = len;
 	_dmadsc->BTCTRL = ctrl2 | DMDSC_VALID|DMDSC_SRCINC;//|DMDSC_BEATSIZE_BYTE;
 
 	_dmach->INTENCLR = ~0;
 	_dmach->INTFLAG = ~0;
 
 	_dmach->CTRLA = ctrl1 | DMCH_ENABLE; //DMCH_TRIGACT_BURST|_dma_trgsrc_tx;
-	
+
+	tm.Reset();
+
 #elif defined(CPU_XMC48)
 
 	HW::DLR->LNEN |= _dlr_lnen_mask;
@@ -330,14 +334,16 @@ void DMA_CH::ReadPeripheral(const volatile void *src, volatile void *dst, u16 le
 		_dmadsc->SRCADDR = src;
 		_dmadsc->DSTADDR = (byte*)dst+(len<<((ctrl2>>8)&3));
 		_dmadsc->DESCADDR = 0;
-		_dmadsc->BTCNT = _dmawrb->BTCNT = len;
+		_dmadsc->BTCNT = _dmawrb->BTCNT = _prevBTCNT = len;
 		_dmadsc->BTCTRL = ctrl2 | DMDSC_VALID|DMDSC_DSTINC; //|DMDSC_BEATSIZE_BYTEC;
 
 		_dmach->INTENCLR = ~0;
 		_dmach->INTFLAG = ~0;
 
 		_dmach->CTRLA = ctrl1 | DMCH_ENABLE; //|DMCH_TRIGACT_BURST|_dma_trgsrc_rx;
-	
+
+		tm.Reset();
+
 #elif defined(CPU_XMC48)
 
 	_GPDMA->DMACFGREG = 1;
@@ -410,13 +416,15 @@ void DMA_CH::WritePeripheral(const volatile void *src, volatile void *dst, u16 l
 
 	_dmadsc->SRCADDR = (byte*)src+len;
 	_dmadsc->DSTADDR = dst;
-	_dmadsc->BTCNT = _dmawrb->BTCNT = len;
+	_dmadsc->BTCNT = _dmawrb->BTCNT = _prevBTCNT = len;
 	_dmadsc->BTCTRL = ctrl2 | DMDSC_VALID|DMDSC_SRCINC;//|DMDSC_BEATSIZE_BYTE;
 
 	_dmach->INTENCLR = ~0;
 	_dmach->INTFLAG = ~0;
 
 	_dmach->CTRLA = ctrl1 | DMCH_ENABLE; //DMCH_TRIGACT_BURST|_dma_trgsrc_tx;
+
+	tm.Reset();
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
