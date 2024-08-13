@@ -141,7 +141,7 @@ namespace T_HW
 		BF_RO32 SRAM_BASE_ADDR;                /*!< SRAM Base Address Register */
 		BF_RW32 DCTL;                          /*!< Data Memory Control Register */
 		BF_RO32 DSTAT;                         /*!< Data Memory CPLB Status Register */
-		BF_RO32 _DCPLB_FAULT_ADDR;             /*!< Data Memory CPLB Fault Address Register (legacy name) */
+		BF_RO32 DCPLB_Fault_Addr;             /*!< Data Memory CPLB Fault Address Register (legacy name) */
 		BF_RW32 DCPLB_DFLT;                    /*!< Data Memory CPLB Default Settings Register */
 		BF_RO32 DPERR_STAT;                    /*!< Data Memory Parity Error Status Register */
 													BF_RO8                  z__RESERVED0[232];
@@ -167,15 +167,15 @@ namespace T_HW
 	struct S_L1IM
 	{
     												BF_RO8                  z__RESERVED0[4];
-		BF_RW32 ICTL;                          /*!< Instruction Memory Control Register */
-		BF_RO32 ISTAT;                         /*!< Instruction Memory CPLB Status Register */
-		BF_RO32 _ICPLB_FAULT_ADDR;             /*!< Instruction Memory CPLB Fault Address Register (legacy name) */
-		BF_RW32 ICPLB_DFLT;                    /*!< Instruction Memory CPLB Default Settings Register */
-		BF_RW32 IPERR_STAT;                    /*!< Instruction Parity Error Status Register */
+		BF_RW32 Ictl;                          /*!< Instruction Memory Control Register */
+		BF_RO32 Istat;                         /*!< Instruction Memory CPLB Status Register */
+		BF_RO32 Icplb_fault_addr;             /*!< Instruction Memory CPLB Fault Address Register (legacy name) */
+		BF_RW32 Icplb_dflt;                    /*!< Instruction Memory CPLB Default Settings Register */
+		BF_RW32 Iperr_stat;                    /*!< Instruction Parity Error Status Register */
     												BF_RO8                  z__RESERVED1[232];
-		BF_RW32 ICPLB_ADDR[16];                /*!< Instruction Memory CPLB Address Registers */
+		BF_RW32 Icplb_addr[16];                /*!< Instruction Memory CPLB Address Registers */
     												BF_RO8                  z__RESERVED2[192];
-		BF_RW32 ICPLB_DATA[16];                /*!< Instruction Memory CPLB Data Registers */
+		BF_RW32 Icplb_data[16];                /*!< Instruction Memory CPLB Data Registers */
 	};
 
 	#define ICTL_CPRIORST               (1UL<<13)                              /* Cache Line Priority Reset */
@@ -193,15 +193,15 @@ namespace T_HW
 
 	struct S_ICU
 	{
-		BF_RW32 _EVT[16];                      /*!< Event Vector Table Registers (legacy name) */
+		BF_PTR	Evt[16];                      /*!< Event Vector Table Registers (legacy name) */
     												BF_RO8                  z__RESERVED0[192];
-		BF_RW32 _EVT_OVERRIDE;                 /*!< Event Vector Table Override Register (legacy name) */
-		BF_RW32 _IMASK;                        /*!< Interrupt Mask Register (legacy name) */
-		BF_RO32 _IPEND;                        /*!< Interrupt Pending Register (legacy name) */
-		BF_RW32 _ILAT;                         /*!< Interrupt Latch Register (legacy name) */
+		BF_RW32 Evt_OVERRIDE;                 /*!< Event Vector Table Override Register (legacy name) */
+		BF_RW32 IMask;                        /*!< Interrupt Mask Register (legacy name) */
+		BF_RO32 IPend;                        /*!< Interrupt Pending Register (legacy name) */
+		BF_RW32 ILat;                         /*!< Interrupt Latch Register (legacy name) */
     												BF_RO8                  z__RESERVED1[4];
-		BF_RW32 CID;                           /*!< Context ID Register */
-		BF_RW32 _CEC_SID;                      /*!< System ID Register (legacy name) */
+		BF_RW32	Cid;                           /*!< Context ID Register */
+		BF_RW32 Cec_sid;                      /*!< System ID Register (legacy name) */
 	}; 	
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -213,10 +213,10 @@ namespace T_HW
 
 	struct S_TMR
 	{
-		BF_RW32 _TCNTL;                        /*!< Timer Control Register (legacy name) */
-		BF_RW32 _TPERIOD;                      /*!< Timer Period Register (legacy name) */
-		BF_RW32 _TSCALE;                       /*!< Timer Scale Register (legacy name) */
-		BF_RW32 _TCOUNT;                       /*!< Timer Count Register (legacy name) */
+		BF_RW32 CNTL;                        /*!< Timer Control Register (legacy name) */
+		BF_RW32 PERIOD;                      /*!< Timer Period Register (legacy name) */
+		BF_RW32 SCALE;                       /*!< Timer Scale Register (legacy name) */
+		BF_RW32 COUNT;                       /*!< Timer Count Register (legacy name) */
 	}; 
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -228,10 +228,10 @@ namespace T_HW
 
 	struct S_PF
 	{
-		BF_RW32 _PFCTL;                        /*!< Control Register (legacy name) */
-    												BF_RO8                  z__RESERVED0[252];
-		BF_RW32 _PFCNTR0;                      /*!< Counter 0 Register (legacy name) */
-		BF_RW32 _PFCNTR1;                      /*!< Counter 1 Register (legacy name) */
+		BF_RW32 CTL;                        /*!< Control Register (legacy name) */
+    											BF_RO8                  z__RESERVED0[252];
+		BF_RW32 CNTR0;                      /*!< Counter 0 Register (legacy name) */
+		BF_RW32 CNTR1;                      /*!< Counter 1 Register (legacy name) */
 	};
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -454,20 +454,20 @@ namespace T_HW
 
 	struct S_SEC
 	{
-		BF_RW32 GCTL;                          /*!< Global Control Register */
-		BF_RW32 GSTAT;                         /*!< Global Status Register */
-		BF_RW32 RAISE;                         /*!< Global Raise Register */
-		BF_RW32 END;                           /*!< Global End Register */
-		BF_RW32 FCTL;                          /*!< Fault Control Register */
-		BF_RW32 FSTAT;                         /*!< Fault Status Register */
-		BF_RO32 FSID;                          /*!< Fault Source ID Register */
-		BF_RW32 FEND;                          /*!< Fault End Register */
-		BF_RW32 FDLY;                          /*!< Fault Delay Register */
-		BF_RO32 FDLY_CUR;                      /*!< Fault Delay Current Register */
-		BF_RW32 FSRDLY;                        /*!< Fault System Reset Delay Register */
-		BF_RO32 FSRDLY_CUR;                    /*!< Fault System Reset Delay Current Register */
-		BF_RW32 FCOPP;                         /*!< Fault COP Period Register */
-		BF_RO32 FCOPP_CUR;                     /*!< Fault COP Period Current Register */
+		BF_RW32 	GCTL;                      /*!< Global Control Register */
+		BF_RW32 	GSTAT;                     /*!< Global Status Register */
+		BF_RW32 	RAISE;                     /*!< Global Raise Register */
+		BF_RW32 	END;                       /*!< Global End Register */
+		BF_RW32 	FCTL;                      /*!< Fault Control Register */
+		BF_RW32 	FSTAT;                     /*!< Fault Status Register */
+		BF_RO32 	FSID;                      /*!< Fault Source ID Register */
+		BF_RW32 	FEND;                      /*!< Fault End Register */
+		BF_RW32 	FDLY;                      /*!< Fault Delay Register */
+		BF_RO32 	FDLY_CUR;                  /*!< Fault Delay Current Register */
+		BF_RW32 	FSRDLY;                    /*!< Fault System Reset Delay Register */
+		BF_RO32 	FSRDLY_CUR;                /*!< Fault System Reset Delay Current Register */
+		BF_RW32 	FCOPP;                     /*!< Fault COP Period Register */
+		BF_RO32 	FCOPP_CUR;                 /*!< Fault COP Period Current Register */
     												BF_RO8                  z__RESERVED0[968];
 		S_SEC_CB	CB;                       /*!< SCI Registers */
     												BF_RO8                  z__RESERVED1[960];
@@ -1632,7 +1632,7 @@ namespace HW
 	 //MK_PTR(DMA21  ,	ADI_DMA21_BASE      ); /*!<  Pointer to DMA Channel (MDMA2_DST) */
 	MK_PTR(CRC0   ,	ADI_CRC0_BASE       ); /*!<  Pointer to Cyclic Redundancy Check Unit (CRC0) */
 	MK_PTR(CRC1   ,	ADI_CRC1_BASE       ); /*!<  Pointer to Cyclic Redundancy Check Unit (CRC1) */
-	MK_PTR(RTC	   ,	ADI_RTC0_BASE       ); /*!<  Pointer to Real Time Clock (RTC0) */
+	MK_PTR(RTC	  ,	ADI_RTC0_BASE       ); /*!<  Pointer to Real Time Clock (RTC0) */
 	MK_PTR(TRNG	,	ADI_TRNG0_BASE      ); /*!<  Pointer to  (TRNG0) */
 	MK_PTR(SCB   ,	ADI_SCB0_BASE       ); /*!<  Pointer to System Cross Bar (SCB0) */ 	
 		
@@ -1689,6 +1689,106 @@ namespace HW
 //#define PID_PPI_Status					(2) 
 //#define PID_DMA_Error_generic			(1) 
 //#define PID_PLL_Wakeup					(0) 
+
+#define	PID_SEC0_ERR             SEC0_ERR_IRQn                      /*!< Fault Interrupt */
+#define	PID_CGU0_EVT             CGU0_EVT_IRQn                      /*!< Event */
+#define	PID_WDOG0_EXP            WDOG0_EXP_IRQn                     /*!< Expiration */
+#define	PID_L2CTL0_ECC_ERR       L2CTL0_ECC_ERR_IRQn                /*!< ECC Error */
+#define	PID_C0_DBL_FAULT         C0_DBL_FAULT_IRQn                  /*!< Core 0 Double Fault */
+#define	PID_C0_HW_ERR            C0_HW_ERR_IRQn                     /*!< Core 0 Hardware Error */
+#define	PID_C0_NMI_L1_PARITY_ERR C0_NMI_L1_PARITY_ERR_IRQn          /*!< Core 0 Unhandled NMI or L1 Memory Parity Error */
+#define	PID_L2CTL0_EVT           L2CTL0_EVT_IRQn                    /*!< L2 Event (Scrub or Initialization) */
+#define	PID_TIMER0_TMR0          TIMER0_TMR0_IRQn                   /*!< Timer 0 */
+#define	PID_TIMER0_TMR1          TIMER0_TMR1_IRQn                   /*!< Timer 1 */
+#define	PID_TIMER0_TMR2          TIMER0_TMR2_IRQn                   /*!< Timer 2 */
+#define	PID_TIMER0_TMR3          TIMER0_TMR3_IRQn                   /*!< Timer 3 */
+#define	PID_TIMER0_TMR4          TIMER0_TMR4_IRQn                   /*!< Timer 4 */
+#define	PID_TIMER0_TMR5          TIMER0_TMR5_IRQn                   /*!< Timer 5 */
+#define	PID_TIMER0_TMR6          TIMER0_TMR6_IRQn                   /*!< Timer 6 */
+#define	PID_TIMER0_TMR7          TIMER0_TMR7_IRQn                   /*!< Timer 7 */
+#define	PID_TIMER0_STAT          TIMER0_STAT_IRQn                   /*!< Status */
+#define	PID_PINT0_BLOCK          PINT0_BLOCK_IRQn                   /*!< Pin Interrupt Block */
+#define	PID_PINT1_BLOCK          PINT1_BLOCK_IRQn                   /*!< Pin Interrupt Block */
+#define	PID_PINT2_BLOCK          PINT2_BLOCK_IRQn                   /*!< Pin Interrupt Block */
+#define	PID_EPPI0_STAT           EPPI0_STAT_IRQn                    /*!< Status */
+#define	PID_EPPI0_CH0_DMA        EPPI0_CH0_DMA_IRQn                 /*!< Channel 0 DMA */
+#define	PID_EPPI0_CH1_DMA        EPPI0_CH1_DMA_IRQn                 /*!< Channel 1 DMA */
+#define	PID_DMAC_ERROR           DMAC_ERROR_IRQn                    /*!< DDE Aggregated Error */
+#define	PID_CNT0_STAT            CNT0_STAT_IRQn                     /*!< Status */
+#define	PID_SPORT0_A_STAT        SPORT0_A_STAT_IRQn                 /*!< Channel A Status */
+#define	PID_SPORT0_A_DMA         SPORT0_A_DMA_IRQn                  /*!< Channel A DMA */
+#define	PID_SPORT0_B_STAT        SPORT0_B_STAT_IRQn                 /*!< Channel B Status */
+#define	PID_SPORT0_B_DMA         SPORT0_B_DMA_IRQn                  /*!< Channel B DMA */
+#define	PID_SPORT1_A_STAT        SPORT1_A_STAT_IRQn                 /*!< Channel A Status */
+#define	PID_SPORT1_A_DMA         SPORT1_A_DMA_IRQn                  /*!< Channel A DMA */
+#define	PID_SPORT1_B_STAT        SPORT1_B_STAT_IRQn                 /*!< Channel B Status */
+#define	PID_SPORT1_B_DMA         SPORT1_B_DMA_IRQn                  /*!< Channel B DMA */
+#define	PID_SPI0_ERR             SPI0_ERR_IRQn                      /*!< Error */
+#define	PID_SPI0_STAT            SPI0_STAT_IRQn                     /*!< Status */
+#define	PID_SPI0_TXDMA           SPI0_TXDMA_IRQn                    /*!< TX DMA Channel */
+#define	PID_SPI0_RXDMA           SPI0_RXDMA_IRQn                    /*!< RX DMA Channel */
+#define	PID_SPI1_ERR             SPI1_ERR_IRQn                      /*!< Error */
+#define	PID_SPI1_STAT            SPI1_STAT_IRQn                     /*!< Status */
+#define	PID_SPI1_TXDMA           SPI1_TXDMA_IRQn                    /*!< TX DMA Channel */
+#define	PID_SPI1_RXDMA           SPI1_RXDMA_IRQn                    /*!< RX DMA Channel */
+#define	PID_SPI2_ERR             SPI2_ERR_IRQn                      /*!< Error */
+#define	PID_SPI2_STAT            SPI2_STAT_IRQn                     /*!< Status */
+#define	PID_SPI2_TXDMA           SPI2_TXDMA_IRQn                    /*!< TX Channel (non-DMA) */
+#define	PID_SPI2_RXDMA           SPI2_RXDMA_IRQn                    /*!< RX Channel (non-DMA) */
+#define	PID_UART0_STAT           UART0_STAT_IRQn                    /*!< Status */
+#define	PID_UART0_TXDMA          UART0_TXDMA_IRQn                   /*!< Transmit DMA */
+#define	PID_UART0_RXDMA          UART0_RXDMA_IRQn                   /*!< Receive DMA */
+#define	PID_UART1_STAT           UART1_STAT_IRQn                    /*!< Status */
+#define	PID_UART1_TXDMA          UART1_TXDMA_IRQn                   /*!< Transmit DMA */
+#define	PID_UART1_RXDMA          UART1_RXDMA_IRQn                   /*!< Receive DMA */
+#define	PID_MDMA0_SRC            MDMA0_SRC_IRQn                     /*!< Memory DMA Stream 0 Source */
+#define	PID_MDMA0_DST            MDMA0_DST_IRQn                     /*!< Memory DMA Stream 0 Destination */
+#define	PID_MDMA1_SRC            MDMA1_SRC_IRQn                     /*!< Memory DMA Stream 1 Source / CRC0 Input Channel */
+#define	PID_MDMA1_DST            MDMA1_DST_IRQn                     /*!< Memory DMA Stream 1 Destination / CRC0 Output Channel */
+#define	PID_MDMA2_SRC            MDMA2_SRC_IRQn                     /*!< Memory DMA Stream 2 Source / CRC1 Input Channel */
+#define	PID_MDMA2_DST            MDMA2_DST_IRQn                     /*!< Memory DMA Stream 2 Destination / CRC1 Output Channel */
+#define	PID_RTC0_EVT             RTC0_EVT_IRQn                      /*!< Event */
+#define	PID_TWI0_DATA            TWI0_DATA_IRQn                     /*!< Data Interrupt */
+#define	PID_CRC0_DCNTEXP         CRC0_DCNTEXP_IRQn                  /*!< Datacount expiration */
+#define	PID_CRC0_ERR             CRC0_ERR_IRQn                      /*!< Error */
+#define	PID_CRC1_DCNTEXP         CRC1_DCNTEXP_IRQn                  /*!< CRC1 Data Count Expiration */
+#define	PID_CRC1_ERR             CRC1_ERR_IRQn                      /*!< CRC1 Error */
+#define	PID_PKTE0_IRQ            PKTE0_IRQ_IRQn                     /*!< Security Packet Engine Interrupt */
+#define	PID_PKIC0_IRQ            PKIC0_IRQ_IRQn                     /*!< Public Key Interrupt */
+#define	PID_OTPC0_ERR            OTPC0_ERR_IRQn                     /*!< Dual-bit error */
+#define	PID_MSI0_STAT            MSI0_STAT_IRQn                     /*!< Status */
+#define	PID_SMPU0_ERR            SMPU0_ERR_IRQn                     /*!< SMPU Error (DMA L2) */
+#define	PID_SMPU1_ERR            SMPU1_ERR_IRQn                     /*!< SMPU Error (DMC) */
+#define	PID_SPU0_INT             SPU0_INT_IRQn                      /*!< Interrupt */
+#define	PID_USB0_STAT            USB0_STAT_IRQn                     /*!< Status/FIFO Data Ready */
+#define	PID_USB0_DATA            USB0_DATA_IRQn                     /*!< DMA Status/Transfer Complete */
+#define	PID_TRU0_SLV0            TRU0_SLV0_IRQn                     /*!< TRU0 Slave 0 */
+#define	PID_TRU0_SLV1            TRU0_SLV1_IRQn                     /*!< TRU0 Slave 1 */
+#define	PID_TRU0_SLV2            TRU0_SLV2_IRQn                     /*!< TRU0 Slave 2 */
+#define	PID_TRU0_SLV3            TRU0_SLV3_IRQn                     /*!< TRU0 Slave 3 */
+#define	PID_CGU0_ERR             CGU0_ERR_IRQn                      /*!< Error */
+#define	PID_DPM0_EVT             DPM0_EVT_IRQn                      /*!< Event */
+#define	PID_SPIHP0_ERR           SPIHP0_ERR_IRQn                    /*!< Error */
+#define	PID_SOFT0_INT            SOFT0_INT_IRQn                     /*!< Software-Driven Interrupt 0 */
+#define	PID_SOFT1_INT            SOFT1_INT_IRQn                     /*!< Software-Driven Interrupt 1 */
+#define	PID_SOFT2_INT            SOFT2_INT_IRQn                     /*!< Software-Driven Interrupt 2 */
+#define	PID_SOFT3_INT            SOFT3_INT_IRQn                     /*!< Software-Driven Interrupt 3 */
+#define	PID_CAN0_RX              CAN0_RX_IRQn                       /*!< Receive */
+#define	PID_CAN0_TX              CAN0_TX_IRQn                       /*!< Transmit */
+#define	PID_CAN0_STAT            CAN0_STAT_IRQn                     /*!< Status */
+#define	PID_CAN1_RX              CAN1_RX_IRQn                       /*!< Recieve */
+#define	PID_CAN1_TX              CAN1_TX_IRQn                       /*!< Transmit */
+#define	PID_CAN1_STAT            CAN1_STAT_IRQn                     /*!< Status */
+#define	PID_CTI0_C0_EVT          CTI0_C0_EVT_IRQn                   /*!< Core 0 CTI Event (CTI0) */
+#define	PID_SWU0_EVT             SWU0_EVT_IRQn                      /*!< Event (L1) */
+#define	PID_SWU1_EVT             SWU1_EVT_IRQn                      /*!< Event (Core L2) */
+#define	PID_SWU2_EVT             SWU2_EVT_IRQn                      /*!< Event (DMA L2) */
+#define	PID_SWU3_EVT             SWU3_EVT_IRQn                      /*!< Event (MMR) */
+#define	PID_SWU4_EVT             SWU4_EVT_IRQn                      /*!< Event (DMC) */
+#define	PID_SWU5_EVT             SWU5_EVT_IRQn                      /*!< Event (SMC) */
+#define	PID_SWU6_EVT             SWU6_EVT_IRQn                      /*!< Event (SPIF) */
+#define	PID_SWU7_EVT             SWU7_EVT_IRQn                      /*!< Event (OTP) */
+#define	PID_TAPC_KEYFAIL         TAPC_KEYFAIL_IRQn                  /*!< User Key Fail Interrupt */ 
 
 
 #undef MK_PTR

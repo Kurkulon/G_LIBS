@@ -19,8 +19,6 @@
 
 #define __disable_irq cli
 
-#elif  defined(__CC_ARM)
-
 #elif defined(_MSC_VER)
 
 	#define WINDOWS_IGNORE_PACKING_MISMATCH

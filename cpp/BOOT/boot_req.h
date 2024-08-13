@@ -10,7 +10,7 @@
 #pragma pack(1)
 #endif
 
-__packed struct BootReqHS { u64 guid; u16 crc; } ;
+__packed struct BootReqHS { u64 guid; u16 crc; };
 __packed struct BootRspHS { u64 guid; u16 crc; };
 
 #ifdef _ADI_COMPILER

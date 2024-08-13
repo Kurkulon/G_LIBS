@@ -588,7 +588,8 @@ static void NAND_Read_PARAM(NandParamPage *pp)
 	NAND_ADR_LATCH(0);
 	NAND_DIR_IN();
 
-	while(!NAND_BUSY());
+	delay(1000); //while(!NAND_BUSY());
+	
 	while(NAND_BUSY());
 	
 	NAND_ReadDataDMA(pp, sizeof(NandParamPage)); while (!NAND_CheckDataComplete());

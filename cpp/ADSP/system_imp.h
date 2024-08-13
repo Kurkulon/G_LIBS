@@ -3,6 +3,8 @@
 
 #include "core.h"
 
+#ifdef __ADSPBF59x__ //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 void InitIVG(u32 IVG, u32 PID, void (*EVT)())
@@ -82,6 +84,111 @@ static void LowLevelInit()
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#elif defined(__ADSPBF70x__) //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+void InitIVG(u32 IVG, u32 PID, void (*EVT)())
+{
+	if (IVG <= 15)
+	{
+		HW::ICU->Evt[IVG]	 = (void*)EVT;		// *(pEVT0 + IVG) = (void*)EVT;
+		HW::ICU->IMask		|= 1<<IVG;			// *pIMASK |= 1<<IVG; 
+
+		if (IVG > 6)
+		{
+			IVG -= 7;
+
+			byte n = PID/8;
+			byte i = (PID&7)*4;
+
+			//HW::Si
+
+			//pSIC_IAR0[n] = (pSIC_IAR0[n] & ~(0xF<<i)) | (IVG<<i);
+
+			//*pSIC_IMASK |= 1<<PID;
+		};
+	};
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static void Init_PLL()
+{
+	u32      ctl = CGUCTL_VALUE;
+	u32 curr_ctl = HW::CGU->CTL & (CGU_CTL_MSEL(~0)|CGU_CTL_DF);
+
+	if (curr_ctl == ctl)
+	{
+      
+		while(HW::CGU->STAT & CGU_STAT_CLKSALGN); // Verify that the CGU_STAT.CLKSALGN bit=0 (clocks aligned).
+
+		HW::CGU->DIV = CGU_DIV_UPDT | CGU_DIV_OSEL(OCLK_DIV) | CGU_DIV_DSEL(DCLK_DIV) | CGU_DIV_S1SEL(SCLK1_DIV) | CGU_DIV_S0SEL(SCLK0_DIV) | CGU_DIV_SYSSEL(SCLK_DIV) | CGU_DIV_CSEL(CCLK_DIV);
+		
+		while(HW::CGU->STAT & CGU_STAT_CLKSALGN); // Poll the CGU_STAT.CLKSALGN bit till it is 1 when clocks are aligned indicating the end of the update sequence.
+
+	}
+	else
+	{
+		while((HW::CGU->STAT & (CGU_STAT_PLLEN|CGU_STAT_PLOCK|CGU_STAT_CLKSALGN)) != (CGU_STAT_PLLEN|CGU_STAT_PLOCK));
+
+		HW::CGU->DIV = CGU_DIV_OSEL(OCLK_DIV) | CGU_DIV_DSEL(DCLK_DIV) | CGU_DIV_S1SEL(SCLK1_DIV) | CGU_DIV_S0SEL(SCLK0_DIV) | CGU_DIV_SYSSEL(SCLK_DIV) | CGU_DIV_CSEL(CCLK_DIV);
+
+		HW::CGU->CTL = ctl;
+
+		while((HW::CGU->STAT & (CGU_STAT_PLOCK|CGU_STAT_PLLBP|CGU_STAT_CLKSALGN)) != CGU_STAT_PLOCK);
+	};
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static void LowLevelInit()
+{
+	Init_PLL();
+	
+			
+	HW::PIOA->MUX		= INIT_PORTA_MUX		;	
+	HW::PIOB->MUX		= INIT_PORTB_MUX		;	
+	HW::PIOC->MUX		= INIT_PORTC_MUX		;	
+						  
+	HW::PIOA->FER 		= INIT_PORTA_FER 		;	
+	HW::PIOB->FER 		= INIT_PORTB_FER 		;	
+	HW::PIOC->FER 		= INIT_PORTC_FER 		;	
+						  
+	HW::PIOA->DIR 		= INIT_PORTA_DIR 		;		
+	HW::PIOB->DIR 		= INIT_PORTB_DIR 		;		
+	HW::PIOC->DIR 		= INIT_PORTC_DIR 		;		
+						  
+	HW::PIOA->INEN 		= INIT_PORTA_INEN 	;	
+	HW::PIOB->INEN 		= INIT_PORTB_INEN 	;	
+	HW::PIOC->INEN 		= INIT_PORTC_INEN 	;	
+		
+	HW::PIOA->DATA		= INIT_PORTA_DATA		;
+	HW::PIOB->DATA		= INIT_PORTB_DATA		;
+	HW::PIOC->DATA		= INIT_PORTC_DATA		;
+
+	HW::PINT0->ASSIGN
+						  
+	*pPORTFIO_POLAR		= INIT_PORTFIO_POLAR	;
+	*pPORTFIO_EDGE		= INIT_PORTFIO_EDGE 	;
+	*pPORTFIO_BOTH		= INIT_PORTFIO_BOTH 	;
+	*pPORTFIO_MASKA 	= INIT_PORTFIO_MASKA	;
+	*pPORTFIO_MASKB 	= INIT_PORTFIO_MASKB	;
+						  
+	*pPORTGIO_POLAR		= INIT_PORTGIO_POLAR	;
+	*pPORTGIO_EDGE 		= INIT_PORTGIO_EDGE 	;
+	*pPORTGIO_BOTH 		= INIT_PORTGIO_BOTH 	;
+	*pPORTGIO_MASKA 	= INIT_PORTGIO_MASKA	;
+	*pPORTGIO_MASKB 	= INIT_PORTGIO_MASKB	;
+
+	*pWDOG_CNT 			= INIT_WDOG_CNT;
+	*pWDOG_CTL 			= INIT_WDOG_CTL;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+#endif //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #endif // SYSTEM_IMP_H__11_10_2022__18_02

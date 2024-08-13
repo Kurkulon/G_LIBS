@@ -16,8 +16,8 @@
 	<Configurations>
 		<Configuration
 			Name="SAME53_Debug|Win32"
-			OutputDirectory="$(SolutionDir)buil\$(ConfigurationName)"
-			IntermediateDirectory="build\$(ConfigurationName)"
+			OutputDirectory="$(ProjectDir)build\$(ConfigurationName)"
+			IntermediateDirectory="$(ProjectDir)build\$(ConfigurationName)"
 			ConfigurationType="0"
 			>
 			<Tool
@@ -25,7 +25,7 @@
 				BuildCommandLine="wmake -h version=Debug targetcpu=SAME53"
 				ReBuildCommandLine="wmake -h -a version=Debug targetcpu=SAME53"
 				CleanCommandLine="@del /Q $(OutDir)\*.*"
-				Output="$(ProjectDir)\SAME53_d.a"
+				Output="$(OutDir)\SAME53_d.a"
 				PreprocessorDefinitions="_DEBUG,__softfp=,CPU_SAME53"
 				IncludeSearchPath="$(ARMCC50INC);"
 				ForcedIncludes=""
@@ -36,8 +36,8 @@
 		</Configuration>
 		<Configuration
 			Name="SAME53_Release|Win32"
-			OutputDirectory="$(SolutionDir)buil\$(ConfigurationName)"
-			IntermediateDirectory="build\$(ConfigurationName)"
+			OutputDirectory="$(ProjectDir)build\$(ConfigurationName)"
+			IntermediateDirectory="$(ProjectDir)build\$(ConfigurationName)"
 			ConfigurationType="0"
 			>
 			<Tool
@@ -45,7 +45,7 @@
 				BuildCommandLine="wmake -h version=Release targetcpu=SAME53"
 				ReBuildCommandLine="wmake -h -a version=Release targetcpu=SAME53"
 				CleanCommandLine="@del /Q $(OutDir)\*.*"
-				Output="$(ProjectDir)\SAME53_r.a"
+				Output="$(OutDir)\SAME53_r.a"
 				PreprocessorDefinitions="__softfp=,CPU_SAME53"
 				IncludeSearchPath="$(ARMCC50INC);"
 				ForcedIncludes=""
@@ -56,8 +56,8 @@
 		</Configuration>
 		<Configuration
 			Name="XMC48_Debug|Win32"
-			OutputDirectory="$(SolutionDir)buil\$(ConfigurationName)"
-			IntermediateDirectory="build\$(ConfigurationName)"
+			OutputDirectory="$(ProjectDir)build\$(ConfigurationName)"
+			IntermediateDirectory="$(ProjectDir)build\$(ConfigurationName)"
 			ConfigurationType="0"
 			>
 			<Tool
@@ -65,7 +65,7 @@
 				BuildCommandLine="wmake -h version=Debug targetcpu=XMC48"
 				ReBuildCommandLine="wmake -h -a version=Debug targetcpu=XMC48"
 				CleanCommandLine="@del /Q $(OutDir)\*.*"
-				Output="$(ProjectDir)\xmc48_d.a"
+				Output="$(OutDir)\xmc48_d.a"
 				PreprocessorDefinitions="_DEBUG,__softfp=,CPU_XMC48"
 				IncludeSearchPath="$(ARMCC50INC);"
 				ForcedIncludes=""
@@ -76,8 +76,8 @@
 		</Configuration>
 		<Configuration
 			Name="XMC48_Release|Win32"
-			OutputDirectory="$(SolutionDir)buil\$(ConfigurationName)"
-			IntermediateDirectory="build\$(ConfigurationName)"
+			OutputDirectory="$(ProjectDir)build\$(ConfigurationName)"
+			IntermediateDirectory="$(ProjectDir)build\$(ConfigurationName)"
 			ConfigurationType="0"
 			>
 			<Tool
@@ -85,7 +85,7 @@
 				BuildCommandLine="wmake -h version=Release targetcpu=XMC48"
 				ReBuildCommandLine="wmake -h -a version=Release targetcpu=XMC48"
 				CleanCommandLine="@del /Q $(OutDir)\*.*"
-				Output="$(ProjectDir)\xmc48_r.a"
+				Output="$(OutDir)\xmc48_r.a"
 				PreprocessorDefinitions="__softfp=,CPU_XMC48"
 				IncludeSearchPath="$(ARMCC50INC);"
 				ForcedIncludes=""
@@ -96,8 +96,8 @@
 		</Configuration>
 		<Configuration
 			Name="Win32_Debug|Win32"
-			OutputDirectory="$(SolutionDir)buil\$(ConfigurationName)"
-			IntermediateDirectory="build\$(ConfigurationName)"
+			OutputDirectory="$(ProjectDir)build\$(ConfigurationName)"
+			IntermediateDirectory="$(ProjectDir)build\$(ConfigurationName)"
 			ConfigurationType="0"
 			>
 			<Tool
@@ -105,7 +105,7 @@
 				BuildCommandLine="wmake -h version=Win32_Debug targetcpu=Win32"
 				ReBuildCommandLine="wmake -h -a version=Win32_Debug targetcpu=Win32"
 				CleanCommandLine="@del /Q $(OutDir)\*.*"
-				Output="$(ProjectDir)\sam3x8e_d.a"
+				Output="$(OutDir)\Win32_Win32.a"
 				PreprocessorDefinitions="_DEBUG,__softfp=,WIN32"
 				IncludeSearchPath=""
 				ForcedIncludes=""
@@ -116,8 +116,8 @@
 		</Configuration>
 		<Configuration
 			Name="LPC824_Debug|Win32"
-			OutputDirectory="$(SolutionDir)buil\$(ConfigurationName)"
-			IntermediateDirectory="build\$(ConfigurationName)"
+			OutputDirectory="$(ProjectDir)build\$(ConfigurationName)"
+			IntermediateDirectory="$(ProjectDir)build\$(ConfigurationName)"
 			ConfigurationType="0"
 			>
 			<Tool
@@ -125,7 +125,7 @@
 				BuildCommandLine="wmake -h version=Debug targetcpu=LPC824"
 				ReBuildCommandLine="wmake -h -a version=Debug targetcpu=LPC824"
 				CleanCommandLine="@del /Q $(OutDir)\*.*"
-				Output="$(ProjectDir)\LPC824_d.a"
+				Output="$(OutDir)\LPC824_d.a"
 				PreprocessorDefinitions="_DEBUG,__softfp=,CPU_LPC824"
 				IncludeSearchPath="$(ARMCC50INC);"
 				ForcedIncludes=""
@@ -136,8 +136,8 @@
 		</Configuration>
 		<Configuration
 			Name="LPC824_Release|Win32"
-			OutputDirectory="$(SolutionDir)buil\$(ConfigurationName)"
-			IntermediateDirectory="build\$(ConfigurationName)"
+			OutputDirectory="$(ProjectDir)build\$(ConfigurationName)"
+			IntermediateDirectory="$(ProjectDir)build\$(ConfigurationName)"
 			ConfigurationType="0"
 			>
 			<Tool
@@ -145,7 +145,7 @@
 				BuildCommandLine="wmake -h version=Release targetcpu=LPC824"
 				ReBuildCommandLine="wmake -h -a version=Release targetcpu=LPC824"
 				CleanCommandLine="@del /Q $(OutDir)\*.*"
-				Output="$(ProjectDir)\LPC824_r.a"
+				Output="$(OutDir)\LPC824_r.a"
 				PreprocessorDefinitions="__softfp=,CPU_LPC824"
 				IncludeSearchPath="$(ARMCC50INC);"
 				ForcedIncludes=""
@@ -156,8 +156,8 @@
 		</Configuration>
 		<Configuration
 			Name="LPC812_Debug|Win32"
-			OutputDirectory="$(SolutionDir)buil\$(ConfigurationName)"
-			IntermediateDirectory="build\$(ConfigurationName)"
+			OutputDirectory="$(ProjectDir)build\$(ConfigurationName)"
+			IntermediateDirectory="$(ProjectDir)build\$(ConfigurationName)"
 			ConfigurationType="0"
 			>
 			<Tool
@@ -165,7 +165,7 @@
 				BuildCommandLine="wmake -h version=Debug targetcpu=LPC812"
 				ReBuildCommandLine="wmake -h -a version=Debug targetcpu=LPC812"
 				CleanCommandLine="@del /Q $(OutDir)\*.*"
-				Output="$(ProjectDir)\LPC812_d.a"
+				Output="$(OutDir)\LPC812_d.a"
 				PreprocessorDefinitions="_DEBUG,__softfp=,CPU_LPC812"
 				IncludeSearchPath="$(ARMCC50INC);"
 				ForcedIncludes=""
@@ -176,8 +176,8 @@
 		</Configuration>
 		<Configuration
 			Name="LPC812_Release|Win32"
-			OutputDirectory="$(SolutionDir)buil\$(ConfigurationName)"
-			IntermediateDirectory="build\$(ConfigurationName)"
+			OutputDirectory="$(ProjectDir)build\$(ConfigurationName)"
+			IntermediateDirectory="$(ProjectDir)build\$(ConfigurationName)"
 			ConfigurationType="0"
 			>
 			<Tool
@@ -185,7 +185,7 @@
 				BuildCommandLine="wmake -h version=Release targetcpu=LPC812"
 				ReBuildCommandLine="wmake -h -a version=Release targetcpu=LPC812"
 				CleanCommandLine="@del /Q $(OutDir)\*.*"
-				Output="$(ProjectDir)\LPC812_r.a"
+				Output="$(OutDir)\LPC812_r.a"
 				PreprocessorDefinitions="__softfp=,CPU_LPC812"
 				IncludeSearchPath="$(ARMCC50INC);"
 				ForcedIncludes=""
@@ -196,8 +196,8 @@
 		</Configuration>
 		<Configuration
 			Name="BF592_Debug|Win32"
-			OutputDirectory="$(SolutionDir)buil\$(ConfigurationName)"
-			IntermediateDirectory="build\$(ConfigurationName)"
+			OutputDirectory="$(ProjectDir)build\$(ConfigurationName)"
+			IntermediateDirectory="$(ProjectDir)build\$(ConfigurationName)"
 			ConfigurationType="0"
 			>
 			<Tool
@@ -205,7 +205,7 @@
 				BuildCommandLine="wmake -h version=Debug targetcpu=BF592"
 				ReBuildCommandLine="wmake -h -a version=Debug targetcpu=BF592"
 				CleanCommandLine="@del /Q $(OutDir)\*.*"
-				Output="$(ProjectDir)\BF592_d.dlb"
+				Output="$(OutDir)\BF592_d.a"
 				PreprocessorDefinitions="_DEBUG,CPU_BF592,_ADI_COMPILER"
 				IncludeSearchPath="$(ADI_CCES)\Blackfin\include;"
 				ForcedIncludes=""
@@ -216,8 +216,8 @@
 		</Configuration>
 		<Configuration
 			Name="BF592_Release|Win32"
-			OutputDirectory="$(SolutionDir)buil\$(ConfigurationName)"
-			IntermediateDirectory="build\$(ConfigurationName)"
+			OutputDirectory="$(ProjectDir)build\$(ConfigurationName)"
+			IntermediateDirectory="$(ProjectDir)build\$(ConfigurationName)"
 			ConfigurationType="0"
 			>
 			<Tool
@@ -225,7 +225,7 @@
 				BuildCommandLine="wmake -h version=Release targetcpu=BF592"
 				ReBuildCommandLine="wmake -h -a version=Release targetcpu=BF592"
 				CleanCommandLine="@del /Q $(OutDir)\*.*"
-				Output="$(ProjectDir)\BF592_d.dlb"
+				Output="$(OutDir)\BF592_r.a"
 				PreprocessorDefinitions="CPU_BF592,_ADI_COMPILER"
 				IncludeSearchPath="$(ADI_CCES)\Blackfin\include;"
 				ForcedIncludes=""
@@ -236,8 +236,8 @@
 		</Configuration>
 		<Configuration
 			Name="BF706_Debug|Win32"
-			OutputDirectory="$(SolutionDir)buil\$(ConfigurationName)"
-			IntermediateDirectory="build\$(ConfigurationName)"
+			OutputDirectory="$(ProjectDir)build\$(ConfigurationName)"
+			IntermediateDirectory="$(ProjectDir)build\$(ConfigurationName)"
 			ConfigurationType="0"
 			>
 			<Tool
@@ -245,9 +245,29 @@
 				BuildCommandLine="wmake -h version=Debug targetcpu=BF706"
 				ReBuildCommandLine="wmake -h -a version=Debug targetcpu=BF706"
 				CleanCommandLine="@del /Q $(OutDir)\*.*"
-				Output="$(ProjectDir)\BF706_d.dlb"
+				Output="$(OutDir)\BF706_d.a"
 				PreprocessorDefinitions="_DEBUG,CPU_BF706,_ADI_COMPILER,__ADSPBF70x__,__ADSPBF706__"
 				IncludeSearchPath=".\cpp;$(ADI_CCES)\Blackfin\include;"
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="BF706_Release|Win32"
+			OutputDirectory="$(ProjectDir)build\$(ConfigurationName)"
+			IntermediateDirectory="$(ProjectDir)build\$(ConfigurationName)"
+			ConfigurationType="0"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="wmake -h version=Release targetcpu=BF706"
+				ReBuildCommandLine="wmake -h -a version=Release targetcpu=BF706"
+				CleanCommandLine="@del /Q $(OutDir)\*.*"
+				Output="$(OutDir)\BF706_r.a"
+				PreprocessorDefinitions="CPU_BF706,_ADI_COMPILER,__ADSPBF70x__,__ADSPBF706__"
+				IncludeSearchPath="$(ADI_CCES)\Blackfin\include;"
 				ForcedIncludes=""
 				AssemblySearchPath=""
 				ForcedUsingAssemblies=""
