@@ -166,7 +166,7 @@ struct TM32
 {
 	u64 pt;
 
-	bool Check(u32 v) { u64 t = GetCycles64(); if ((u32)(t - pt) >= MS2CTM(v)) { pt = t; return true; } else { return false; }; }
+	bool Check(u32 v) { u64 t = GetCycles64(); if ((u64)(t - pt) >= MS2CTM(v)) { pt = t; return true; } else { return false; }; }
 	bool Timeout(u32 v) { return (u64)(GetCycles64() - pt) >= MS2CTM(v); }
 	void Reset() { pt = GetCycles64(); }
 };

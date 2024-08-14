@@ -16,7 +16,7 @@
 #define US2COM(v) US2CTM(v)
 #define MS2COM(v) MS2CTM(v)
 
-#ifdef ADSP_BLACKFIN
+#ifdef __ADSPBF59x__
 class ComPort
 #else
 class ComPort : public USIC
@@ -63,7 +63,6 @@ class ComPort : public USIC
 	enum STATUS485 { WRITEING = 0, WAIT_READ = 1, READING = 2, READ_END = 3 };
 #endif
 
-//	union CUSART { void *vp; T_HW::S_UART *DU; T_HW::S_USART *SU; };
 	#ifdef ADSP_BLACKFIN
 
 		word			_prevDmaCounter;
@@ -82,6 +81,23 @@ class ComPort : public USIC
 
 		//bool IsTransmited() {return *pUART0_LSR & TEMT; }
 		//bool IsRecieved()	{  }
+
+		#ifdef __ADSPBF70x__
+
+			T_HW::S_PORT* const _PIO_RTS;
+			const u32	_MASK_RTS;
+
+			const byte	_PIN_RTS;
+
+			DMA_CH		_DMATX;
+			DMA_CH		_DMARX;
+
+			bool IsTransmited() { bool c = _DMATX.CheckComplete(); return c && (_uhw->STAT & UART_TEMT); }
+			bool IsRecieved()	{ return _prevDmaCounter != _DMARX.GetBytesLeft(); }
+			u32	GetDmaCounter() { return _DMARX.GetBytesLeft(); }
+			u16	GetRecievedLen() { return _pReadBuffer->maxLen - GetDmaCounter(); }
+
+		#endif
 
 	#elif defined(CPU_SAME53)
 
@@ -266,7 +282,7 @@ class ComPort : public USIC
 
 	CTM32			_rtm;
 
-#if defined(CPU_SAME53) || defined(CPU_XMC48)
+#if defined(CPU_SAME53) || defined(CPU_XMC48) || defined(__ADSPBF70x__)
 
 	void		Set_RTS() { if (_PIO_RTS != 0) _PIO_RTS->SET(_MASK_RTS); }
 	void		Clr_RTS() { if (_PIO_RTS != 0) _PIO_RTS->CLR(_MASK_RTS); }
@@ -280,9 +296,13 @@ class ComPort : public USIC
 
   public:
 	  
-#ifdef ADSP_BLACKFIN
+#ifdef __ADSPBF59x__
 
 	ComPort() : _connected(false), _status485(READ_END) {}
+
+#elif defined(__ADSPBF70x__)
+
+	  ComPort(byte num, T_HW::S_PORT *prts, byte pinrts) : USIC(num), _PIO_RTS(prts), _PIN_RTS(pinrts), _MASK_RTS(1UL<<pinrts), _DMATX(UART0_TX_DMA+num*2), _DMARX(UART0_RX_DMA+num*2), _connected(false), _status485(READ_END) {}
 
 #elif defined(CPU_SAME53)
 
@@ -315,7 +335,7 @@ class ComPort : public USIC
 	bool	Connect(CONNECT_TYPE ct, dword speed, byte parity, byte stopBits = 1);
 	bool	Connect(dword speed, byte parity) { return Connect(ASYNC, speed, parity, 1); }
 
-#ifdef ADSP_BLACKFIN
+#ifdef __ADSPBF59x__
 
 	//bool		Connect(CONNECT_TYPE ct, dword speed, byte parity, byte stopBits);
 

@@ -890,9 +890,18 @@ static void _MainAppStart(u32 adr)
 {
 	if (!bootFlash.flashChecked) bootFlash.ADSP_CheckFlash();
 
-	if (bootFlash.flashOK && bootFlash.flashCRCOK) HW::WDT->Disable(), bfrom_SpiBoot(FLASH_START_ADR, BFLAG_PERIPHERAL | BFLAG_NOAUTO | BFLAG_FASTREAD | BFLAG_TYPE3 | 7, 0, 0);
+		if (bootFlash.flashOK && bootFlash.flashCRCOK)
+		{
+			HW::DisableWDT();
+			
+			#ifdef __ADSPBF59x__
+				bfrom_SpiBoot(FLASH_START_ADR, BFLAG_PERIPHERAL | BFLAG_NOAUTO | BFLAG_FASTREAD | BFLAG_TYPE3 | 7, 0, 0);
+			#elif defined(__ADSPBF70x__)
+				adi_rom_Boot((void*)(0x40000000+FLASH_START_ADR), 0, 0, 0, ENUM_ROM_BCMD_SPIM_DEV_SPIXIP | ENUM_ROM_BCMD_SPIM_DEVENUM_2 | ENUM_ROM_BCMD_SPIM_BCODE_1);
+			#endif
+		};
 	
-	tm64.Reset(); timeOut = MS2CTM(1000);
+	tm64.Reset(); timeOut = 1000;
 }
 
 #else
@@ -1238,6 +1247,10 @@ int main()
 	SEGGER_RTT_WriteString(0, RTT_CTRL_CLEAR);
 	SEGGER_RTT_WriteString(0, RTT_CTRL_TEXT_BRIGHT_YELLOW "Bootloader Start ...\n");
 
+	#ifdef BOOT_HW_INIT
+		BOOT_HW_INIT();
+	#endif
+
 	#ifdef BOOT_EMAC
 		ResetPHY();
 	#endif
@@ -1292,6 +1305,10 @@ int main()
 
 		#else
 				runEmac = false;
+		#endif
+
+		#ifdef BOOT_HW_UPDATE
+			BOOT_HW_UPDATE();
 		#endif
 
 		#ifdef BOOT_TIMEOUT

@@ -54,7 +54,11 @@
 #define NS2CCLK(x)	NS2CLK(x)
 #endif
 
+#ifdef __ADSPBF59x__
 #define SPIMODE	(CPOL|CPHA)
+#elif defined(__ADSPBF70x__)
+#define SPIMODE	(SPI_CPOL|SPI_CPHA)
+#endif
 
 static char 		*pFlashDesc =		"Atmel AT25DF021";
 static char 		*pDeviceCompany	=	"Atmel Corporation";
@@ -124,6 +128,17 @@ enum ERROR_CODE
 #define BFLAG_FILL          0x00000100   /* fill memory with 32-bit argument value */
 #define BFLAG_AUX           0x00000020   /* load auxiliary header -- reserved */
 #define BFLAG_SAVE          0x00000010   /* save block on power down -- reserved */
+
+#define BFLG_FINAL    		BFLAG_FINAL
+#define BFLG_FIRST			BFLAG_FIRST
+#define BFLG_INDIRECT 		BFLAG_INDIRECT
+#define BFLG_IGNORE   		BFLAG_IGNORE
+#define BFLG_INIT     		BFLAG_INIT
+#define BFLG_CALLBACK 		BFLAG_CALLBACK
+#define BFLG_QUICKBOOT		BFLAG_QUICKBOOT
+#define BFLG_FILL     		BFLAG_FILL
+#define BFLG_AUX      		BFLAG_AUX
+#define BFLG_SAVE     		BFLAG_SAVE
 
 struct ADI_BOOT_HEADER
 {
@@ -1029,12 +1044,12 @@ void FlashSPI::ADSP_CheckFlash()
 		{
 			adr += sizeof(bh);
 
-			if ((bh.dBlockCode & BFLAG_FILL) == 0)
+			if ((bh.dBlockCode & BFLG_FILL) == 0)
 			{
 				adr += bh.dByteCount;	
 			};
 
-			if (bh.dBlockCode & BFLAG_FINAL)
+			if (bh.dBlockCode & BFLG_FINAL)
 			{
 				flashOK = true;
 

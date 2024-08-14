@@ -1,7 +1,7 @@
 #ifndef USIC_H__05_05_2022__18_33
 #define USIC_H__05_05_2022__18_33
 
-#ifndef _ADI_COMPILER
+#ifndef __ADSPBF59x__
 
 #include "types.h"
 
@@ -54,6 +54,12 @@
 	};
 
 	typedef SERCOM* USICHWT;
+
+#elif defined(__ADSPBF70x__)
+
+	#define USIC_NUM 2
+
+	typedef T_HW::S_UART *USICHWT;
 
 #endif 
 

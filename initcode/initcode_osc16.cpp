@@ -122,7 +122,7 @@ void initcode(ADI_ROM_BOOT_CONFIG* pBootStruct)
    /* Set the L1 instruction cache/SRAM block as SRAM */
 	ssync();
 	
-	HW::L1IM->ICTL &= ~(ICTL_ENCPLB|ICTL_CFG);
+	HW::L1IM->Ictl &= ~(ICTL_ENCPLB|ICTL_CFG);
 	
 	ssync();
 

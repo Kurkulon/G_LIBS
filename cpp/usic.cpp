@@ -1,4 +1,4 @@
-#ifndef _ADI_COMPILER
+#ifndef __ADSPBF59x__
 
 #include "usic.h"
 
@@ -35,8 +35,12 @@ const byte	USIC::_usic_pid[USIC_NUM] = {0};
 
 USICHWT	const USIC::_usic_hw[USIC_NUM] = { 0 };
 
-#endif 
+#elif defined(__ADSPBF70x__)
 
+const byte	USIC::_usic_pid[USIC_NUM]		= {	PID_UART0_STAT, PID_UART1_STAT };
+USICHWT		const USIC::_usic_hw[USIC_NUM]	= {	HW::UART0, HW::UART1 };
+
+#endif 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

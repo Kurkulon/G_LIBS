@@ -1,21 +1,38 @@
 #ifndef BF706_H__16_07_2024__15_40
 #define BF706_H__16_07_2024__15_40
 
+#pragma once
+
 #ifndef CORETYPE_BF706
-//#error  Must #include "core.h"
+#error  Must #include "core.h"
 #endif 
 
-//#include <blackfin.h>
+#ifndef __ADSPBF70x__
+#error  Must #include "core.h"
+#endif
+
+#include <blackfin.h>
 #include <bfrom.h>
 #include <sys\exception.h>
 #include <sysreg.h>
+#include <adi_bootstream.h >
 
 #include "types.h"
 
+typedef ADI_ROM_BOOT_HEADER ADI_BOOT_HEADER;
+
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-//extern void InitIVG(u32 IVG, u32 PID, void (*EVT)());
-//
+extern void InitIVG(u32 IVG, void (*EVT)());
+extern u32 Get_CCLK();
+extern u32 Get_SCLK();
+extern u32 Get_SCLK0();
+extern u32 Get_SCLK1();
+extern u32 Get_CCLK_MHz();	
+extern u32 Get_SCLK_MHz();	
+extern u32 Get_SCLK0_MHz();	
+extern u32 Get_SCLK1_MHz();	
+
 //#pragma always_inline
 //inline void SIC_EnableIRQ(byte pid) { *pSIC_IMASK |= 1UL<<pid; }
 //inline void SIC_DisableIRQ(byte pid) { *pSIC_IMASK &= ~(1UL<<pid); }
@@ -703,6 +720,10 @@ namespace T_HW
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+	#define WDOG_WDRO	(1UL<<15)				/* Watch Dog Rollover */
+	#define WDOG_WDEN	(1UL<<4)				/* Watch Dog Enable */
+	#define WDOG_WDDIS	(0x0AD0)				/* Watch Dog Enable */
+
 	/*!
 	 * \struct ADI_WDOG_TypeDef
 	 * \brief  Watch Dog Timer Unit
@@ -715,9 +736,11 @@ namespace T_HW
 		BF_RW32 STAT;                          /*!< Watchdog Timer Status Register */
 
 		inline void Update()	{ STAT = 0; }
-		inline void Reset()		{ STAT = 0; }
-		inline void Disable()	{ CTL = 0x0AD0; }
+		inline void Reset()	{ STAT = 0; }
+		inline void Disable()	{ CTL = WDOG_WDDIS; }
 	};
+
+	typedef S_WDOG S_WDT;
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -755,18 +778,86 @@ namespace T_HW
 		BF_RO32 SLVSTAT;                       /*!< Slave Mode Status Register */
 		BF_RW32 SLVADDR;                       /*!< Slave Mode Address Register */
 		BF_RW32 MSTRCTL;                       /*!< Master Mode Control Registers */
-		BF_RO32 MSTRSTAT;                      /*!< Master Mode Status Register */
+		BF_RW32 MSTRSTAT;                      /*!< Master Mode Status Register */
 		BF_RW32 MSTRADDR;                      /*!< Master Mode Address Register */
 		BF_RW32 ISTAT;                         /*!< Interrupt Status Register */
 		BF_RW32 IMSK;                          /*!< Interrupt Mask Register */
 		BF_RW32 FIFOCTL;                       /*!< FIFO Control Register */
-		BF_RO32 FIFOSTAT;                      /*!< FIFO Status Register */
+
+		struct
+		{
+			BF_RO32 TXSTAT		:2;				/* Rx FIFO Status */
+			BF_RO32 RXSTAT		:2;				/* Tx FIFO Status */
+
+			operator u32() { return *((u32*)this); }
+			u32 Bits() { return *((u32*)this); } 
+
+		} FIFOSTAT; // BF_RO32 FIFOSTAT; /*!< FIFO Status Register */
+		                     
     												BF_RO8                  z__RESERVED0[80];
 		BF_WO32 TXDATA8;                       /*!< Tx Data Single-Byte Register */
 		BF_WO32 TXDATA16;                      /*!< Tx Data Double-Byte Register */
 		BF_WO32 RXDATA8;                       /*!< Rx Data Single-Byte Register */
 		BF_WO32 RXDATA16;                      /*!< Rx Data Double-Byte Register */
 	};
+
+	#define TWI_CLKHI(v)		(((v)&0xFF)<<8)		/* SCL Clock High Periods */
+	#define TWI_CLKLO(v)		(((v)&0xFF)<<0)		/* SCL Clock Low Periods */
+
+	#define TWI_CTL_SCCB		(1UL<<9)			/* SCCB Compatibility */
+	#define TWI_CTL_EN			(1UL<<7)			/* Enable Module */
+	#define TWI_CTL_PRESCALE(v)	(((v)&0x7F)<<0)		/* SCLK Prescale Value */
+
+	#define TWI_SLV_GEN			(1UL<<4)			/* General Call Enable */
+	#define TWI_SLV_NAK			(1UL<<3)			/* Not Acknowledge */
+	#define TWI_SLV_TDVAL		(1UL<<2)			/* Transmit Data Valid for Slave */
+	#define TWI_SLV_EN			(1UL<<0)			/* Enable Slave Mode */
+
+	#define TWI_SLV_GCALL		(1UL<<1)			/* General Call */
+	#define TWI_SLV_DIR			(1UL<<0)			/* Transfer Direction for Slave */
+
+	#define TWI_MST_SCLOVR		(1UL<<15)			/* Serial Clock Override */
+	#define TWI_MST_SDAOVR		(1UL<<14)			/* Serial Data Override */
+	#define TWI_MST_DCNT(v)		(((v)&0xFF)<<6)		     /* Data Transfer Count */
+	#define TWI_MST_RSTART		(1UL<<5)			/* Repeat Start */
+	#define TWI_MST_STOP		(1UL<<4)			/* Issue Stop Condition */
+	#define TWI_MST_FAST		(1UL<<3)			/* Fast Mode */
+	#define TWI_MST_DIR			(1UL<<2)			/* Transfer Direction for Master */
+	#define TWI_MST_EN			(1UL<<0)			/* Enable Master Mode */
+
+	#define TWI_BUSBUSY			(1UL<<8)			/* Bus Busy */
+	#define TWI_SCLSEN			(1UL<<7)			/* Serial Clock Sense */
+	#define TWI_SDASEN			(1UL<<6)			/* Serial Data Sense */
+	#define TWI_BUFWRERR		(1UL<<5)			/* Buffer Write Error */
+	#define TWI_BUFRDERR		(1UL<<4)			/* Buffer Read Error */
+	#define TWI_DNAK			(1UL<<3)			/* Data Not Acknowledged */
+	#define TWI_ANAK			(1UL<<2)			/* Address Not Acknowledged */
+	#define TWI_LOSTARB			(1UL<<1)			/* Lost Arbitration */
+	#define TWI_MPROG			(1UL<<0)			/* Master Transfer in Progress */
+
+	#define TWI_SCLI			(1UL<<15)			/* Serial Clock Interrupt */
+	#define TWI_SDAI			(1UL<<14)			/* Serial Data Interrupt */
+	#define TWI_RXSERV			(1UL<<7 )			/* Rx FIFO Service */
+	#define TWI_TXSERV			(1UL<<6 )			/* Tx FIFO Service */
+	#define TWI_MERR			(1UL<<5 )			/* Master Transfer Error */
+	#define TWI_MCOMP			(1UL<<4 )			/* Master Transfer Complete */
+	#define TWI_SOVF			(1UL<<3)			/* Slave Overflow */
+	#define TWI_SERR			(1UL<<2)			/* Slave Transfer Error */
+	#define TWI_SCOMP			(1UL<<1)			/* Slave Transfer Complete */
+	#define TWI_SINIT			(1UL<<0)			/* Slave Transfer Initiated */
+
+	#define TWI_RXILEN			(1UL<<3)			/* Rx Buffer Interrupt Length */
+	#define TWI_TXILEN			(1UL<<2)			/* Tx Buffer Interrupt Length */
+	#define TWI_RXFLUSH			(1UL<<1)			/* Rx Buffer Flush */
+	#define TWI_TXFLUSH			(1UL<<0)			/* Tx Buffer Flush */
+
+	#define TWI_RXSTAT_EMPTY	(0)					/* Rx FIFO Status */
+	#define TWI_RXSTAT_1BYTE	(1)					/* Rx FIFO Status */
+	#define TWI_RXSTAT_FULL		(3)					/* Rx FIFO Status */
+
+	#define TWI_TXSTAT_EMPTY	(0)					/* Tx FIFO Status */
+	#define TWI_TXSTAT_1BYTE	(1)					/* Tx FIFO Status */
+	#define TWI_TXSTAT_FULL		(3)					/* Tx FIFO Status */
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -885,6 +976,57 @@ namespace T_HW
 	};
 
 	typedef S_UART S_UART0, S_UART1;
+
+#define UART_RFRT                   (1UL<<30)                               /* Receive FIFO RTS Threshold */
+#define UART_RFIT                   (1UL<<29)                               /* Receive FIFO IRQ Threshold */
+#define UART_ACTS                   (1UL<<28)                               /* Automatic CTS */
+#define UART_ARTS                   (1UL<<27)                               /* Automatic RTS */
+#define UART_XOFF                   (1UL<<26)                               /* Transmitter off */
+#define UART_MRTS                   (1UL<<25)                               /* Manual Request to Send */
+#define UART_TPOLC                  (1UL<<24)                               /* IrDA TX Polarity Change */
+#define UART_RPOLC                  (1UL<<23)                               /* IrDA RX Polarity Change */
+#define UART_FCPOL                  (1UL<<22)                               /* Flow Control Pin Polarity */
+#define UART_SB                     (1UL<<19)                               /* Set Break */
+#define UART_FFE                    (1UL<<18)                               /* Force Framing Error on Transmit */
+#define UART_FPE                    (1UL<<17)                               /* Force Parity Error on Transmit */
+#define UART_STP                    (1UL<<16)                               /* Sticky Parity */
+#define UART_EPS                    (1UL<<15)                               /* Even Parity Select */
+#define UART_PEN                    (1UL<<14)                               /* Parity Enable */
+#define UART_STBH                   (1UL<<13)                               /* Stop Bits (Half Bit Time) */
+#define UART_STB                    (1UL<<12)                               /* Stop Bits */
+#define UART_WLS                    (1UL<<8)                              /* Word Length Select */
+#define UART_MOD                    (1UL<<4)                              /* Mode of Operation */
+#define UART_LOOP_EN                (1UL<<1)                              /* Loopback Enable */
+#define UART_EN                     (1UL<<0)                              /* Enable UART */
+
+#define UART_RFCS                   (1UL<<17)                               /* Receive FIFO Count Status */
+#define UART_CTS                    (1UL<<16)                               /* Clear to Send */
+#define UART_SCTS                   (1UL<<12)                               /* Sticky CTS */
+#define UART_RO                     (1UL<<11)                               /* Reception On-going */
+#define UART_ADDR                   (1UL<<10)                               /* Address Bit Status */
+#define UART_ASTKY                  (1UL<<9)                              /* Address Sticky */
+#define UART_TFI                    (1UL<<8)                              /* Transmission Finished Indicator */
+#define UART_TEMT                   (1UL<<7)                              /* TSR and THR Empty */
+#define UART_THRE                   (1UL<<5)                               /* Transmit Hold Register Empty */
+#define UART_BI                     (1UL<<4)                               /* Break Indicator */
+#define UART_FE                     (1UL<<3)                               /* Framing Error */
+#define UART_PE                     (1UL<<2)                               /* Parity Error */
+#define UART_OE                     (1UL<<1)                               /* Overrun Error */
+#define UART_DR                     (1UL<<0)                               /* Data Ready */
+	
+#define UART_EDBO                   (1UL<<31)                               /* Enable Divide By One */
+#define UART_DIV(v)                 (((v)&0xFFFF)<<0)                               /* Divisor */
+
+#define UART_ETXS                   (1UL<<9)                               /* Enable TX to Status Interrupt Mask Status */
+#define UART_ERXS                   (1UL<<8)                               /* Enable RX to Status Interrupt Mask Status */
+#define UART_EAWI                   (1UL<<7)                               /* Enable Address Word Interrupt Mask Status */
+#define UART_ERFCI                  (1UL<<6)                               /* Enable Receive FIFO Count Interrupt Mask Status */
+#define UART_ETFI                   (1UL<<5)                               /* Enable Transmission Finished Interrupt Mask Status */
+#define UART_EDTPTI                 (1UL<<4)                               /* Enable DMA TX Peripheral Trigerred Interrupt Mask Status */
+#define UART_EDSSI                  (1UL<<3)                               /* Enable Modem Status Interrupt Mask Status */
+#define UART_ELSI                   (1UL<<2)                               /* Enable Line Status Interrupt Mask Status */
+#define UART_ETBEI                  (1UL<<1)                               /* Enable Transmit Buffer Empty Interrupt Mask Status */
+#define UART_ERBFI                  (1UL<<0)                               /* Enable Receive Buffer Full Interrupt Mask Status */
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -1572,6 +1714,7 @@ namespace HW
 	MK_PTR(PINT2	,	ADI_PINT2_BASE      ); /*!<  Pointer to PINT (PINT2) */
 	MK_PTR(TIMER	,	ADI_TIMER0_BASE     ); /*!<  Pointer to General-Purpose Timer Block (TIMER0) */
 	MK_PTR(WDOG		,	ADI_WDOG0_BASE      ); /*!<  Pointer to Watch Dog Timer Unit (WDOG0) */
+	MK_PTR(WDT		,	ADI_WDOG0_BASE      ); /*!<  Pointer to Watch Dog Timer Unit (WDOG0) */
 	MK_PTR(TAPC		,	ADI_TAPC0_BASE      ); /*!<  Pointer to Test Access Port Controller (TAPC0) */
 	MK_PTR(TWI		,	ADI_TWI0_BASE       ); /*!<  Pointer to 2-Wire Interface (TWI0) */
 	MK_PTR(SPORT0	,	ADI_SPORT0_BASE     ); /*!<  Pointer to Serial Port (SPORT0) */
@@ -1661,134 +1804,129 @@ namespace HW
 } // namespace HW
 
 
-//#define PID_Watchdog_Timer				(31)
-//#define PID_DMA_14_15_Mem_DMA_Stream_1	(30)
-//#define PID_DMA_12_13_Mem_DMA_Stream_0	(29)
-//#define PID_TWI							(24)
-//#define PID_Port_G_Interrupt_B			(23)
-//#define PID_Port_G_Interrupt_A			(22)
-//#define PID_GP_Timer_2					(21)
-//#define PID_GP_Timer_1					(20)
-//#define PID_GP_Timer_0					(19)
-//#define PID_Port_F_Interrupt_B			(18)
-//#define PID_Port_F_Interrupt_A			(17)
-//#define PID_DMA8_UART0_TX				(16)
-//#define PID_DMA7_UART0_RX				(15)
-//#define PID_DMA6_SPI1_RX_TX				(14)
-//#define PID_DMA5_SPI0_RX_TX				(13)
-//#define PID_DMA4_SPORT1_TX				(12)
-//#define PID_DMA3_SPORT1_RX				(11)
-//#define PID_DMA2_SPORT0_TX				(10)
-//#define PID_DMA1_SPORT0_RX				(9)
-//#define PID_DMA0_PPI					(8)
-//#define PID_UART0_Status				(7)
-//#define PID_SPI1_Status					(6) 
-//#define PID_SPI0_Status					(5) 
-//#define PID_SPORT1_Status				(4) 
-//#define PID_SPORT0_Status				(3) 
-//#define PID_PPI_Status					(2) 
-//#define PID_DMA_Error_generic			(1) 
-//#define PID_PLL_Wakeup					(0) 
+#define	PID_SEC0_ERR				SEC0_ERR_IRQn                      /*!< Fault Interrupt */
+#define	PID_CGU0_EVT				CGU0_EVT_IRQn                      /*!< Event */
+#define	PID_WDOG0_EXP				WDOG0_EXP_IRQn                     /*!< Expiration */
+#define	PID_L2CTL0_ECC_ERR			L2CTL0_ECC_ERR_IRQn                /*!< ECC Error */
+#define	PID_C0_DBL_FAULT			C0_DBL_FAULT_IRQn                  /*!< Core 0 Double Fault */
+#define	PID_C0_HW_ERR				C0_HW_ERR_IRQn                     /*!< Core 0 Hardware Error */
+#define	PID_C0_NMI_L1_PARITY_ERR	C0_NMI_L1_PARITY_ERR_IRQn          /*!< Core 0 Unhandled NMI or L1 Memory Parity Error */
+#define	PID_L2CTL0_EVT				L2CTL0_EVT_IRQn                    /*!< L2 Event (Scrub or Initialization) */
+#define	PID_TIMER0_TMR0				TIMER0_TMR0_IRQn                   /*!< Timer 0 */
+#define	PID_TIMER0_TMR1				TIMER0_TMR1_IRQn                   /*!< Timer 1 */
+#define	PID_TIMER0_TMR2				TIMER0_TMR2_IRQn                   /*!< Timer 2 */
+#define	PID_TIMER0_TMR3				TIMER0_TMR3_IRQn                   /*!< Timer 3 */
+#define	PID_TIMER0_TMR4				TIMER0_TMR4_IRQn                   /*!< Timer 4 */
+#define	PID_TIMER0_TMR5				TIMER0_TMR5_IRQn                   /*!< Timer 5 */
+#define	PID_TIMER0_TMR6				TIMER0_TMR6_IRQn                   /*!< Timer 6 */
+#define	PID_TIMER0_TMR7				TIMER0_TMR7_IRQn                   /*!< Timer 7 */
+#define	PID_TIMER0_STAT				TIMER0_STAT_IRQn                   /*!< Status */
+#define	PID_PINT0_BLOCK				PINT0_BLOCK_IRQn                   /*!< Pin Interrupt Block */
+#define	PID_PINT1_BLOCK				PINT1_BLOCK_IRQn                   /*!< Pin Interrupt Block */
+#define	PID_PINT2_BLOCK				PINT2_BLOCK_IRQn                   /*!< Pin Interrupt Block */
+#define	PID_EPPI0_STAT				EPPI0_STAT_IRQn                    /*!< Status */
+#define	PID_EPPI0_CH0_DMA			EPPI0_CH0_DMA_IRQn                 /*!< Channel 0 DMA */
+#define	PID_EPPI0_CH1_DMA			EPPI0_CH1_DMA_IRQn                 /*!< Channel 1 DMA */
+#define	PID_DMAC_ERROR				DMAC_ERROR_IRQn                    /*!< DDE Aggregated Error */
+#define	PID_CNT0_STAT				CNT0_STAT_IRQn                     /*!< Status */
+#define	PID_SPORT0_A_STAT			SPORT0_A_STAT_IRQn                 /*!< Channel A Status */
+#define	PID_SPORT0_A_DMA			SPORT0_A_DMA_IRQn                  /*!< Channel A DMA */
+#define	PID_SPORT0_B_STAT			SPORT0_B_STAT_IRQn                 /*!< Channel B Status */
+#define	PID_SPORT0_B_DMA			SPORT0_B_DMA_IRQn                  /*!< Channel B DMA */
+#define	PID_SPORT1_A_STAT			SPORT1_A_STAT_IRQn                 /*!< Channel A Status */
+#define	PID_SPORT1_A_DMA			SPORT1_A_DMA_IRQn                  /*!< Channel A DMA */
+#define	PID_SPORT1_B_STAT			SPORT1_B_STAT_IRQn                 /*!< Channel B Status */
+#define	PID_SPORT1_B_DMA			SPORT1_B_DMA_IRQn                  /*!< Channel B DMA */
+#define	PID_SPI0_ERR				SPI0_ERR_IRQn                      /*!< Error */
+#define	PID_SPI0_STAT				SPI0_STAT_IRQn                     /*!< Status */
+#define	PID_SPI0_TXDMA				SPI0_TXDMA_IRQn                    /*!< TX DMA Channel */
+#define	PID_SPI0_RXDMA				SPI0_RXDMA_IRQn                    /*!< RX DMA Channel */
+#define	PID_SPI1_ERR				SPI1_ERR_IRQn                      /*!< Error */
+#define	PID_SPI1_STAT				SPI1_STAT_IRQn                     /*!< Status */
+#define	PID_SPI1_TXDMA				SPI1_TXDMA_IRQn                    /*!< TX DMA Channel */
+#define	PID_SPI1_RXDMA				SPI1_RXDMA_IRQn                    /*!< RX DMA Channel */
+#define	PID_SPI2_ERR				SPI2_ERR_IRQn                      /*!< Error */
+#define	PID_SPI2_STAT				SPI2_STAT_IRQn                     /*!< Status */
+#define	PID_SPI2_TXDMA				SPI2_TXDMA_IRQn                    /*!< TX Channel (non-DMA) */
+#define	PID_SPI2_RXDMA				SPI2_RXDMA_IRQn                    /*!< RX Channel (non-DMA) */
+#define	PID_UART0_STAT				UART0_STAT_IRQn                    /*!< Status */
+#define	PID_UART0_TXDMA				UART0_TXDMA_IRQn                   /*!< Transmit DMA */
+#define	PID_UART0_RXDMA				UART0_RXDMA_IRQn                   /*!< Receive DMA */
+#define	PID_UART1_STAT				UART1_STAT_IRQn                    /*!< Status */
+#define	PID_UART1_TXDMA				UART1_TXDMA_IRQn                   /*!< Transmit DMA */
+#define	PID_UART1_RXDMA				UART1_RXDMA_IRQn                   /*!< Receive DMA */
+#define	PID_MDMA0_SRC				MDMA0_SRC_IRQn                     /*!< Memory DMA Stream 0 Source */
+#define	PID_MDMA0_DST				MDMA0_DST_IRQn                     /*!< Memory DMA Stream 0 Destination */
+#define	PID_MDMA1_SRC				MDMA1_SRC_IRQn                     /*!< Memory DMA Stream 1 Source / CRC0 Input Channel */
+#define	PID_MDMA1_DST				MDMA1_DST_IRQn                     /*!< Memory DMA Stream 1 Destination / CRC0 Output Channel */
+#define	PID_MDMA2_SRC				MDMA2_SRC_IRQn                     /*!< Memory DMA Stream 2 Source / CRC1 Input Channel */
+#define	PID_MDMA2_DST				MDMA2_DST_IRQn                     /*!< Memory DMA Stream 2 Destination / CRC1 Output Channel */
+#define	PID_RTC0_EVT				RTC0_EVT_IRQn                      /*!< Event */
+#define	PID_TWI0_DATA				TWI0_DATA_IRQn                     /*!< Data Interrupt */
+#define	PID_CRC0_DCNTEXP			CRC0_DCNTEXP_IRQn                  /*!< Datacount expiration */
+#define	PID_CRC0_ERR				CRC0_ERR_IRQn                      /*!< Error */
+#define	PID_CRC1_DCNTEXP			CRC1_DCNTEXP_IRQn                  /*!< CRC1 Data Count Expiration */
+#define	PID_CRC1_ERR				CRC1_ERR_IRQn                      /*!< CRC1 Error */
+#define	PID_PKTE0_IRQ				PKTE0_IRQ_IRQn                     /*!< Security Packet Engine Interrupt */
+#define	PID_PKIC0_IRQ				PKIC0_IRQ_IRQn                     /*!< Public Key Interrupt */
+#define	PID_OTPC0_ERR				OTPC0_ERR_IRQn                     /*!< Dual-bit error */
+#define	PID_MSI0_STAT				MSI0_STAT_IRQn                     /*!< Status */
+#define	PID_SMPU0_ERR				SMPU0_ERR_IRQn                     /*!< SMPU Error (DMA L2) */
+#define	PID_SMPU1_ERR				SMPU1_ERR_IRQn                     /*!< SMPU Error (DMC) */
+#define	PID_SPU0_INT				SPU0_INT_IRQn                      /*!< Interrupt */
+#define	PID_USB0_STAT				USB0_STAT_IRQn                     /*!< Status/FIFO Data Ready */
+#define	PID_USB0_DATA				USB0_DATA_IRQn                     /*!< DMA Status/Transfer Complete */
+#define	PID_TRU0_SLV0				TRU0_SLV0_IRQn                     /*!< TRU0 Slave 0 */
+#define	PID_TRU0_SLV1				TRU0_SLV1_IRQn                     /*!< TRU0 Slave 1 */
+#define	PID_TRU0_SLV2				TRU0_SLV2_IRQn                     /*!< TRU0 Slave 2 */
+#define	PID_TRU0_SLV3				TRU0_SLV3_IRQn                     /*!< TRU0 Slave 3 */
+#define	PID_CGU0_ERR				CGU0_ERR_IRQn                      /*!< Error */
+#define	PID_DPM0_EVT				DPM0_EVT_IRQn                      /*!< Event */
+#define	PID_SPIHP0_ERR				SPIHP0_ERR_IRQn                    /*!< Error */
+#define	PID_SOFT0_INT				SOFT0_INT_IRQn                     /*!< Software-Driven Interrupt 0 */
+#define	PID_SOFT1_INT				SOFT1_INT_IRQn                     /*!< Software-Driven Interrupt 1 */
+#define	PID_SOFT2_INT				SOFT2_INT_IRQn                     /*!< Software-Driven Interrupt 2 */
+#define	PID_SOFT3_INT				SOFT3_INT_IRQn                     /*!< Software-Driven Interrupt 3 */
+#define	PID_CAN0_RX					CAN0_RX_IRQn                       /*!< Receive */
+#define	PID_CAN0_TX					CAN0_TX_IRQn                       /*!< Transmit */
+#define	PID_CAN0_STAT				CAN0_STAT_IRQn                     /*!< Status */
+#define	PID_CAN1_RX					CAN1_RX_IRQn                       /*!< Recieve */
+#define	PID_CAN1_TX					CAN1_TX_IRQn                       /*!< Transmit */
+#define	PID_CAN1_STAT				CAN1_STAT_IRQn                     /*!< Status */
+#define	PID_CTI0_C0_EVT				CTI0_C0_EVT_IRQn                   /*!< Core 0 CTI Event (CTI0) */
+#define	PID_SWU0_EVT				SWU0_EVT_IRQn                      /*!< Event (L1) */
+#define	PID_SWU1_EVT				SWU1_EVT_IRQn                      /*!< Event (Core L2) */
+#define	PID_SWU2_EVT				SWU2_EVT_IRQn                      /*!< Event (DMA L2) */
+#define	PID_SWU3_EVT				SWU3_EVT_IRQn                      /*!< Event (MMR) */
+#define	PID_SWU4_EVT				SWU4_EVT_IRQn                      /*!< Event (DMC) */
+#define	PID_SWU5_EVT				SWU5_EVT_IRQn                      /*!< Event (SMC) */
+#define	PID_SWU6_EVT				SWU6_EVT_IRQn                      /*!< Event (SPIF) */
+#define	PID_SWU7_EVT				SWU7_EVT_IRQn                      /*!< Event (OTP) */
+#define	PID_TAPC_KEYFAIL			TAPC_KEYFAIL_IRQn                  /*!< User Key Fail Interrupt */ 
 
-#define	PID_SEC0_ERR             SEC0_ERR_IRQn                      /*!< Fault Interrupt */
-#define	PID_CGU0_EVT             CGU0_EVT_IRQn                      /*!< Event */
-#define	PID_WDOG0_EXP            WDOG0_EXP_IRQn                     /*!< Expiration */
-#define	PID_L2CTL0_ECC_ERR       L2CTL0_ECC_ERR_IRQn                /*!< ECC Error */
-#define	PID_C0_DBL_FAULT         C0_DBL_FAULT_IRQn                  /*!< Core 0 Double Fault */
-#define	PID_C0_HW_ERR            C0_HW_ERR_IRQn                     /*!< Core 0 Hardware Error */
-#define	PID_C0_NMI_L1_PARITY_ERR C0_NMI_L1_PARITY_ERR_IRQn          /*!< Core 0 Unhandled NMI or L1 Memory Parity Error */
-#define	PID_L2CTL0_EVT           L2CTL0_EVT_IRQn                    /*!< L2 Event (Scrub or Initialization) */
-#define	PID_TIMER0_TMR0          TIMER0_TMR0_IRQn                   /*!< Timer 0 */
-#define	PID_TIMER0_TMR1          TIMER0_TMR1_IRQn                   /*!< Timer 1 */
-#define	PID_TIMER0_TMR2          TIMER0_TMR2_IRQn                   /*!< Timer 2 */
-#define	PID_TIMER0_TMR3          TIMER0_TMR3_IRQn                   /*!< Timer 3 */
-#define	PID_TIMER0_TMR4          TIMER0_TMR4_IRQn                   /*!< Timer 4 */
-#define	PID_TIMER0_TMR5          TIMER0_TMR5_IRQn                   /*!< Timer 5 */
-#define	PID_TIMER0_TMR6          TIMER0_TMR6_IRQn                   /*!< Timer 6 */
-#define	PID_TIMER0_TMR7          TIMER0_TMR7_IRQn                   /*!< Timer 7 */
-#define	PID_TIMER0_STAT          TIMER0_STAT_IRQn                   /*!< Status */
-#define	PID_PINT0_BLOCK          PINT0_BLOCK_IRQn                   /*!< Pin Interrupt Block */
-#define	PID_PINT1_BLOCK          PINT1_BLOCK_IRQn                   /*!< Pin Interrupt Block */
-#define	PID_PINT2_BLOCK          PINT2_BLOCK_IRQn                   /*!< Pin Interrupt Block */
-#define	PID_EPPI0_STAT           EPPI0_STAT_IRQn                    /*!< Status */
-#define	PID_EPPI0_CH0_DMA        EPPI0_CH0_DMA_IRQn                 /*!< Channel 0 DMA */
-#define	PID_EPPI0_CH1_DMA        EPPI0_CH1_DMA_IRQn                 /*!< Channel 1 DMA */
-#define	PID_DMAC_ERROR           DMAC_ERROR_IRQn                    /*!< DDE Aggregated Error */
-#define	PID_CNT0_STAT            CNT0_STAT_IRQn                     /*!< Status */
-#define	PID_SPORT0_A_STAT        SPORT0_A_STAT_IRQn                 /*!< Channel A Status */
-#define	PID_SPORT0_A_DMA         SPORT0_A_DMA_IRQn                  /*!< Channel A DMA */
-#define	PID_SPORT0_B_STAT        SPORT0_B_STAT_IRQn                 /*!< Channel B Status */
-#define	PID_SPORT0_B_DMA         SPORT0_B_DMA_IRQn                  /*!< Channel B DMA */
-#define	PID_SPORT1_A_STAT        SPORT1_A_STAT_IRQn                 /*!< Channel A Status */
-#define	PID_SPORT1_A_DMA         SPORT1_A_DMA_IRQn                  /*!< Channel A DMA */
-#define	PID_SPORT1_B_STAT        SPORT1_B_STAT_IRQn                 /*!< Channel B Status */
-#define	PID_SPORT1_B_DMA         SPORT1_B_DMA_IRQn                  /*!< Channel B DMA */
-#define	PID_SPI0_ERR             SPI0_ERR_IRQn                      /*!< Error */
-#define	PID_SPI0_STAT            SPI0_STAT_IRQn                     /*!< Status */
-#define	PID_SPI0_TXDMA           SPI0_TXDMA_IRQn                    /*!< TX DMA Channel */
-#define	PID_SPI0_RXDMA           SPI0_RXDMA_IRQn                    /*!< RX DMA Channel */
-#define	PID_SPI1_ERR             SPI1_ERR_IRQn                      /*!< Error */
-#define	PID_SPI1_STAT            SPI1_STAT_IRQn                     /*!< Status */
-#define	PID_SPI1_TXDMA           SPI1_TXDMA_IRQn                    /*!< TX DMA Channel */
-#define	PID_SPI1_RXDMA           SPI1_RXDMA_IRQn                    /*!< RX DMA Channel */
-#define	PID_SPI2_ERR             SPI2_ERR_IRQn                      /*!< Error */
-#define	PID_SPI2_STAT            SPI2_STAT_IRQn                     /*!< Status */
-#define	PID_SPI2_TXDMA           SPI2_TXDMA_IRQn                    /*!< TX Channel (non-DMA) */
-#define	PID_SPI2_RXDMA           SPI2_RXDMA_IRQn                    /*!< RX Channel (non-DMA) */
-#define	PID_UART0_STAT           UART0_STAT_IRQn                    /*!< Status */
-#define	PID_UART0_TXDMA          UART0_TXDMA_IRQn                   /*!< Transmit DMA */
-#define	PID_UART0_RXDMA          UART0_RXDMA_IRQn                   /*!< Receive DMA */
-#define	PID_UART1_STAT           UART1_STAT_IRQn                    /*!< Status */
-#define	PID_UART1_TXDMA          UART1_TXDMA_IRQn                   /*!< Transmit DMA */
-#define	PID_UART1_RXDMA          UART1_RXDMA_IRQn                   /*!< Receive DMA */
-#define	PID_MDMA0_SRC            MDMA0_SRC_IRQn                     /*!< Memory DMA Stream 0 Source */
-#define	PID_MDMA0_DST            MDMA0_DST_IRQn                     /*!< Memory DMA Stream 0 Destination */
-#define	PID_MDMA1_SRC            MDMA1_SRC_IRQn                     /*!< Memory DMA Stream 1 Source / CRC0 Input Channel */
-#define	PID_MDMA1_DST            MDMA1_DST_IRQn                     /*!< Memory DMA Stream 1 Destination / CRC0 Output Channel */
-#define	PID_MDMA2_SRC            MDMA2_SRC_IRQn                     /*!< Memory DMA Stream 2 Source / CRC1 Input Channel */
-#define	PID_MDMA2_DST            MDMA2_DST_IRQn                     /*!< Memory DMA Stream 2 Destination / CRC1 Output Channel */
-#define	PID_RTC0_EVT             RTC0_EVT_IRQn                      /*!< Event */
-#define	PID_TWI0_DATA            TWI0_DATA_IRQn                     /*!< Data Interrupt */
-#define	PID_CRC0_DCNTEXP         CRC0_DCNTEXP_IRQn                  /*!< Datacount expiration */
-#define	PID_CRC0_ERR             CRC0_ERR_IRQn                      /*!< Error */
-#define	PID_CRC1_DCNTEXP         CRC1_DCNTEXP_IRQn                  /*!< CRC1 Data Count Expiration */
-#define	PID_CRC1_ERR             CRC1_ERR_IRQn                      /*!< CRC1 Error */
-#define	PID_PKTE0_IRQ            PKTE0_IRQ_IRQn                     /*!< Security Packet Engine Interrupt */
-#define	PID_PKIC0_IRQ            PKIC0_IRQ_IRQn                     /*!< Public Key Interrupt */
-#define	PID_OTPC0_ERR            OTPC0_ERR_IRQn                     /*!< Dual-bit error */
-#define	PID_MSI0_STAT            MSI0_STAT_IRQn                     /*!< Status */
-#define	PID_SMPU0_ERR            SMPU0_ERR_IRQn                     /*!< SMPU Error (DMA L2) */
-#define	PID_SMPU1_ERR            SMPU1_ERR_IRQn                     /*!< SMPU Error (DMC) */
-#define	PID_SPU0_INT             SPU0_INT_IRQn                      /*!< Interrupt */
-#define	PID_USB0_STAT            USB0_STAT_IRQn                     /*!< Status/FIFO Data Ready */
-#define	PID_USB0_DATA            USB0_DATA_IRQn                     /*!< DMA Status/Transfer Complete */
-#define	PID_TRU0_SLV0            TRU0_SLV0_IRQn                     /*!< TRU0 Slave 0 */
-#define	PID_TRU0_SLV1            TRU0_SLV1_IRQn                     /*!< TRU0 Slave 1 */
-#define	PID_TRU0_SLV2            TRU0_SLV2_IRQn                     /*!< TRU0 Slave 2 */
-#define	PID_TRU0_SLV3            TRU0_SLV3_IRQn                     /*!< TRU0 Slave 3 */
-#define	PID_CGU0_ERR             CGU0_ERR_IRQn                      /*!< Error */
-#define	PID_DPM0_EVT             DPM0_EVT_IRQn                      /*!< Event */
-#define	PID_SPIHP0_ERR           SPIHP0_ERR_IRQn                    /*!< Error */
-#define	PID_SOFT0_INT            SOFT0_INT_IRQn                     /*!< Software-Driven Interrupt 0 */
-#define	PID_SOFT1_INT            SOFT1_INT_IRQn                     /*!< Software-Driven Interrupt 1 */
-#define	PID_SOFT2_INT            SOFT2_INT_IRQn                     /*!< Software-Driven Interrupt 2 */
-#define	PID_SOFT3_INT            SOFT3_INT_IRQn                     /*!< Software-Driven Interrupt 3 */
-#define	PID_CAN0_RX              CAN0_RX_IRQn                       /*!< Receive */
-#define	PID_CAN0_TX              CAN0_TX_IRQn                       /*!< Transmit */
-#define	PID_CAN0_STAT            CAN0_STAT_IRQn                     /*!< Status */
-#define	PID_CAN1_RX              CAN1_RX_IRQn                       /*!< Recieve */
-#define	PID_CAN1_TX              CAN1_TX_IRQn                       /*!< Transmit */
-#define	PID_CAN1_STAT            CAN1_STAT_IRQn                     /*!< Status */
-#define	PID_CTI0_C0_EVT          CTI0_C0_EVT_IRQn                   /*!< Core 0 CTI Event (CTI0) */
-#define	PID_SWU0_EVT             SWU0_EVT_IRQn                      /*!< Event (L1) */
-#define	PID_SWU1_EVT             SWU1_EVT_IRQn                      /*!< Event (Core L2) */
-#define	PID_SWU2_EVT             SWU2_EVT_IRQn                      /*!< Event (DMA L2) */
-#define	PID_SWU3_EVT             SWU3_EVT_IRQn                      /*!< Event (MMR) */
-#define	PID_SWU4_EVT             SWU4_EVT_IRQn                      /*!< Event (DMC) */
-#define	PID_SWU5_EVT             SWU5_EVT_IRQn                      /*!< Event (SMC) */
-#define	PID_SWU6_EVT             SWU6_EVT_IRQn                      /*!< Event (SPIF) */
-#define	PID_SWU7_EVT             SWU7_EVT_IRQn                      /*!< Event (OTP) */
-#define	PID_TAPC_KEYFAIL         TAPC_KEYFAIL_IRQn                  /*!< User Key Fail Interrupt */ 
+
+#define	SPORT0_A_DMA  				SPORT0_A_DMA_CHANn                /*!< Channel A DMA */
+#define	SPORT0_B_DMA  				SPORT0_B_DMA_CHANn                /*!< Channel B DMA */
+#define	SPORT1_A_DMA  				SPORT1_A_DMA_CHANn                /*!< Channel A DMA */
+#define	SPORT1_B_DMA  				SPORT1_B_DMA_CHANn                /*!< Channel B DMA */
+#define	SPI0_TX_DMA    				SPI0_TXDMA_CHANn                  /*!< TX DMA Channel */
+#define	SPI0_RX_DMA    				SPI0_RXDMA_CHANn                  /*!< RX DMA Channel */
+#define	SPI1_TX_DMA    				SPI1_TXDMA_CHANn                  /*!< TX DMA Channel */
+#define	SPI1_RX_DMA    				SPI1_RXDMA_CHANn                  /*!< RX DMA Channel */
+#define	SPI2_TX_DMA    				SPI2_TXDMA_CHANn                  /*!< TX Channel (non-DMA) */
+#define	SPI2_RX_DMA    				SPI2_RXDMA_CHANn                  /*!< RX Channel (non-DMA) */
+#define	UART0_TX_DMA   				UART0_TXDMA_CHANn                 /*!< Transmit DMA */
+#define	UART0_RX_DMA   				UART0_RXDMA_CHANn                 /*!< Receive DMA */
+#define	UART1_TX_DMA   				UART1_TXDMA_CHANn                 /*!< Transmit DMA */
+#define	UART1_RX_DMA   				UART1_RXDMA_CHANn                 /*!< Receive DMA */
+#define	EPPI0_CH0_DMA 				EPPI0_CH0_DMA_CHANn               /*!< Channel 0 DMA */
+#define	EPPI0_CH1_DMA 				EPPI0_CH1_DMA_CHANn               /*!< Channel 1 DMA */
+#define	MDMA0_SRC     				MDMA0_SRC_CHANn                   /*!< Memory DMA Stream 0 Source */
+#define	MDMA0_DST     				MDMA0_DST_CHANn                   /*!< Memory DMA Stream 0 Destination */
+#define	MDMA1_SRC     				MDMA1_SRC_CHANn                   /*!< Memory DMA Stream 1 Source / CRC0 Input Channel */
+#define	MDMA1_DST     				MDMA1_DST_CHANn                   /*!< Memory DMA Stream 1 Destination / CRC0 Output Channel */
+#define	MDMA2_SRC     				MDMA2_SRC_CHANn                   /*!< Memory DMA Stream 2 Source / CRC1 Input Channel */
+#define	MDMA2_DST     				MDMA2_DST_CHANn                   /*!< Memory DMA Stream 2 Destination / CRC1 Output Channel */
 
 
 #undef MK_PTR

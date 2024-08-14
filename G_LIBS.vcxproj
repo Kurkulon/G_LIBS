@@ -9,6 +9,14 @@
       <Configuration>BF592_Release</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="BF706_Debug|Win32">
+      <Configuration>BF706_Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="BF706_Release|Win32">
+      <Configuration>BF706_Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="LPC812_Debug|Win32">
       <Configuration>LPC812_Debug</Configuration>
       <Platform>Win32</Platform>
@@ -55,7 +63,15 @@
     <ConfigurationType>Makefile</ConfigurationType>
     <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='BF706_Release|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='BF592_Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='BF706_Debug|Win32'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
@@ -101,7 +117,13 @@
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='BF592_Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='BF706_Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='BF592_Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='BF706_Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='LPC812_Release|Win32'" Label="PropertySheets">
@@ -136,8 +158,8 @@
     <_ProjectFileVersion>16.0.32830.301</_ProjectFileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='SAME53_Debug|Win32'">
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
+    <OutDir>$(ProjectDir)build\$(Configuration)\</OutDir>
+    <IntDir>$(OutDir)</IntDir>
     <NMakeBuildCommandLine>wmake -h version=Debug targetcpu=SAME53</NMakeBuildCommandLine>
     <NMakeReBuildCommandLine>wmake -h -a version=Debug targetcpu=SAME53</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
@@ -146,8 +168,8 @@
     <NMakeIncludeSearchPath>.\cpp;$(ARMCC50INC);</NMakeIncludeSearchPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='SAME53_Release|Win32'">
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
+    <OutDir>$(ProjectDir)build\$(Configuration)\</OutDir>
+    <IntDir>$(OutDir)</IntDir>
     <NMakeBuildCommandLine>wmake -h version=Release targetcpu=SAME53</NMakeBuildCommandLine>
     <NMakeReBuildCommandLine>wmake -h -a version=Release targetcpu=SAME53</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
@@ -156,94 +178,114 @@
     <NMakeIncludeSearchPath>.\cpp;$(ARMCC50INC);</NMakeIncludeSearchPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='XMC48_Debug|Win32'">
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
+    <OutDir>$(ProjectDir)build\$(Configuration)\</OutDir>
+    <IntDir>$(OutDir)</IntDir>
     <NMakeBuildCommandLine>wmake -h version=Debug targetcpu=XMC48</NMakeBuildCommandLine>
     <NMakeReBuildCommandLine>wmake -h -a version=Debug targetcpu=XMC48</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
     <NMakeOutput>$(ProjectDir)\xmc48_d.a</NMakeOutput>
-    <NMakePreprocessorDefinitions>_DEBUG,__softfp=,CPU_XMC48;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ARMCC50INC);$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakePreprocessorDefinitions>_DEBUG;__softfp=;CPU_XMC48;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>.\cpp;$(ARMCC50INC);</NMakeIncludeSearchPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='XMC48_Release|Win32'">
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
+    <OutDir>$(ProjectDir)build\$(Configuration)\</OutDir>
+    <IntDir>$(OutDir)</IntDir>
     <NMakeBuildCommandLine>wmake -h version=Release targetcpu=XMC48</NMakeBuildCommandLine>
     <NMakeReBuildCommandLine>wmake -h -a version=Release targetcpu=XMC48</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
     <NMakeOutput>$(ProjectDir)\xmc48_r.a</NMakeOutput>
-    <NMakePreprocessorDefinitions>__softfp=,CPU_XMC48;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ARMCC50INC);$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakePreprocessorDefinitions>__softfp=;CPU_XMC48;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>.\cpp;$(ARMCC50INC);</NMakeIncludeSearchPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win32_Debug|Win32'">
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
+    <OutDir>$(ProjectDir)build\$(Configuration)\</OutDir>
+    <IntDir>$(OutDir)</IntDir>
     <NMakeBuildCommandLine>wmake -h version=Win32_Debug targetcpu=Win32</NMakeBuildCommandLine>
     <NMakeReBuildCommandLine>wmake -h -a version=Win32_Debug targetcpu=Win32</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
     <NMakeOutput>$(ProjectDir)\sam3x8e_d.a</NMakeOutput>
     <NMakePreprocessorDefinitions>_DEBUG;__softfp=;WIN32;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>.\cpp;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='LPC824_Debug|Win32'">
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
+    <OutDir>$(ProjectDir)build\$(Configuration)\</OutDir>
+    <IntDir>$(OutDir)</IntDir>
     <NMakeBuildCommandLine>wmake -h version=Debug targetcpu=LPC824</NMakeBuildCommandLine>
     <NMakeReBuildCommandLine>wmake -h -a version=Debug targetcpu=LPC824</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
     <NMakeOutput>$(ProjectDir)\LPC824_d.a</NMakeOutput>
-    <NMakePreprocessorDefinitions>_DEBUG,__softfp=,CPU_LPC824;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ARMCC50INC);$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakePreprocessorDefinitions>_DEBUG;__softfp=;CPU_LPC824;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>.\cpp;$(ARMCC50INC);</NMakeIncludeSearchPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='LPC824_Release|Win32'">
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
+    <OutDir>$(ProjectDir)build\$(Configuration)\</OutDir>
+    <IntDir>$(OutDir)</IntDir>
     <NMakeBuildCommandLine>wmake -h version=Release targetcpu=LPC824</NMakeBuildCommandLine>
     <NMakeReBuildCommandLine>wmake -h -a version=Release targetcpu=LPC824</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
     <NMakeOutput>$(ProjectDir)\LPC824_r.a</NMakeOutput>
-    <NMakePreprocessorDefinitions>__softfp=,CPU_LPC824;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ARMCC50INC);$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakePreprocessorDefinitions>__softfp=;CPU_LPC824;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>.\cpp;$(ARMCC50INC);</NMakeIncludeSearchPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='LPC812_Debug|Win32'">
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
+    <OutDir>$(ProjectDir)build\$(Configuration)\</OutDir>
+    <IntDir>$(OutDir)</IntDir>
     <NMakeBuildCommandLine>wmake -h version=Debug targetcpu=LPC812</NMakeBuildCommandLine>
     <NMakeReBuildCommandLine>wmake -h -a version=Debug targetcpu=LPC812</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
     <NMakeOutput>$(ProjectDir)\LPC812_d.a</NMakeOutput>
-    <NMakePreprocessorDefinitions>_DEBUG,__softfp=,CPU_LPC812;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ARMCC50INC);$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakePreprocessorDefinitions>_DEBUG;__softfp=;CPU_LPC812;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>.\cpp;$(ARMCC50INC);</NMakeIncludeSearchPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='LPC812_Release|Win32'">
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
+    <OutDir>$(ProjectDir)build\$(Configuration)\</OutDir>
+    <IntDir>$(OutDir)</IntDir>
     <NMakeBuildCommandLine>wmake -h version=Release targetcpu=LPC812</NMakeBuildCommandLine>
     <NMakeReBuildCommandLine>wmake -h -a version=Release targetcpu=LPC812</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
     <NMakeOutput>$(ProjectDir)\LPC812_r.a</NMakeOutput>
-    <NMakePreprocessorDefinitions>__softfp=,CPU_LPC812;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ARMCC50INC);$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakePreprocessorDefinitions>__softfp=;CPU_LPC812;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>.\cpp;$(ARMCC50INC);</NMakeIncludeSearchPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='BF592_Debug|Win32'">
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
+    <OutDir>$(ProjectDir)build\$(Configuration)\</OutDir>
+    <IntDir>$(OutDir)</IntDir>
     <NMakeBuildCommandLine>wmake -h version=Debug targetcpu=BF592</NMakeBuildCommandLine>
     <NMakeReBuildCommandLine>wmake -h -a version=Debug targetcpu=BF592</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
     <NMakeOutput>$(ProjectDir)\BF592_d.a</NMakeOutput>
     <NMakePreprocessorDefinitions>_DEBUG;CPU_BF592;_ADI_COMPILER;</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ADI_CCES)\Blackfin\include;</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>.\cpp;$(ADI_CCES)\Blackfin\include;</NMakeIncludeSearchPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='BF706_Debug|Win32'">
+    <OutDir>$(ProjectDir)build\$(Configuration)\</OutDir>
+    <IntDir>$(OutDir)</IntDir>
+    <NMakeBuildCommandLine>wmake -h version=Debug targetcpu=BF706</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>wmake -h -a version=Debug targetcpu=BF706</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
+    <NMakeOutput>$(ProjectDir)\BF706_d.a</NMakeOutput>
+    <NMakePreprocessorDefinitions>_DEBUG;CPU_BF706;_ADI_COMPILER;</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>.\cpp;$(ADI_CCES)\Blackfin\include;</NMakeIncludeSearchPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='BF592_Release|Win32'">
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
+    <OutDir>$(ProjectDir)build\$(Configuration)\</OutDir>
+    <IntDir>$(OutDir)</IntDir>
     <NMakeBuildCommandLine>wmake -h version=Release targetcpu=BF592</NMakeBuildCommandLine>
     <NMakeReBuildCommandLine>wmake -h -a version=Release targetcpu=BF592</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
     <NMakeOutput>$(ProjectDir)\BF592_d.a</NMakeOutput>
     <NMakePreprocessorDefinitions>CPU_BF592;_ADI_COMPILER;</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ADI_CCES)\Blackfin\include;</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>.\cpp;$(ADI_CCES)\Blackfin\include;</NMakeIncludeSearchPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='BF706_Release|Win32'">
+    <OutDir>$(ProjectDir)build\$(Configuration)\</OutDir>
+    <IntDir>$(OutDir)</IntDir>
+    <NMakeBuildCommandLine>wmake -h version=Release targetcpu=BF706</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>wmake -h -a version=Release targetcpu=BF706</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
+    <NMakeOutput>$(ProjectDir)\BF706_d.a</NMakeOutput>
+    <NMakePreprocessorDefinitions>CPU_BF706;_ADI_COMPILER;</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>.\cpp;$(ADI_CCES)\Blackfin\include;</NMakeIncludeSearchPath>
   </PropertyGroup>
   <ItemDefinitionGroup>
   </ItemDefinitionGroup>

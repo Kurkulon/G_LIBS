@@ -87,6 +87,20 @@ static void LowLevelInit()
 
 #elif defined(__ADSPBF70x__) //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+u32 Get_CCLK_MHz()	{ return CCLK_MHz;	}
+u32 Get_SCLK_MHz()	{ return SCLK_MHz;	}
+u32 Get_SCLK0_MHz()	{ return SCLK0_MHz; }
+u32 Get_SCLK1_MHz()	{ return SCLK1_MHz; }
+
+u32 Get_CCLK()	{ return CCLK;	}
+u32 Get_SCLK()	{ return SCLK;	}
+u32 Get_SCLK0()	{ return SCLK0; }
+u32 Get_SCLK1()	{ return SCLK1; }
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 void InitIVG(u32 IVG, u32 PID, void (*EVT)())
 {
@@ -94,20 +108,6 @@ void InitIVG(u32 IVG, u32 PID, void (*EVT)())
 	{
 		HW::ICU->Evt[IVG]	 = (void*)EVT;		// *(pEVT0 + IVG) = (void*)EVT;
 		HW::ICU->IMask		|= 1<<IVG;			// *pIMASK |= 1<<IVG; 
-
-		if (IVG > 6)
-		{
-			IVG -= 7;
-
-			byte n = PID/8;
-			byte i = (PID&7)*4;
-
-			//HW::Si
-
-			//pSIC_IAR0[n] = (pSIC_IAR0[n] & ~(0xF<<i)) | (IVG<<i);
-
-			//*pSIC_IMASK |= 1<<PID;
-		};
 	};
 }
 
@@ -147,42 +147,33 @@ static void LowLevelInit()
 	Init_PLL();
 	
 			
-	HW::PIOA->MUX		= INIT_PORTA_MUX		;	
-	HW::PIOB->MUX		= INIT_PORTB_MUX		;	
-	HW::PIOC->MUX		= INIT_PORTC_MUX		;	
+	HW::PIOA->MUX		= INIT_PORTA_MUX;	
+	HW::PIOB->MUX		= INIT_PORTB_MUX;	
+	HW::PIOC->MUX		= INIT_PORTC_MUX;	
 						  
-	HW::PIOA->FER 		= INIT_PORTA_FER 		;	
-	HW::PIOB->FER 		= INIT_PORTB_FER 		;	
-	HW::PIOC->FER 		= INIT_PORTC_FER 		;	
+	HW::PIOA->FER 		= INIT_PORTA_FER;	
+	HW::PIOB->FER 		= INIT_PORTB_FER;	
+	HW::PIOC->FER 		= INIT_PORTC_FER;	
 						  
-	HW::PIOA->DIR 		= INIT_PORTA_DIR 		;		
-	HW::PIOB->DIR 		= INIT_PORTB_DIR 		;		
-	HW::PIOC->DIR 		= INIT_PORTC_DIR 		;		
+	HW::PIOA->DIR 		= INIT_PORTA_DIR;		
+	HW::PIOB->DIR 		= INIT_PORTB_DIR;		
+	HW::PIOC->DIR 		= INIT_PORTC_DIR;		
 						  
-	HW::PIOA->INEN 		= INIT_PORTA_INEN 	;	
-	HW::PIOB->INEN 		= INIT_PORTB_INEN 	;	
-	HW::PIOC->INEN 		= INIT_PORTC_INEN 	;	
+	HW::PIOA->INEN 		= INIT_PORTA_INEN;	
+	HW::PIOB->INEN 		= INIT_PORTB_INEN;	
+	HW::PIOC->INEN 		= INIT_PORTC_INEN;	
 		
-	HW::PIOA->DATA		= INIT_PORTA_DATA		;
-	HW::PIOB->DATA		= INIT_PORTB_DATA		;
-	HW::PIOC->DATA		= INIT_PORTC_DATA		;
+	HW::PIOA->DATA		= INIT_PORTA_DATA;
+	HW::PIOB->DATA		= INIT_PORTB_DATA;
+	HW::PIOC->DATA		= INIT_PORTC_DATA;
 
-	HW::PINT0->ASSIGN
-						  
-	*pPORTFIO_POLAR		= INIT_PORTFIO_POLAR	;
-	*pPORTFIO_EDGE		= INIT_PORTFIO_EDGE 	;
-	*pPORTFIO_BOTH		= INIT_PORTFIO_BOTH 	;
-	*pPORTFIO_MASKA 	= INIT_PORTFIO_MASKA	;
-	*pPORTFIO_MASKB 	= INIT_PORTFIO_MASKB	;
-						  
-	*pPORTGIO_POLAR		= INIT_PORTGIO_POLAR	;
-	*pPORTGIO_EDGE 		= INIT_PORTGIO_EDGE 	;
-	*pPORTGIO_BOTH 		= INIT_PORTGIO_BOTH 	;
-	*pPORTGIO_MASKA 	= INIT_PORTGIO_MASKA	;
-	*pPORTGIO_MASKB 	= INIT_PORTGIO_MASKB	;
+	HW::PINT0->MSK_CLR	= ~0;
+	HW::PINT1->MSK_CLR	= ~0;
+	HW::PINT2->MSK_CLR	= ~0;
+	HW::PADS->PCFG0		= 0;
 
-	*pWDOG_CNT 			= INIT_WDOG_CNT;
-	*pWDOG_CTL 			= INIT_WDOG_CTL;
+	HW::WDOG->CNT 		= INIT_WDOG_CNT;
+	HW::WDOG->CTL 		= INIT_WDOG_CTL;
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

@@ -70,7 +70,7 @@ extern dword millisecondsCount;
 
 #endif	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#ifdef ADSP_BLACKFIN //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#ifdef __ADSPBF59x__ //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #if defined(PIO_RTS) && defined(MASK_RTS)
 inline void	Set_RTS() { PIO_RTS->SET(MASK_RTS); }
@@ -270,7 +270,26 @@ void ComPort::InitHW()
 		uhw->CFG = _CFG;
 		uhw->BRG = _BRG;
 
+	#elif defined(__ADSPBF70x__)
+
+		if (_usic_num == 0)
+		{
+			HW::PIOB->SetFER(PB8|PB9);
+		}
+		else if (_usic_num == 1)
+		{
+			HW::PIOC->SetFER(PC0|PC1);
+		};
+
+		if (_PIO_RTS != 0)
+		{
+			_PIO_RTS->DirSet(_MASK_RTS); 
+			_PIO_RTS->ClrFER(_MASK_RTS); 
+			_PIO_RTS->CLR(_MASK_RTS); 
+		};
+
 	#endif
+
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -415,6 +434,9 @@ bool ComPort::Connect(CONNECT_TYPE ct, dword speed, byte parity, byte stopBits)
 				break;
 		};
 
+	#elif defined(__ADSPBF70x__)
+
+
 	#endif
 
 	u32 t = 24000000/speed;
@@ -464,7 +486,7 @@ word ComPort::BoudToPresc(dword speed)
 {
 	if (speed == 0) return 0;
 
-	#ifdef ADSP_BLACKFIN
+	#ifdef __ADSPBF59x__
 
 		return (word)((SCLK + (speed<<3)) / (speed << 4));
 
@@ -487,6 +509,10 @@ word ComPort::BoudToPresc(dword speed)
 	#elif defined(WIN32)
 		
 		return 0;
+
+	#elif defined(__ADSPBF70x__)
+
+		return (word)((SCLK0 + (speed<<3)) / (speed << 4));
 
 	#endif
 }
@@ -625,7 +651,7 @@ void ComPort::EnableTransmit(void* src, word count)
 
 		_uhw.usart->CFG |= 1;
 
-	#elif defined(ADSP_BLACKFIN)
+	#elif defined(__ADSPBF59x__)
 
 		*pDMA8_CONFIG = 0;	// Disable transmit and receive
 		*pUART0_IER = 0;
@@ -689,7 +715,7 @@ void ComPort::DisableTransmit()
 		_uhw.usart->CFG &= ~1;	// Disable transmit and receive
 		_uhw.usart->INTENCLR = ~0;
 
-	#elif defined(ADSP_BLACKFIN)
+	#elif defined(__ADSPBF59x__)
 
 		*pDMA8_CONFIG = 0;	// Disable transmit and receive
 		*pUART0_IER = 0;
@@ -782,7 +808,7 @@ void ComPort::EnableReceive(void* dst, word count)
 		_uhw.usart->INTENSET = 1;
 		_uhw.usart->CFG |= 1;
 
-	#elif defined(ADSP_BLACKFIN)
+	#elif defined(__ADSPBF59x__)
 
 		*pDMA7_CONFIG = 0;	// Disable transmit and receive
 		*pUART0_IER = 0;
@@ -850,7 +876,7 @@ void ComPort::DisableReceive()
 		_uhw.usart->CFG &= ~1;	// Disable transmit and receive
 		_uhw.usart->INTENCLR = ~0;
 
-	#elif defined(ADSP_BLACKFIN)
+	#elif defined(__ADSPBF59x__)
 
 		*pDMA7_CONFIG = 0;	// Disable transmit and receive
 		*pUART0_IER = 0;
@@ -939,7 +965,7 @@ void ComPort::IRQ_WriteHandler()
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#ifdef ADSP_BLACKFIN
+#ifdef __ADSPBF59x__
 
 bool ComPort::Update()
 {

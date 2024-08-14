@@ -9,6 +9,7 @@
 #include <sys\exception.h>
 #include <cdefBF592-A.h>
 #include <sysreg.h>
+#include <adi_bootstream.h >
 
 #include "types.h"
 

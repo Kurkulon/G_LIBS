@@ -112,6 +112,10 @@
 		#define	CORETYPE_BF706
 		#define ADSP_BLACKFIN
 
+		#ifndef __ADSPBF706__
+		#define __ADSPBF706__
+		#endif
+
 		#ifndef __ADSPBF70x__
 		#define __ADSPBF70x__
 		#endif

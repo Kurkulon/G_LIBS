@@ -4,6 +4,7 @@
 #include "SEGGER_RTT\SEGGER_RTT.h"
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 #ifdef __ADSPBF59x__ //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 //#pragma diag(push)
@@ -232,6 +233,217 @@ bool I2C_AddRequest(DSCI2C *d)
 
 #elif defined(__ADSPBF70x__)
 
+static volatile u16 twiWriteCount = 0;
+static volatile u16 twiReadCount = 0;
+static volatile byte * volatile twiWriteData = 0;
+static volatile byte * volatile twiReadData;
+static volatile DSCI2C* volatile twi_dsc = 0;
+static volatile DSCI2C* volatile twi_lastDsc = 0;
+
+void TWI_ISR()
+{
+	u16 stat = HW::TWI->ISTAT;
+
+	if (stat & TWI_RXSERV)
+	{
+		if (twiReadCount > 0)
+		{
+			*twiReadData++ = HW::TWI->RXDATA8;
+			twiReadCount--;
+		};
+
+		if (twiReadCount == 0)
+		{
+			
+			HW::TWI->MSTRCTL |= TWI_MST_STOP;
+			HW::TWI->FIFOCTL  = TWI_TXFLUSH|TWI_RXFLUSH;
+		};
+	};
+
+	if (stat & TWI_TXSERV)
+	{
+		if (twiWriteCount == 0 && twi_dsc->wlen2 != 0)
+		{
+			twiWriteData = (byte*)twi_dsc->wdata2;
+			twiWriteCount = twi_dsc->wlen2;
+			twi_dsc->wlen2 = 0;
+		};
+
+		if (twiWriteCount > 0)
+		{
+			HW::TWI->TXDATA8 = *twiWriteData++;
+			twiWriteCount--;
+
+		};
+	};
+
+	if (stat & (TWI_MCOMP|TWI_MERR))
+	{
+		twi_dsc->ack = ((stat & TWI_MERR) == 0);
+
+		if (twi_dsc->ack && twiReadCount > 0)
+		{
+			HW::TWI->IMSK		= TWI_RXSERV|TWI_MCOMP|TWI_MERR;
+			HW::TWI->MSTRCTL	= TWI_MST_DCNT(~0)|TWI_MST_DIR|TWI_MST_FAST|TWI_MST_EN;
+		}
+		else
+		{
+			twi_dsc->ready = true;
+			twi_dsc->readedLen = twi_dsc->rlen - twiReadCount;
+			//twi_dsc->master_stat = *pTWI_MASTER_STAT;
+
+			DSCI2C *ndsc = twi_dsc->next;
+
+			if (ndsc != 0)
+			{
+				twi_dsc->next = 0;
+				twi_dsc = ndsc;
+
+				twi_dsc->ready = false;
+				twi_dsc->ack = false;
+				twi_dsc->readedLen = 0;
+
+				if (twi_dsc->wdata2 == 0) twi_dsc->wlen2 = 0;
+
+				twiWriteData = (byte*)twi_dsc->wdata;
+				twiWriteCount = twi_dsc->wlen;
+				twiReadData = (byte*)twi_dsc->rdata;
+				twiReadCount = twi_dsc->rlen;
+
+				u16 len = twiWriteCount + twi_dsc->wlen2;
+
+				HW::TWI->MSTRSTAT	= ~0;
+				HW::TWI->FIFOCTL	= 0;
+
+				HW::TWI->MSTRADDR = twi_dsc->adr;
+
+				if (len != 0)
+				{
+					HW::TWI->TXDATA8	= *twiWriteData++; twiWriteCount--;
+					HW::TWI->IMSK		= TWI_TXSERV|TWI_MCOMP|TWI_MERR;
+					HW::TWI->MSTRCTL	= TWI_MST_DCNT(~0)|TWI_MST_FAST|TWI_MST_EN|((twiReadCount>0) ? TWI_MST_DIR : 0);
+				}
+				else
+				{
+					HW::TWI->IMSK		= TWI_RXSERV|TWI_MCOMP|TWI_MERR;
+					HW::TWI->MSTRCTL	= TWI_MST_DCNT(~0)|TWI_MST_DIR|TWI_MST_FAST|TWI_MST_EN;
+				};
+			}
+			else
+			{
+				HW::TWI->MSTRCTL	= 0;
+				HW::TWI->MSTRSTAT	= ~0;
+				HW::TWI->FIFOCTL	= TWI_TXFLUSH|TWI_RXFLUSH;
+				HW::TWI->IMSK		= 0;
+
+				twi_lastDsc = twi_dsc = 0;
+			};
+
+		};
+	};
+
+	HW::TWI->ISTAT = stat;
+
+	//ssync();
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void I2C_Init()
+{
+	u32 sclk_mhz = Get_SCLK0_MHz();
+
+	HW::TWI->CTL		= TWI_CTL_EN | TWI_CTL_PRESCALE(sclk_mhz/10);
+	HW::TWI->CLKDIV		= TWI_CLKHI(150/(sclk_mhz/10))|TWI_CLKLO(150/(sclk_mhz/10));
+	HW::TWI->IMSK		= 0;
+	HW::TWI->MSTRADDR	= 0;
+
+	//InitIVG(ivg_twi, pid_twi, TWI_ISR);
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static bool TWI_Write(DSCI2C *d)
+{
+	//	using namespace HW;
+
+	if (twi_dsc != 0 || d == 0) { return false; };
+	if ((d->wdata == 0 || d->wlen == 0) && (d->rdata == 0 || d->rlen == 0)) { return false; }
+
+	twi_dsc = d;
+
+	twi_dsc->ready = false;
+	twi_dsc->ack = false;
+	twi_dsc->readedLen = 0;
+
+	if (twi_dsc->wdata2 == 0) twi_dsc->wlen2 = 0;
+
+	u32 t = cli();
+
+	HW::TWI->MSTRCTL	= 0;
+	HW::TWI->MSTRSTAT	= ~0;
+	HW::TWI->FIFOCTL	= 0;//XMTINTLEN|RCVINTLEN;
+
+	twiWriteData = (byte*)twi_dsc->wdata;
+	twiWriteCount = twi_dsc->wlen;
+	twiReadData = (byte*)twi_dsc->rdata;
+	twiReadCount = twi_dsc->rlen;
+
+	u16 len = twiWriteCount + twi_dsc->wlen2;
+
+	HW::TWI->MSTRADDR = twi_dsc->adr;
+
+	if (len != 0)
+	{
+		HW::TWI->TXDATA8 = *twiWriteData++; twiWriteCount--;
+		HW::TWI->IMSK = TWI_TXSERV|TWI_MERR|TWI_MCOMP;
+		HW::TWI->MSTRCTL = TWI_MST_DCNT(~0)|TWI_MST_FAST||((twiReadCount>0) ? TWI_MST_DIR : 0);
+	}
+	else
+	{
+		HW::TWI->IMSK = TWI_RXSERV|TWI_MERR|TWI_MCOMP;
+		HW::TWI->MSTRCTL = TWI_MST_DCNT(~0)|TWI_MST_DIR|TWI_MST_FAST|TWI_MST_EN;
+	};
+
+	sti(t);
+
+	return true;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+bool I2C_AddRequest(DSCI2C *d)
+{
+	if (d == 0) { return false; };
+	if ((d->wdata == 0 || d->wlen == 0) && (d->rdata == 0 || d->rlen == 0)) { return false; }
+
+	d->next = 0;
+	d->ready = false;
+
+	if (d->wdata2 == 0) d->wlen2 = 0;
+
+	u32 t = cli();
+
+	if (twi_lastDsc == 0)
+	{
+		twi_lastDsc = d;
+
+		sti(t);
+
+		return TWI_Write(d);
+	}
+	else
+	{
+		twi_lastDsc->next = d;
+		twi_lastDsc = d;
+
+		sti(t);
+	};
+
+	return true;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #else // #ifdef ADSP_BLACKFIN //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

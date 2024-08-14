@@ -28,9 +28,13 @@ struct DSCI2C
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#ifdef ADSP_BLACKFIN
+#ifdef __ADSPBF59x__
 
 extern void I2C_Init(u32 sclk_mhz, u32 ivg_twi, u32 pid_twi);
+
+#elif defined(__ADSPBF70x__)
+
+extern void I2C_Init();
 
 #else // #ifdef ADSP_BLACKFIN //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

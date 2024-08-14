@@ -5,21 +5,27 @@
 
 #ifdef _ADI_COMPILER
 
-#include <ccblkfn.h>
+	#include <ccblkfn.h>
 
-#ifdef __DEBUG
-#define __breakpoint(v) asm("EMUEXCPT;")
-#else
-#define __breakpoint(v)
-#endif
+	#ifndef _MSC_VER
 
-#define __forceinline inline
-#define __nop __builtin_NOP
-#define __packed /*__attribute__((packed))*/
+		#ifdef __DEBUG
+			#define __breakpoint(v) asm("EMUEXCPT;")
+		#else
+			#define __breakpoint(v)
+		#endif
 
-#define __disable_irq cli
+		#define __forceinline inline
+		#define __nop __builtin_NOP
+		#define __packed /*__attribute__((packed))*/
 
-#elif defined(_MSC_VER)
+		#define __disable_irq cli
+
+	#endif
+
+#endif // _ADI_COMPILER
+
+#ifdef _MSC_VER
 
 	#define WINDOWS_IGNORE_PACKING_MISMATCH
 
@@ -32,6 +38,7 @@
 	#define __attribute__(v)
 	#define __func__ __FUNCTION__
 	#define restrict /**/
+	#define section(v) static const char _section = v;
 
 	__forceinline void __breakpoint(int v) { __debugbreak(); }
 	__forceinline void __disable_irq() {}
