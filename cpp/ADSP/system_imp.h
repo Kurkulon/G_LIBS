@@ -142,10 +142,41 @@ static void Init_PLL()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static void LowLevelInit()
+section ("L1_code")
+
+static void Init_Cache()
+{
+	int l1_code_cache;
+	int l1_data_cache_a;
+	int l1_data_cache_b;
+
+	asm (	".extern ___l1_code_cache;\n	.type ___l1_code_cache, STT_OBJECT;\n	%0 = ___l1_code_cache (Z);"		: "=d" (l1_code_cache)		: : );						
+	asm (	".extern ___l1_data_cache_a;\n	.type ___l1_data_cache_a, STT_OBJECT;\n	%0 = ___l1_data_cache_a (Z);"	: "=d" (l1_data_cache_a)	: : );
+	asm (	".extern ___l1_data_cache_b;\n	.type ___l1_data_cache_b, STT_OBJECT;\n	%0 = ___l1_data_cache_b (Z);"	: "=d" (l1_data_cache_b)	: : );
+
+	if (l1_code_cache != 0)
+	{
+		ssync();
+
+		HW::L1IM->Ictl |= ICTL_CFG;
+		HW::L1IM->Icplb_dflt = 0;
+		HW::L1IM->Icplb_addr[0] = 0;
+		HW::L1IM->Icplb_data[0] = 0;
+
+		csync();
+
+		HW::L1IM->Ictl |= ICTL_ENCPLB;
+
+		ssync();
+	};
+
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+extern "C" void SystemInit()
 {
 	Init_PLL();
-	
 			
 	HW::PIOA->MUX		= INIT_PORTA_MUX;	
 	HW::PIOB->MUX		= INIT_PORTB_MUX;	
@@ -174,6 +205,8 @@ static void LowLevelInit()
 
 	HW::WDOG->CNT 		= INIT_WDOG_CNT;
 	HW::WDOG->CTL 		= INIT_WDOG_CTL;
+
+	Init_Cache();
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

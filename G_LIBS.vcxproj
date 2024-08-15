@@ -405,6 +405,7 @@
     <None Include="cpp\ARM\startup_CM0.s" />
     <None Include="cpp\ARM\startup_CM4.s" />
     <None Include="LDF\BF592A.ldf" />
+    <None Include="LDF\BF706.ldf" />
     <None Include="LDF\initcode.ldf" />
     <None Include="makeobj" />
     <None Include="Scatter\LPC812.sct" />

@@ -20,9 +20,9 @@
 
 #include <sys/platform.h>
 #include <sys/anomaly_macros_rtl.h>
-#include <adi_osal.h>
-#include <sys/fatal_error_code.h>
-#include <sys/exception.h>
+//#include <adi_osal.h>
+//#include <sys/fatal_error_code.h>
+//#include <sys/exception.h>
 
 #define LOADIMM32REG(R,VAL) R = VAL;
 
@@ -39,6 +39,15 @@
 .SECTION/DOUBLEANY program;
 .ALIGN 2;
 
+//.extern ___l1_code_cache;
+//.type ___l1_code_cache, STT_OBJECT;
+//.extern ___l1_data_cache_a;
+//.type ___l1_data_cache_a, STT_OBJECT;
+//.extern l1_data_a_cache_enabled_when_used_for_data;
+//.type l1_data_a_cache_enabled_when_used_for_data, STT_FUNC;
+//.extern ___l1_data_cache_b;
+//.type ___l1_data_cache_b, STT_OBJECT; 
+
 start:
       // The assembler warning for anomaly 05-00-0312, issued when interrupts
       // are enabled and an an SSYNC, CSYNC or loop register load is used, is
@@ -46,12 +55,6 @@ start:
       .MESSAGE/SUPPRESS 5515;
 
 
-/*$VDSG<insert-code-very-beginning>                             */
-.start_of_user_code_very_beginning:
-      // Insert additional code to be executed before any other startup code here.
-      // This code is preserved if the CRT is re-generated.
-.end_of_user_code_very_beginning:
-/*$VDSG<insert-code-very-beginning>                             */
 
       // Disable the Branch Predictor and clear its memory so that it is not
       // making predictions based on out-of-date address/opcode info. This is
@@ -76,241 +79,251 @@ start:
            BITM_BP_CFG_CALL32EN |      // CALL32EN (Call 32-Bit Enable)
            BITM_BP_CFG_CALL64EN |      // CALL64EN (Call 64-Bit Enable)
            (2<<BITP_BP_CFG_STMOUTVAL); // 2 STMOUTVAL (Store Timeout Value)
-      [REG_BP_CFG] = R0;
 
-      R0 = SYSCFG;
-      BITCLR(R0, BITP_SYSCFG_BPEN);
-      SYSCFG = R0;                     // Disable the BP
+		[REG_BP_CFG] = R0;
 
-      // Clearing now in progress. We will have to wait until later to enable
-      // the predictor.
+		R0 = SYSCFG;
+		BITCLR(R0, BITP_SYSCFG_BPEN);
+		SYSCFG = R0;                     // Disable the BP
 
-      //// Disable CPLBs as they might be enable by initialization code
-      //// or still be enabled after a software reset.
-      //.EXTERN __disable_cplbs;
-      //.TYPE __disable_cplbs,STT_FUNC;
-      //CALL.X __disable_cplbs;
+		// Clearing now in progress. We will have to wait until later to enable
+		// the predictor.
 
-      // Set RCU0_SVECT0 to allow a self-initiated core only reset to bypass
-      // the boot code and vector straight to the beginning of L1 memory.
-      R0 = start;
-      [REG_RCU0_SVECT0] = R0;
+		// Disable CPLBs as they might be enable by initialization code
+		// or still be enabled after a software reset.
+		.EXTERN __disable_cplbs;
+		.TYPE __disable_cplbs,STT_FUNC;
+		CALL.X __disable_cplbs;
 
-      // Set registers to unassigned value.
-      LOADIMM32REG(R0, UNASSIGNED_VAL)
+		// Set RCU0_SVECT0 to allow a self-initiated core only reset to bypass
+		// the boot code and vector straight to the beginning of L1 memory.
+		R0 = start;
+		[REG_RCU0_SVECT0] = R0;
 
-      // Initialize the stack.
-      // Note: this points just past the end of the stack memory.
-      // So the first write must be with [--SP].
-      .EXTERN ldf_stack_end;
-      .TYPE ldf_stack_end,STT_OBJECT;
-      LOADIMM32REG(SP, ldf_stack_end)
-      USP = SP;
+		// Set registers to unassigned value.
+		LOADIMM32REG(R0, UNASSIGNED_VAL)
 
-      // Push UNASSIGNED_VAL as RETS and old FP onto the stack to terminate
-      // the call stack.
-      [--SP] = R0;
-      [--SP] = R0;
+		// Initialize the stack.
+		// Note: this points just past the end of the stack memory.
+		// So the first write must be with [--SP].
+		.EXTERN ldf_stack_end;
+		.TYPE ldf_stack_end,STT_OBJECT;
+		LOADIMM32REG(SP, ldf_stack_end)
+		USP = SP;
 
-      // Initialize FP to point to the UNASSIGNED_VAL old FP value.
-      FP = SP;
+		// Push UNASSIGNED_VAL as RETS and old FP onto the stack to terminate
+		// the call stack.
+		[--SP] = R0;
+		[--SP] = R0;
 
-      // And make space for incoming "parameters" for functions
-      // we call from here.
-      SP += -12;
+		// Initialize FP to point to the UNASSIGNED_VAL old FP value.
+		FP = SP;
 
-      // Initialize loop counters to zero, to make sure that
-      // hardware loops are disabled (it can be really baffling
-      // if the counters and bottom regs are set, and we happen
-      // to run into them).
-      R7 = 0;
-      LC0 = R7;
-      LC1 = R7;
+		// And make space for incoming "parameters" for functions
+		// we call from here.
+		SP += -12;
 
-      // Clear the DAG Length regs so that it's safe to use I-regs
-      // without them wrapping around as required by the Blackfin C ABI.
-      L0 = R7;
-      L1 = R7;
-      L2 = R7;
-      L3 = R7;
+		// Initialize loop counters to zero, to make sure that
+		// hardware loops are disabled (it can be really baffling
+		// if the counters and bottom regs are set, and we happen
+		// to run into them).
+		R7 = 0;
+		LC0 = R7;
+		LC1 = R7;
 
-      // Initialize the Event Vector Table (EVT) entries other than
-      // EVT0 (Emulation) and EVT1 (Reset).
-      LOADIMM32REG(P0, EVT2)
-      LOADIMM32REG(R1, dummy_exception)
-      P1 = 13;
-      LSETUP (.ivt, .ivt) LC0 = P1;
-.ivt:  [P0++] = R1;
+		// Clear the DAG Length regs so that it's safe to use I-regs
+		// without them wrapping around as required by the Blackfin C ABI.
+		L0 = R7;
+		L1 = R7;
+		L2 = R7;
+		L3 = R7;
 
-      // Set IVG15's handler to be the start of the mode-change
-      // code. Then, before we return from the Reset back to user
-      // mode, we'll raise IVG15. This will mean we stay in supervisor
-      // mode, and continue from the mode-change point at the
-      // lowest priority.
-      LOADIMM32REG(P1, supervisor_mode)
-      [P0] = P1;
+		// Initialize the Event Vector Table (EVT) entries other than
+		// EVT0 (Emulation) and EVT1 (Reset).
+		LOADIMM32REG(P0, EVT2)
+		LOADIMM32REG(R1, dummy_exception)
+		P1 = 13;
+		LSETUP (.ivt, .ivt) LC0 = P1;
 
-      //// Set the handler for IVG11 to the SEC interrupt dispatcher.
-      //.EXTERN __sec_int_dispatcher;
-      //.TYPE __sec_int_dispatcher,STT_FUNC;
-      //LOADIMM32REG(R1, __sec_int_dispatcher)
-      //[P0+(EVT11-EVT15)] = R1;  // write &sec_int_dispatcher to EVT11.
+.ivt:	[P0++] = R1;
 
-      // Configure SYSCFG.
-      R1 = SYSCFG;
+		// Set IVG15's handler to be the start of the mode-change
+		// code. Then, before we return from the Reset back to user
+		// mode, we'll raise IVG15. This will mean we stay in supervisor
+		// mode, and continue from the mode-change point at the
+		// lowest priority.
+		LOADIMM32REG(P1, supervisor_mode)
+		[P0] = P1;
 
-      R0 = ( BITM_SYSCFG_CCEN |       // Enable the cycle counter.
-             BITM_SYSCFG_SNEN |       // Enable self-nesting interrupts.
-             BITM_SYSCFG_BPEN |       // Enable branch prediction.
-             BITM_SYSCFG_MPWEN );     // Enable MMR posted writes.
-      R1 = R0 | R1;
+		//// Set the handler for IVG11 to the SEC interrupt dispatcher.
+		//.EXTERN __sec_int_dispatcher;
+		//.TYPE __sec_int_dispatcher,STT_FUNC;
+		//LOADIMM32REG(R1, __sec_int_dispatcher)
+		//[P0+(EVT11-EVT15)] = R1;  // write &sec_int_dispatcher to EVT11.
 
-      SYSCFG = R1;
+		// Configure SYSCFG.
+		R1 = SYSCFG;
 
-      //// Initialize memory. L1 memory initialization allows parity errors
-      //// to be enabled.
-      //.EXTERN _adi_init_mem_error_detection;
-      //.TYPE _adi_init_mem_error_detection,STT_FUNC;
-      //CALL.X _adi_init_mem_error_detection;
+		R0 = ( BITM_SYSCFG_CCEN |       // Enable the cycle counter.
+			 BITM_SYSCFG_SNEN |       // Enable self-nesting interrupts.
+			 BITM_SYSCFG_BPEN |       // Enable branch prediction.
+			 BITM_SYSCFG_MPWEN );     // Enable MMR posted writes.
+		R1 = R0 | R1;
 
-      // __install_default_handlers is called to allow the opportunity
-      // to install event handlers before main(). The default version of this
-      // function provided in the libraries just returns the mask passed in.
-      R0 = INTERRUPT_BITS (Z);
-      //.EXTERN __install_default_handlers;
-      //.TYPE __install_default_handlers,STT_FUNC;
-      //CALL.X __install_default_handlers;  // get the enable mask
-      R4 = R0;              // hold the modified mask in preserved register R4
+		SYSCFG = R1;
 
-      // Initialize the jump target tables used by the interrupt dispatcher.
-      //.EXTERN __init_dispatch_tables;
-      //.TYPE __init_dispatch_tables,STT_FUNC;
-      //CALL.X __init_dispatch_tables;
+		//// Initialize memory. L1 memory initialization allows parity errors
+		//// to be enabled.
+		//.EXTERN _adi_init_mem_error_detection;
+		//.TYPE _adi_init_mem_error_detection,STT_FUNC;
+		//CALL.X _adi_init_mem_error_detection;
+
+		// __install_default_handlers is called to allow the opportunity
+		// to install event handlers before main(). The default version of this
+		// function provided in the libraries just returns the mask passed in.
+		R0 = INTERRUPT_BITS (Z);
+		//.EXTERN __install_default_handlers;
+		//.TYPE __install_default_handlers,STT_FUNC;
+		//CALL.X __install_default_handlers;  // get the enable mask
+		R4 = R0;              // hold the modified mask in preserved register R4
+
+		// Initialize the jump target tables used by the interrupt dispatcher.
+		//.EXTERN __init_dispatch_tables;
+		//.TYPE __init_dispatch_tables,STT_FUNC;
+		//CALL.X __init_dispatch_tables;
 
 
-      // Switch from reset to handling IVG15. This is Done before CPLB
-      // initialization so that CPLB events can be handled as soon as
-      // they are enabled.
+		// Switch from reset to handling IVG15. This is Done before CPLB
+		// initialization so that CPLB events can be handled as soon as
+		// they are enabled.
 
-      // We are about to enable interrupts so stop suppressing the assembler
-      // warning for 05-00-0312.
-      .MESSAGE/RESTORE 5515;
+		// We are about to enable interrupts so stop suppressing the assembler
+		// warning for 05-00-0312.
+		.MESSAGE/RESTORE 5515;
 
-      // Enable interrupts using the mask returned from the call to
-      // __install_default_handlers.
-      STI R4;
-      RAISE 15;             // handled by supervisor_mode
+		// Enable interrupts using the mask returned from the call to
+		// __install_default_handlers.
+		STI R4;
+		RAISE 15;             // handled by supervisor_mode
 
-      // Move the processor into user mode.
-      LOADIMM32REG(P0, still_interrupt_in_ipend)
-      RETI = P0;
+		// Move the processor into user mode.
+		LOADIMM32REG(P0, still_interrupt_in_ipend)
+		RETI = P0;
 
 still_interrupt_in_ipend:
-      // Execute RTI instructions until we've `finished` servicing
-      // all interrupts of priority higher than IVG15. Normally one
-      // would expect to only have the reset interrupt in IPEND
-      // being serviced, but occasionally when debugging this may
-      // not be the case - if restart is hit when servicing an
-      // interrupt.
-      //
-      // When we clear all bits from IPEND, we'll enter user mode,
-      // then we'll automatically jump to supervisor_mode to start
-      // servicing IVG15 (which we will 'service' for the whole
-      // program, so that the program is in supervisor mode.
-      //
-      // Need to do this to 'finish' servicing the reset interrupt.
-      .MESSAGE/SUPPRESS 1056 FOR 1 LINES;  // Suppress stall information message
-      RTI;
+
+		// Execute RTI instructions until we've `finished` servicing
+		// all interrupts of priority higher than IVG15. Normally one
+		// would expect to only have the reset interrupt in IPEND
+		// being serviced, but occasionally when debugging this may
+		// not be the case - if restart is hit when servicing an
+		// interrupt.
+		//
+		// When we clear all bits from IPEND, we'll enter user mode,
+		// then we'll automatically jump to supervisor_mode to start
+		// servicing IVG15 (which we will 'service' for the whole
+		// program, so that the program is in supervisor mode.
+		//
+		// Need to do this to 'finish' servicing the reset interrupt.
+
+		.MESSAGE/SUPPRESS 1056 FOR 1 LINES;  // Suppress stall information message
+
+		RTI;
 
 supervisor_mode:
-      [--SP] = RETI;        // re-enables the interrupt system
 
-      //#include "cplb.h"
-      //// Invoke register_dispatched_handler for each exception code supported,
-      //// passing the event type parameter in the callback value so we can
-      //// avoid all of the conditional checking in the handler itself.
-      //// As the vector table is freshly initialized, we don't need to worry
-      //// about running out of space so don't check the return codes to avoid
-      //// the overhead.
-      ////
-      //// There is no support provided for data access multiple CPLB hits (0x27)
-      //// and Instruction fetch CPLB protection violation (0x2B). If these
-      //// exception occurs they will be treated as an unhandled exception.
-      ////
-      //// The code below calls the underlying RTL support rather than OSAL to
-      //// avoid startup overheads.
-      //.EXTERN _adi_rtl_register_dispatched_handler;
-      //.TYPE _adi_rtl_register_dispatched_handler,STT_FUNC;
-      //.EXTERN _cplb_dhandler;
-      //.TYPE _cplb_dhandler,STT_FUNC;
-      //// 0x23 - Data access CPLB protection violation
-      //LOADIMM32REG(R0, ADI_EXC_DATA_PROT_VIOLATION)
-      //LOADIMM32REG(R1, _cplb_dhandler)
-      //R2 = CPLB_EVT_DCPLB_WRITE;
-      //R5 = R1;
-      //CALL.X _adi_rtl_register_dispatched_handler;
-      //// 0x26 - Data access CPLB miss
-      //LOADIMM32REG(R0, ADI_EXC_DATA_CPLB_MISS)
-      //R1 = R5;
-      //R2 = CPLB_EVT_DCPLB_MISS;
-      //CALL.X _adi_rtl_register_dispatched_handler;
-      //// 0x2C - Instruction fetch CPLB miss
-      //LOADIMM32REG(R0, ADI_EXC_INSTR_CPLB_MISS)
-      //R1 = R5;
-      //R2 = CPLB_EVT_ICPLB_MISS;
-      //CALL.X _adi_rtl_register_dispatched_handler;
-      //// 0x2D - Instruction fetch multiple CPLB hits
-      //LOADIMM32REG(R0, ADI_EXC_INSTR_CPLB_MULTI_HIT)
-      //R1 = R5;
-      //R2 = CPLB_EVT_ICPLB_DOUBLE_HIT;
-      //CALL.X _adi_rtl_register_dispatched_handler;
+		[--SP] = RETI;        // re-enables the interrupt system
 
-      // Initialize the default CPLB registers for L1 memory.
-      // System memory is controlled by individual CPLB entries.
+		//#include "cplb.h"
+		//// Invoke register_dispatched_handler for each exception code supported,
+		//// passing the event type parameter in the callback value so we can
+		//// avoid all of the conditional checking in the handler itself.
+		//// As the vector table is freshly initialized, we don't need to worry
+		//// about running out of space so don't check the return codes to avoid
+		//// the overhead.
+		////
+		//// There is no support provided for data access multiple CPLB hits (0x27)
+		//// and Instruction fetch CPLB protection violation (0x2B). If these
+		//// exception occurs they will be treated as an unhandled exception.
+		////
+		//// The code below calls the underlying RTL support rather than OSAL to
+		//// avoid startup overheads.
+		//.EXTERN _adi_rtl_register_dispatched_handler;
+		//.TYPE _adi_rtl_register_dispatched_handler,STT_FUNC;
+		//.EXTERN _cplb_dhandler;
+		//.TYPE _cplb_dhandler,STT_FUNC;
+		//// 0x23 - Data access CPLB protection violation
+		//LOADIMM32REG(R0, ADI_EXC_DATA_PROT_VIOLATION)
+		//LOADIMM32REG(R1, _cplb_dhandler)
+		//R2 = CPLB_EVT_DCPLB_WRITE;
+		//R5 = R1;
+		//CALL.X _adi_rtl_register_dispatched_handler;
+		//// 0x26 - Data access CPLB miss
+		//LOADIMM32REG(R0, ADI_EXC_DATA_CPLB_MISS)
+		//R1 = R5;
+		//R2 = CPLB_EVT_DCPLB_MISS;
+		//CALL.X _adi_rtl_register_dispatched_handler;
+		//// 0x2C - Instruction fetch CPLB miss
+		//LOADIMM32REG(R0, ADI_EXC_INSTR_CPLB_MISS)
+		//R1 = R5;
+		//R2 = CPLB_EVT_ICPLB_MISS;
+		//CALL.X _adi_rtl_register_dispatched_handler;
+		//// 0x2D - Instruction fetch multiple CPLB hits
+		//LOADIMM32REG(R0, ADI_EXC_INSTR_CPLB_MULTI_HIT)
+		//R1 = R5;
+		//R2 = CPLB_EVT_ICPLB_DOUBLE_HIT;
+		//CALL.X _adi_rtl_register_dispatched_handler;
 
-      // Load the data value into R0.
-      R0 = BITM_L1DM_DCPLB_DFLT_L1UREAD | BITM_L1DM_DCPLB_DFLT_L1UWRITE | BITM_L1DM_DCPLB_DFLT_L1SWRITE | BITM_L1DM_DCPLB_DFLT_L1EOM;
+		// Initialize the default CPLB registers for L1 memory.
+		// System memory is controlled by individual CPLB entries.
 
-      // Load the instruction value into R1.
-      R1 = BITM_L1IM_ICPLB_DFLT_L1UREAD | BITM_L1IM_ICPLB_DFLT_L1EOM;
+		// Load the data value into R0.
+		R0 = BITM_L1DM_DCPLB_DFLT_L1UREAD | BITM_L1DM_DCPLB_DFLT_L1UWRITE | BITM_L1DM_DCPLB_DFLT_L1SWRITE | BITM_L1DM_DCPLB_DFLT_L1EOM;
 
-      // Write the values to the default CPLB registers.
-      [REG_L1DM_DCPLB_DFLT] = R0;
-      [REG_L1IM_ICPLB_DFLT] = R1;
-      CSYNC;
+		// Load the instruction value into R1.
+		R1 = BITM_L1IM_ICPLB_DFLT_L1UREAD | BITM_L1IM_ICPLB_DFLT_L1EOM;
 
-      //// initialize the CPLBs if they're needed. This was not possible
-      //// before we set up the stacks.
-      //R0 = 32;              // cplb_ctrl = 32
-      //.EXTERN _cplb_init;
-      //.TYPE _cplb_init,STT_FUNC;
-      //CALL.X _cplb_init;
+		// Write the values to the default CPLB registers.
+		[REG_L1DM_DCPLB_DFLT] = R0;
+		[REG_L1IM_ICPLB_DFLT] = R1;
+		CSYNC;
 
-      //// Define and initialize the CPLB control variable.
-      //.SECTION/DOUBLEANY cplb_data;
-      //.ALIGN 4;
-      //.BYTE4 ___cplb_ctrl = 32;
-      //.GLOBAL ___cplb_ctrl;
-      //.TYPE ___cplb_ctrl,STT_OBJECT;
+		//// initialize the CPLBs if they're needed. This was not possible
+		//// before we set up the stacks.
+		//R0 = 32;              // cplb_ctrl = 32
+		//.EXTERN _cplb_init;
+		//.TYPE _cplb_init,STT_FUNC;
+		//CALL.X _cplb_init;
 
-      //.PREVIOUS;            // revert back to the code section
-      //.ALIGN 2;
+		//// Define and initialize the CPLB control variable.
+		//.SECTION/DOUBLEANY cplb_data;
+		//.ALIGN 4;
+		//.BYTE4 ___cplb_ctrl = 32;
+		//.GLOBAL ___cplb_ctrl;
+		//.TYPE ___cplb_ctrl,STT_OBJECT;
 
-      // Call constructors for C++ global scope variables.
-      .EXTERN ___ctorloop;
-      .TYPE ___ctorloop,STT_FUNC
-      CALL.X ___ctorloop;
+		//.PREVIOUS;            // revert back to the code section
+		//.ALIGN 2;
 
-      // Call the application program.
-      .EXTERN _main;
-      .TYPE _main,STT_FUNC;
-      CALL.X _main;
+		.EXTERN _SystemInit;
+		.TYPE _SystemInit,STT_FUNC;
+		CALL.X _SystemInit;
+
+		// Call constructors for C++ global scope variables.
+		.EXTERN ___ctorloop;
+		.TYPE ___ctorloop,STT_FUNC
+		CALL.X ___ctorloop;
+
+		// Call the application program.
+		.EXTERN _main;
+		.TYPE _main,STT_FUNC;
+		CALL.X _main;
 
 dummy_exception:
 
-	EMUEXCPT;
-	IDLE;
-	JUMP dummy_exception; 
+		EMUEXCPT;
+		IDLE;
+		JUMP dummy_exception; 
 
 //.main_end_loop:
 //	  JUMP 	.main_end_loop;

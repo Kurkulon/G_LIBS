@@ -436,5 +436,8 @@
     <None Include="cpp\ADSP\startup_BF706.s">
       <Filter>CPP\ADSP</Filter>
     </None>
+    <None Include="LDF\BF706.ldf">
+      <Filter>LDF</Filter>
+    </None>
   </ItemGroup>
 </Project>
