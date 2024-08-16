@@ -352,7 +352,7 @@ void S_SPIM::WritePIO(const void *data, u16 count)
 	while((_hw->STAT & (STAT_TF|STAT_SPIF)) != (STAT_TF|STAT_SPIF));
 
 	_hw->TXCTL	= 0;
-	_hw->CTL = 0;
+	_hw->RXCTL	= 0;
 
 #elif defined(CPU_SAME53)
 
@@ -384,7 +384,7 @@ void S_SPIM::WriteAsyncDMA(const void *data, u16 count)
 
 #elif defined(__ADSPBF70x__)
 
-	_hw->TXCTL	= 0;
+	_hw->TXCTL	= TXCTL_TEN|TXCTL_TTI|TXCTL_TWCEN|TXCTL_TDR_EMPTY;
 	_hw->RXCTL	= 0;
 	_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&(SPI_CPOL|SPI_CPHA|SPI_LSBF));	
 	_hw->TWC	= count;
@@ -392,7 +392,7 @@ void S_SPIM::WriteAsyncDMA(const void *data, u16 count)
 
 	_DMATX.Write8((volatile void*)data, count);
 
-	_hw->TXCTL	= TXCTL_TEN|TXCTL_TTI|TXCTL_TWCEN;
+	//_hw->TXCTL |= TXCTL_TEN;
 
 #elif defined(CPU_SAME53)	
 
@@ -447,7 +447,8 @@ void S_SPIM::WriteSyncDMA(const void *data, u16 count)
 		_hw->Ctl = 0;
 		_DMA.Disable();
 	#elif defined(__ADSPBF70x__)
-		_hw->CTL = 0;
+		_hw->TXCTL	= 0;
+		_hw->RXCTL	= 0;
 		_DMATX.Disable();
 	#elif defined(CPU_SAME53)
 		_DMATX->Disable();
@@ -472,15 +473,14 @@ void S_SPIM::WriteAsyncDMA(const void *data1, u16 count1, const void *data2, u16
 
 #elif defined(__ADSPBF70x__)
 
-	_hw->TXCTL	= 0;
+	_hw->TXCTL	= TXCTL_TEN|TXCTL_TTI|TXCTL_TWCEN|TXCTL_TDR_EMPTY;
+	//_hw->TXCTL	= 0;
 	_hw->RXCTL	= 0;
 	_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&(SPI_CPOL|SPI_CPHA|SPI_LSBF));	
 	_hw->TWC	= count1+count2;
 	_hw->TWCR	= 0;
 
 	_DMATX.Write8((volatile void*)data1, count1, (volatile void*)data2, count2);
-
-	_hw->TXCTL	= TXCTL_TEN|TXCTL_TTI|TXCTL_TWCEN;
 
 #elif defined(CPU_SAME53)
 
@@ -505,7 +505,8 @@ void S_SPIM::WriteSyncDMA(const void *data1, u16 count1, const void *data2, u16 
 		_hw->Ctl = 0;
 		_DMA.Disable();
 	#elif defined(__ADSPBF70x__)
-		_hw->CTL = 0;
+		_hw->TXCTL	= 0;
+		_hw->RXCTL	= 0;
 		_DMATX.Disable();
 	#elif defined(CPU_SAME53)
 		_DMATX->Disable();
@@ -563,8 +564,8 @@ void S_SPIM::ReadPIO(void *data, u16 count)
 		*(p++) = _hw->RFIFO; count--;
 	};
 
-	_hw->RXCTL = 0;
-	_hw->CTL = 0;
+	_hw->TXCTL	= 0;
+	_hw->RXCTL	= 0;
 
 #elif defined(CPU_SAME53)
 
@@ -610,7 +611,7 @@ void S_SPIM::ReadAsyncDMA(void *data, u16 count)
 
 	_DMARX.Read8(data, count);
 
-	_hw->RXCTL = RXCTL_REN|RXCTL_RTI|RXCTL_RWCEN;
+	_hw->RXCTL	= RXCTL_REN|RXCTL_RTI|RXCTL_RWCEN|RXCTL_RDR_NE;
 
 #elif defined(CPU_SAME53)	
 
@@ -670,7 +671,8 @@ void S_SPIM::ReadSyncDMA(void *data, u16 count)
 
 	#elif defined(__ADSPBF70x__)
 
-		_hw->CTL = 0;
+		_hw->TXCTL	= 0;
+		_hw->RXCTL	= 0;
 		_DMARX.Disable();
 
 	#elif defined(CPU_SAME53)	

@@ -39,14 +39,6 @@
 .SECTION/DOUBLEANY program;
 .ALIGN 2;
 
-//.extern ___l1_code_cache;
-//.type ___l1_code_cache, STT_OBJECT;
-//.extern ___l1_data_cache_a;
-//.type ___l1_data_cache_a, STT_OBJECT;
-//.extern l1_data_a_cache_enabled_when_used_for_data;
-//.type l1_data_a_cache_enabled_when_used_for_data, STT_FUNC;
-//.extern ___l1_data_cache_b;
-//.type ___l1_data_cache_b, STT_OBJECT; 
 
 start:
       // The assembler warning for anomaly 05-00-0312, issued when interrupts
@@ -323,6 +315,7 @@ dummy_exception:
 
 		EMUEXCPT;
 		IDLE;
+		RTI;
 		JUMP dummy_exception; 
 
 //.main_end_loop:

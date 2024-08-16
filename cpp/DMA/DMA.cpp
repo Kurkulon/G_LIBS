@@ -116,7 +116,7 @@ void DMA_CH::Trans(volatile void *src, u16 len, u16 ctrl)
 	_dmach->XMOD = 1UL<<((ctrl>>4)&3);
 
 	_dmach->STAT = ~0;
-	_dmach->CFG = DMA_FLOW_STOP|(ctrl&(DMA_PSIZE(~0)|DMA_WNR))|DMA_SYNC|DMA_EN;
+	_dmach->CFG = DMA_INT_XCNT|DMA_FLOW_STOP|(ctrl&(DMA_PSIZE(~0)|DMA_WNR))|DMA_SYNC|DMA_EN;
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -140,11 +140,11 @@ void DMA_CH::Trans(volatile void *stadr1, u16 len1, u16 mdfy1, u16 ctrl1, volati
 		_dsc2.ADDRSTART = (void*)stadr2;
 		_dsc2.XCNT = len2;
 		_dsc2.XMOD = mdfy2;
-		_dsc2.DMACFG = DMA_FLOW_STOP|ctrl2;
+		_dsc2.DMACFG = DMA_FLOW_STOP|DMA_INT_XCNT|ctrl2;
 	}
 	else
 	{
-		_dsc1.DMACFG = DMA_FLOW_STOP|ctrl1;
+		_dsc1.DMACFG = DMA_FLOW_STOP|DMA_INT_XCNT|ctrl1;
 	};
 
 	_dmach->STAT = ~0;
@@ -181,11 +181,11 @@ void DMA_CH::Trans2D(volatile void *stadr1, u16 xcount1, u16 xmdfy1, u16 ycount1
 		_dsc2.YCNT		= ycount2;
 		_dsc2.YMOD		= ymdfy2;
 
-		_dsc2.DMACFG = DMA_FLOW_STOP|ctrl2;
+		_dsc2.DMACFG = DMA_FLOW_STOP|DMA_INT_YCNT|ctrl2;
 	}
 	else
 	{
-		_dsc1.DMACFG = DMA_FLOW_STOP|ctrl;
+		_dsc1.DMACFG = DMA_FLOW_STOP|DMA_INT_YCNT|ctrl;
 	};
 
 	_dmach->STAT = ~0;

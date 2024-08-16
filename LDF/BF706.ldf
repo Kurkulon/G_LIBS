@@ -70,16 +70,11 @@ may be suppressed by defining the LDF macro NO_UTILITY_ROM.
 #elif defined(USE_CACHE_C_A)
 	#define USE_CACHE_CODE
 	#define USE_CACHE_DA
-#elif defined(USE_CACHE_C_B)
-	#define USE_CACHE_CODE
-	#define USE_CACHE_DB
 #elif defined(USE_CACHE_A_B)
 	#define USE_CACHE_DA
 	#define USE_CACHE_DB
 #elif defined(USE_CACHE_A)
 	#define USE_CACHE_DA
-#elif defined(USE_CACHE_B)
-	#define USE_CACHE_DB
 #elif defined(USE_CACHE_C)
 	#define USE_CACHE_CODE
 #endif

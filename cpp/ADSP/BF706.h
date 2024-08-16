@@ -155,24 +155,75 @@ namespace T_HW
 
 	struct S_L1DM
 	{
-		BF_RO32 SRAM_BASE_ADDR;                /*!< SRAM Base Address Register */
-		BF_RW32 DCTL;                          /*!< Data Memory Control Register */
-		BF_RO32 DSTAT;                         /*!< Data Memory CPLB Status Register */
-		BF_RO32 DCPLB_Fault_Addr;             /*!< Data Memory CPLB Fault Address Register (legacy name) */
-		BF_RW32 DCPLB_DFLT;                    /*!< Data Memory CPLB Default Settings Register */
-		BF_RO32 DPERR_STAT;                    /*!< Data Memory Parity Error Status Register */
+		BF_RO32 SRAM_BASE_ADDR;					/*!< SRAM Base Address Register */
+		BF_RW32 DCTL;							/*!< Data Memory Control Register */
+		BF_RO32 DSTAT;							/*!< Data Memory CPLB Status Register */
+		BF_RO32 DCPLB_Fault_Addr;				/*!< Data Memory CPLB Fault Address Register (legacy name) */
+		BF_RW32 DCPLB_DFLT;						/*!< Data Memory CPLB Default Settings Register */
+		BF_RO32 DPERR_STAT;						/*!< Data Memory Parity Error Status Register */
 													BF_RO8                  z__RESERVED0[232];
-		BF_RW32 DCPLB_ADDR[16];                /*!< Data Memory CPLB Address Registers */
+		BF_RW32 DCPLB_ADDR[16];					/*!< Data Memory CPLB Address Registers */
 													BF_RO8                  z__RESERVED1[192];
-		BF_RW32 DCPLB_DATA[16];                /*!< Data Memory CPLB Data Registers */
+		BF_RW32 DCPLB_DATA[16];					/*!< Data Memory CPLB Data Registers */
 	}; 
 
-	#define DCTL_ENX					(1UL<<16)                               /* Enable Extended Data Access */
-	#define DCTL_RDCHK              	(1UL<<9)                               /* Read Parity Check */
-	#define DCTL_CBYPASS            	(1UL<<8)                               /* Cache Bypass */
-	#define DCTL_DCBS               	(1UL<<4)                               /* Data Cache Bank Select */
-	#define DCTL_CFG                	(1UL<<2)                               /* Configure as Cache or SRAM */
-	#define DCTL_ENCPLB             	(1UL<<1)                               /* Enable CPLB Operations */
+	#define L1DM_ENX				(1UL<<16)		/* Enable Extended Data Access */
+	#define L1DM_RDCHK				(1UL<<9)		/* Read Parity Check */
+	#define L1DM_CBYPASS			(1UL<<8)		/* Cache Bypass */
+	#define L1DM_DCBS				(1UL<<4)		/* Data Cache Bank Select */
+	#define L1DM_ENCPLB				(1UL<<1)		/* Enable CPLB Operations */
+	#define L1DM_CFG				(3UL<<2)		/* Configure as Cache or SRAM */
+	#define L1DM_SRAM_AB			(0UL<<2)		/* CFG: L1 data block A as SRAM, L1 data block B as SRAM */
+	#define L1DM_ACACHE_BSRAM       (1UL<<2)		/* CFG: L1 data block A as cache, L1 data block B as SRAM */
+	#define L1DM_ACACHE_BCACHE      (3UL<<2)		/* CFG: L1 data block A as cache, L1 data block B as cache */ 
+
+	#define L1DM_DFLT_L1SWRITE		(1UL<<11)		/* L1 Supervisor Mode Write */
+	#define L1DM_DFLT_L1UWRITE		(1UL<<10)		/* L1 User Mode Write */
+	#define L1DM_DFLT_L1UREAD		(1UL<<9)		/* L1 User Mode Read */
+	#define L1DM_DFLT_L1EOM			(1UL<<8)		/* L1 Exception On Miss */
+	#define L1DM_DFLT_SYSSWRITE		(1UL<<7)		/* System Supervisor Mode Write */
+	#define L1DM_DFLT_SYSUWRITE		(1UL<<6)		/* System User Mode Write */
+	#define L1DM_DFLT_SYSUREAD		(1UL<<5)		/* System User Mode Read */
+	#define L1DM_DFLT_SYSEOM		(1UL<<4)		/* System Exception On Miss */
+
+	#define L1DM_DFLT_NOCACHE		(0)				/* SYSCPROPS: Non-cacheable memory space */
+	#define L1DM_DFLT_WB_L1			(1)				/* SYSCPROPS: Non-cacheable in L2; write back cacheable in L1 */
+	#define L1DM_DFLT_WB_L2			(2)				/* SYSCPROPS: Write back cacheable in L2; non-cacheable in L1 */
+	#define L1DM_DFLT_WB_L1L2		(3)				/* SYSCPROPS: Write back cacheable in L1 and L2 */
+	#define L1DM_DFLT_IO			(4)				/* SYSCPROPS: I/O device space */
+	#define L1DM_DFLT_WT_L1			(5)				/* SYSCPROPS: Non-cacheable in L2; write through cacheable in L1 */
+	#define L1DM_DFLT_WT_L2			(6)				/* SYSCPROPS: Write through cacheable in L2; non-cacheable in L1 */
+	#define L1DM_DFLT_WT_L1L2		(7)				/* SYSCPROPS: Write through cacheable in L1 and L2 */ 
+
+	#define L1DM_PSIZE(v)			(((v)&15)<<16)  /* Page Size */
+	#define L1DM_PSIZE_1KB			(0UL<<16)		/* PSIZE: 1K byte page size */
+	#define L1DM_PSIZE_4KB			(1UL<<16)		/* PSIZE: 4K byte page size */
+	#define L1DM_PSIZE_16KB			(2UL<<16)		/* PSIZE: 16K byte page size */
+	#define L1DM_PSIZE_64KB			(3UL<<16)		/* PSIZE: 64K byte page size */
+	#define L1DM_PSIZE_256KB		(4UL<<16)		/* PSIZE: 256K byte page size */
+	#define L1DM_PSIZE_1MB			(5UL<<16)		/* PSIZE: 1M byte page size */
+	#define L1DM_PSIZE_4MB			(6UL<<16)		/* PSIZE: 4M byte page size */
+	#define L1DM_PSIZE_16MB			(7UL<<16)		/* PSIZE: 16M byte page size */
+	#define L1DM_PSIZE_64MB			(8UL<<16)		/* PSIZE: 64M byte page size */
+	#define L1DM_PSIZE_256MB		(9UL<<16)		/* PSIZE: 256M byte page size */ 
+	#define L1DM_PSIZE_1GB			(10UL<<16)		/* PSIZE: 1G byte page size */
+
+	#define L1DM_NOCACHE			(0<<12)			/* CPROPS: Non-cacheable memory space */
+	#define L1DM_WB_L1				(1<<12)			/* CPROPS: Non-cacheable in L2; write back cacheable in L1 */
+	#define L1DM_WB_L2				(2<<12)			/* CPROPS: Write back cacheable in L2; non-cacheable in L1 */
+	#define L1DM_WB_L1L2			(3<<12)			/* CPROPS: Write back cacheable in L1 and L2 */
+	#define L1DM_IO					(4<<12)			/* CPROPS: I/O device space */
+	#define L1DM_WT_L1				(5<<12)			/* CPROPS: Non-cacheable in L2; write through cacheable in L1 */
+	#define L1DM_WT_L2				(6<<12)			/* CPROPS: Write through cacheable in L2; non-cacheable in L1 */
+	#define L1DM_WT_L1L2			(7<<12)			/* CPROPS: Write through cacheable in L1 and L2 */
+
+	#define L1DM_DIRTY				(1UL<<7)		/* CPROPS: Dirty CPLB */
+	#define L1DM_SWRITE				(1UL<<4)		/* CPROPS: Supervisor Mode Write */
+	#define L1DM_UWRITE				(1UL<<3)		/* CPROPS: User Mode Write */
+	#define L1DM_UREAD				(1UL<<2)		/* CPROPS: User Mode Read */
+	#define L1DM_LOCK				(1UL<<1)		/* CPROPS: Lock CPLB */
+	#define L1DM_VALID				(1UL<<0)		/* CPROPS: Valid CPLB */ 
+
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -195,11 +246,49 @@ namespace T_HW
 		BF_RW32 Icplb_data[16];                /*!< Instruction Memory CPLB Data Registers */
 	};
 
-	#define ICTL_CPRIORST               (1UL<<13)                              /* Cache Line Priority Reset */
-	#define ICTL_RDCHK                  (1UL<<9)                               /* Read Parity Checking */
-	#define ICTL_CBYPASS                (1UL<<8)                               /* Cache Bypass */
-	#define ICTL_CFG                    (1UL<<2)                               /* Configure L1 code memory as cache */
-	#define ICTL_ENCPLB                 (1UL<<1)                               /* Enable ICPLB */
+	#define L1IM_CPRIORST				(1UL<<13)							/* ICTL: Cache Line Priority Reset */
+	#define L1IM_RDCHK					(1UL<<9)							/* ICTL: Read Parity Checking */
+	#define L1IM_CBYPASS				(1UL<<8)							/* ICTL: Cache Bypass */
+	#define L1IM_CFG					(1UL<<2)							/* ICTL: Configure L1 code memory as cache */
+	#define L1IM_ENCPLB					(1UL<<1)							/* ICTL: Enable ICPLB */
+
+	#define L1IM_ILLADDR				(1UL<<19)							/* ISTAT: Illegal Address */
+	#define L1IM_MODE					(1UL<<17)							/* ISTAT: Access Mode */
+	#define L1IM_FAULT					(0xFFFF)							/* ISTAT: Fault Status */ 
+
+	#define L1IM_L1UREAD				(1UL<<9)							/* ICPLB_DFLT: L1 user mode read access default */
+	#define L1IM_L1EOM					(1UL<<8)							/* ICPLB_DFLT: Access exception on Instruction CPLB miss to L1 memory space */
+	#define L1IM_SYSUREAD				(1UL<<5)							/* ICPLB_DFLT: System user mode read access default */
+	#define L1IM_SYSEOM					(1UL<<4)							/* ICPLB_DFLT: Access exception on Instruction CPLB miss to System space */
+	#define L1IM_DFLT_NOCACHE			(0UL<<0)							/* ICPLB_DFLT.SYSCPROPS: Non-cacheable memory space : Default cacheability properties for system space */ 
+	#define L1IM_DFLT_L1CACHE			(1UL<<0)							/* ICPLB_DFLT.SYSCPROPS: Cacheable in L1 : Default cacheability properties for system space */ 
+
+	//#define L1IM_IPERR_STAT_BYTELOC         24							/* Parity Error Bytes */
+	//#define L1IM_IPERR_STAT_PORT            22							/* Parity Error Port */
+	//#define L1IM_IPERR_STAT_ADDRESS          3							/* Parity Error Address */
+	//#define L1IM_IPERR_STAT_LOCATION         0							/* Parity Error Location */ 
+
+	#define L1IM_PSIZE(v)				(((v)&15)<<16)                      /* Page Size */
+	#define L1IM_PSIZE_1KB				(0UL<<16)							/* PSIZE: 1K byte page size */
+	#define L1IM_PSIZE_4KB				(1UL<<16)							/* PSIZE: 4K byte page size */
+	#define L1IM_PSIZE_16KB				(2UL<<16)							/* PSIZE: 16K byte page size */
+	#define L1IM_PSIZE_64KB				(3UL<<16)							/* PSIZE: 64K byte page size */
+	#define L1IM_PSIZE_256KB			(4UL<<16)							/* PSIZE: 256K byte page size */
+	#define L1IM_PSIZE_1MB				(5UL<<16)							/* PSIZE: 1M byte page size */
+	#define L1IM_PSIZE_4MB				(6UL<<16)							/* PSIZE: 4M byte page size */
+	#define L1IM_PSIZE_16MB				(7UL<<16)							/* PSIZE: 16M byte page size */
+	#define L1IM_PSIZE_64MB				(8UL<<16)							/* PSIZE: 64M byte page size */
+	#define L1IM_PSIZE_256MB			(9UL<<16)							/* PSIZE: 256M byte page size */ 
+	#define L1IM_PSIZE_1GB				(10UL<<16)							/* PSIZE: 1G byte page size */
+
+	#define L1IM_NOCACHE				(0UL<<12)							/* ICPLB_DATA.CPROPS: Non-cacheable memory space */
+	#define L1IM_L1CACHE				(1UL<<12)							/* ICPLB_DATA.CPROPS: Non-cacheable in L2; cacheable in L1 */
+
+	#define L1IM_CPRIO_LO				(0UL<<8)							/* ICPLB_DATA: Cache Line Priority : Low importance */
+	#define L1IM_CPRIO_HI				(1UL<<8)							/* ICPLB_DATA: Cache Line Priority : High importance */
+	#define L1IM_UREAD					(1UL<<2)							/* ICPLB_DATA: Allow User Read */
+	#define L1IM_LOCK					(1UL<<1)							/* ICPLB_DATA: CPLB Lock */
+	#define L1IM_VALID					(1UL<<0)							/* ICPLB_DATA: CPLB Valid */ 
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -1536,27 +1625,39 @@ namespace T_HW
 	#define STAT_RFS		(1UL<<12)       /* SPI_RFIFO Status */
 	#define STAT_TF 		(1UL<<11)       /* Transmit Finish Indication */
 	#define STAT_RF 		(1UL<<10)       /* Receive Finish Indication */
-	#define STAT_TS  	(1UL<<9)		/* Transmit Start */
-	#define STAT_RS  	(1UL<<8)        /* Receive Start */
-	#define STAT_MF  	(1UL<<7)        /* Mode Fault Indication */
-	#define STAT_TC  	(1UL<<6)        /* Transmit Collision Indication */
-	#define STAT_TUR 	(1UL<<5)        /* Transmit Underrun Indication */
-	#define STAT_ROR 	(1UL<<4)        /* Receive Overrun Indication */
-	#define STAT_TUWM	(1UL<<2)        /* Transmit Urgent Watermark Breached */
-	#define STAT_RUWM	(1UL<<1)        /* Receive Urgent Watermark Breached */
-	#define STAT_SPIF	(1UL<<0)        /* SPI Finished */ 
+	#define STAT_TS  		(1UL<<9)		/* Transmit Start */
+	#define STAT_RS  		(1UL<<8)        /* Receive Start */
+	#define STAT_MF  		(1UL<<7)        /* Mode Fault Indication */
+	#define STAT_TC  		(1UL<<6)        /* Transmit Collision Indication */
+	#define STAT_TUR 		(1UL<<5)        /* Transmit Underrun Indication */
+	#define STAT_ROR 		(1UL<<4)        /* Receive Overrun Indication */
+	#define STAT_TUWM		(1UL<<2)        /* Transmit Urgent Watermark Breached */
+	#define STAT_RUWM		(1UL<<1)        /* Receive Urgent Watermark Breached */
+	#define STAT_SPIF		(1UL<<0)        /* SPI Finished */ 
 
 	#define RXCTL_RUWM  	(1UL<<16)   	/* Receive FIFO Urgent Watermark */
 	#define RXCTL_RRWM  	(1UL<<12)   	/* Receive FIFO Regular Watermark */
 	#define RXCTL_RDO   	(1UL<< 8)   	/* Receive Data Overrun */
-	#define RXCTL_RDR   	(1UL<< 4)   	/* Receive Data Request */
+	//#define RXCTL_RDR   	(1UL<< 4)   	/* Receive Data Request */
+	#define RXCTL_RDR_DIS   (0UL<< 4)		/* RDR: Disabled */
+	#define RXCTL_RDR_NE    (1UL<< 4)		/* RDR: Not empty RFIFO */
+	#define RXCTL_RDR_25    (2UL<< 4)		/* RDR: 25% full RFIFO */
+	#define RXCTL_RDR_50    (3UL<< 4)		/* RDR: 50% full RFIFO */
+	#define RXCTL_RDR_75    (4UL<< 4)		/* RDR: 75% full RFIFO */
+	#define RXCTL_RDR_FULL  (5UL<< 4)		/* RDR: Full RFIFO */ 
 	#define RXCTL_RWCEN 	(1UL<< 3)   	/* Receive Word Counter Enable */
 	#define RXCTL_RTI   	(1UL<< 2)   	/* Receive Transfer Initiate */
 	#define RXCTL_REN   	(1UL<< 0)   	/* Receive Enable */ 
 	#define TXCTL_TUWM  	(1UL<<16)   	/* FIFO Urgent Watermark */
 	#define TXCTL_TRWM  	(1UL<<12)   	/* FIFO Regular Watermark */
 	#define TXCTL_TDU   	(1UL<< 8)   	/* Transmit Data Under-run */
-	#define TXCTL_TDR   	(1UL<< 4)   	/* Transmit Data Request */
+	//#define TXCTL_TDR   	(1UL<< 4)   	/* Transmit Data Request */
+	#define TXCTL_TDR_DIS   (0UL<< 4)		/* TDR: Disabled */
+	#define TXCTL_TDR_NF    (1UL<< 4)		/* TDR: Not full TFIFO */
+	#define TXCTL_TDR_25    (2UL<< 4)		/* TDR: 25% empty TFIFO */
+	#define TXCTL_TDR_50    (3UL<< 4)		/* TDR: 50% empty TFIFO */
+	#define TXCTL_TDR_75    (4UL<< 4)		/* TDR: 75% empty TFIFO */
+	#define TXCTL_TDR_EMPTY (5UL<< 4)		/* TDR: Empty TFIFO */ 	
 	#define TXCTL_TWCEN 	(1UL<< 3)   	/* Transmit Word Counter Enable */
 	#define TXCTL_TTI   	(1UL<< 2)   	/* Transmit Transfer Initiate */
 	#define TXCTL_TEN   	(1UL<< 0)   	/* Transmit Enable */ 
