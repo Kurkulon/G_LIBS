@@ -24,6 +24,8 @@ typedef ADI_ROM_BOOT_HEADER ADI_BOOT_HEADER;
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 extern void InitIVG(u32 IVG, void (*EVT)());
+extern void InitSEC(u32 PID, void (*EVT)());
+
 extern u32 Get_CCLK();
 extern u32 Get_SCLK();
 extern u32 Get_SCLK0();
@@ -527,15 +529,15 @@ namespace T_HW
 
 	struct S_SEC_CB
 	{
-		BF_RW32 CCTL;                          /*!< SCI Control Register n */
-		BF_RW32 CSTAT;                         /*!< SCI Status Register n */
-		BF_RO32 CPND;                          /*!< Core Pending Register n */
-		BF_RO32 CACT;                          /*!< SCI Active Register n */
-		BF_RW32 CPMSK;                         /*!< SCI Priority Mask Register n */
-		BF_RW32 CGMSK;                         /*!< SCI Group Mask Register n */
-		BF_RW32 CPLVL;                         /*!< SCI Priority Level Register n */
-		BF_RW32 CSID;                          /*!< SCI Source ID Register n */
-    												BF_RO8                  z__RESERVED0[32];
+		BF_RW32 CCTL;	/*!< SCI Control Register n */
+		BF_RW32 CSTAT;	/*!< SCI Status Register n */
+		BF_RO32 CPND;	/*!< Core Pending Register n */
+		BF_RO32 CACT;	/*!< SCI Active Register n */
+		BF_RW32 CPMSK;	/*!< SCI Priority Mask Register n */
+		BF_RW32 CGMSK;	/*!< SCI Group Mask Register n */
+		BF_RW32 CPLVL;	/*!< SCI Priority Level Register n */
+		BF_RW32 CSID;	/*!< SCI Source ID Register n */
+    					BF_RO8	z__RESERVED0[32];
 	};
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -547,8 +549,8 @@ namespace T_HW
 
 	struct S_SEC_SB
 	{
-		BF_RW32 SCTL;                          /*!< Source Control Register n */
-		BF_RW32 SSTAT;                         /*!< Source Status Register n */
+		BF_RW32 SCTL;	/*!< Source Control Register n */
+		BF_RW32 SSTAT;	/*!< Source Status Register n */
 	};
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -560,25 +562,29 @@ namespace T_HW
 
 	struct S_SEC
 	{
-		BF_RW32 	GCTL;                      /*!< Global Control Register */
-		BF_RW32 	GSTAT;                     /*!< Global Status Register */
-		BF_RW32 	RAISE;                     /*!< Global Raise Register */
-		BF_RW32 	END;                       /*!< Global End Register */
-		BF_RW32 	FCTL;                      /*!< Fault Control Register */
-		BF_RW32 	FSTAT;                     /*!< Fault Status Register */
-		BF_RO32 	FSID;                      /*!< Fault Source ID Register */
-		BF_RW32 	FEND;                      /*!< Fault End Register */
-		BF_RW32 	FDLY;                      /*!< Fault Delay Register */
-		BF_RO32 	FDLY_CUR;                  /*!< Fault Delay Current Register */
-		BF_RW32 	FSRDLY;                    /*!< Fault System Reset Delay Register */
-		BF_RO32 	FSRDLY_CUR;                /*!< Fault System Reset Delay Current Register */
-		BF_RW32 	FCOPP;                     /*!< Fault COP Period Register */
-		BF_RO32 	FCOPP_CUR;                 /*!< Fault COP Period Current Register */
+		BF_RW32 	GCTL;						/*!< Global Control Register */
+		BF_RW32 	GSTAT;						/*!< Global Status Register */
+		BF_RW32 	RAISE;						/*!< Global Raise Register */
+		BF_RW32 	END;						/*!< Global End Register */
+		BF_RW32 	FCTL;						/*!< Fault Control Register */
+		BF_RW32 	FSTAT;						/*!< Fault Status Register */
+		BF_RO32 	FSID;						/*!< Fault Source ID Register */
+		BF_RW32 	FEND;						/*!< Fault End Register */
+		BF_RW32 	FDLY;						/*!< Fault Delay Register */
+		BF_RO32 	FDLY_CUR;					/*!< Fault Delay Current Register */
+		BF_RW32 	FSRDLY;						/*!< Fault System Reset Delay Register */
+		BF_RO32 	FSRDLY_CUR;					/*!< Fault System Reset Delay Current Register */
+		BF_RW32 	FCOPP;						/*!< Fault COP Period Register */
+		BF_RO32 	FCOPP_CUR;					/*!< Fault COP Period Current Register */
     												BF_RO8                  z__RESERVED0[968];
-		S_SEC_CB	CB;                       /*!< SCI Registers */
+		S_SEC_CB	SCI;							/*!< SCI Registers */
     												BF_RO8                  z__RESERVED1[960];
-		S_SEC_SB	SB[106];                  /*!< SSI Registers */
+		S_SEC_SB	SSI[PARAM_SEC0_SCOUNT];		/*!< SSI Registers */
+
+		typedef void (*EVT)();
 	};
+
+	#define SEC_INTERRUPT_HANDLER(_NAME) _Pragma("regs_clobbered \"R1 R2 P0 P1 P2 ASTAT\"") void _NAME()
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

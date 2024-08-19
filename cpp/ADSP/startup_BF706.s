@@ -24,12 +24,48 @@
 //#include <sys/fatal_error_code.h>
 //#include <sys/exception.h>
 
+#define DISPATCHER_REG_PUSH \
+		[--SP] = P0;  \
+		[--SP] = P1;  \
+		[--SP] = P2;  \
+		[--SP] = R0;  \
+		[--SP] = R1;  \
+		[--SP] = R2;  \
+		[--SP] = RETS;\
+		[--SP] = ASTAT
+
+/* Standard dispatcher register restore sequence,
+** must be identical across all dispatchers
+*/
+#define DISPATCHER_REG_POP \
+		ASTAT = [SP++];\
+		RETS  = [SP++];\
+		R2    = [SP++];\
+		R1    = [SP++];\
+		R0    = [SP++];\
+		P2    = [SP++];\
+		P1    = [SP++];\
+		P0    = [SP++] 
+
 #define LOADIMM32REG(R,VAL) R = VAL;
 
 /* Mask of interrupt bits to be enabled by default. Bits 0-4 unmaskable. */
 #define INTERRUPT_BITS (BITM_IMASK_IVG11 | BITM_IMASK_IVG15)
 
 #define UNASSIGNED_VAL 0x81818181
+
+#define SEC_VECTABLE_LEN PARAM_SEC0_SCOUNT
+
+.SECTION/NO_INIT SEC_VecTable;
+
+	.BYTE4	_SEC_VecTable[SEC_VECTABLE_LEN];
+	.GLOBAL _SEC_VecTable;
+	.TYPE	_SEC_VecTable,STT_OBJECT;
+
+#if WA_19000054
+	.BYTE4	_isr_nesting_count;
+	.BYTE4	_prev_bp_enable;
+#endif // #if WA_19000054
 
 // The requiredForROMBoot file attribute is included here as this source
 // defines code and data that are used before, or as part of, the meminit
@@ -226,49 +262,6 @@ supervisor_mode:
 
 		[--SP] = RETI;        // re-enables the interrupt system
 
-		//#include "cplb.h"
-		//// Invoke register_dispatched_handler for each exception code supported,
-		//// passing the event type parameter in the callback value so we can
-		//// avoid all of the conditional checking in the handler itself.
-		//// As the vector table is freshly initialized, we don't need to worry
-		//// about running out of space so don't check the return codes to avoid
-		//// the overhead.
-		////
-		//// There is no support provided for data access multiple CPLB hits (0x27)
-		//// and Instruction fetch CPLB protection violation (0x2B). If these
-		//// exception occurs they will be treated as an unhandled exception.
-		////
-		//// The code below calls the underlying RTL support rather than OSAL to
-		//// avoid startup overheads.
-		//.EXTERN _adi_rtl_register_dispatched_handler;
-		//.TYPE _adi_rtl_register_dispatched_handler,STT_FUNC;
-		//.EXTERN _cplb_dhandler;
-		//.TYPE _cplb_dhandler,STT_FUNC;
-		//// 0x23 - Data access CPLB protection violation
-		//LOADIMM32REG(R0, ADI_EXC_DATA_PROT_VIOLATION)
-		//LOADIMM32REG(R1, _cplb_dhandler)
-		//R2 = CPLB_EVT_DCPLB_WRITE;
-		//R5 = R1;
-		//CALL.X _adi_rtl_register_dispatched_handler;
-		//// 0x26 - Data access CPLB miss
-		//LOADIMM32REG(R0, ADI_EXC_DATA_CPLB_MISS)
-		//R1 = R5;
-		//R2 = CPLB_EVT_DCPLB_MISS;
-		//CALL.X _adi_rtl_register_dispatched_handler;
-		//// 0x2C - Instruction fetch CPLB miss
-		//LOADIMM32REG(R0, ADI_EXC_INSTR_CPLB_MISS)
-		//R1 = R5;
-		//R2 = CPLB_EVT_ICPLB_MISS;
-		//CALL.X _adi_rtl_register_dispatched_handler;
-		//// 0x2D - Instruction fetch multiple CPLB hits
-		//LOADIMM32REG(R0, ADI_EXC_INSTR_CPLB_MULTI_HIT)
-		//R1 = R5;
-		//R2 = CPLB_EVT_ICPLB_DOUBLE_HIT;
-		//CALL.X _adi_rtl_register_dispatched_handler;
-
-		// Initialize the default CPLB registers for L1 memory.
-		// System memory is controlled by individual CPLB entries.
-
 		// Load the data value into R0.
 		R0 = BITM_L1DM_DCPLB_DFLT_L1UREAD | BITM_L1DM_DCPLB_DFLT_L1UWRITE | BITM_L1DM_DCPLB_DFLT_L1SWRITE | BITM_L1DM_DCPLB_DFLT_L1EOM;
 
@@ -280,22 +273,24 @@ supervisor_mode:
 		[REG_L1IM_ICPLB_DFLT] = R1;
 		CSYNC;
 
-		//// initialize the CPLBs if they're needed. This was not possible
-		//// before we set up the stacks.
-		//R0 = 32;              // cplb_ctrl = 32
-		//.EXTERN _cplb_init;
-		//.TYPE _cplb_init,STT_FUNC;
-		//CALL.X _cplb_init;
+		P0 = _SEC_VecTable;
+		R1 = dummy_sec_vector;
+		P1 = SEC_VECTABLE_LEN;
+		LSETUP (.secvt, .secvt) LC0 = P1;
 
-		//// Define and initialize the CPLB control variable.
-		//.SECTION/DOUBLEANY cplb_data;
-		//.ALIGN 4;
-		//.BYTE4 ___cplb_ctrl = 32;
-		//.GLOBAL ___cplb_ctrl;
-		//.TYPE ___cplb_ctrl,STT_OBJECT;
+		.secvt:	[P0++] = R1;
 
-		//.PREVIOUS;            // revert back to the code section
-		//.ALIGN 2;
+#if WA_19000054
+		R1 = 0;
+		[_isr_nesting_count]	= R1;
+		[_prev_bp_enable]		= R1;
+#endif // #if WA_19000054
+
+		R0 = __sec_int_dispatcher;
+		[EVT11] = R0;
+		R0 = [IMASK];
+		BITSET(R0, 11); 
+		[IMASK] = R0;
 
 		.EXTERN _SystemInit;
 		.TYPE _SystemInit,STT_FUNC;
@@ -311,6 +306,75 @@ supervisor_mode:
 		.TYPE _main,STT_FUNC;
 		CALL.X _main;
 
+mail_exit_loop:
+
+		EMUEXCPT;
+		IDLE;
+		JUMP mail_exit_loop; 
+
+__sec_int_dispatcher:
+
+		DISPATCHER_REG_PUSH; 
+
+#if WA_19000054
+
+		R0 = [_isr_nesting_count];
+		CC = R0;
+		R0 += 1;
+		[_isr_nesting_count] = R0;
+		// Only save the BPEN bit for the outer ISR.
+		IF CC JUMP .wa_19000054_already_nested;
+		// Save the BPEN bit.
+		R0 = SYSCFG;
+		R1 = BITM_SYSCFG_BPEN;
+		R1 = R0 & R1;
+		[_adi_prev_bp_enable] = R1;
+		// Make sure the pipeline is clear before disabling the enable bit.
+		BITCLR(R0, BITP_SYSCFG_BPEN);
+		CSYNC;
+		SYSCFG = R0;
+		.wa_19000054_already_nested:
+
+#endif /* WA_19000054 */
+
+		P0 = [CEC_SID];					// read CEC_SID (32-bit MMR)
+		R0 = P0;						// copy SID to 1st handler arg
+		[CEC_SID] = P0;					// interrupt acknowledgement
+
+		P1 = _SEC_VecTable;
+
+		P1 = P1 + (P0 << 2);			// &_SEC_VecTable[index]
+
+		CALL (P1);						// call the handler, preserves R0
+
+		[REG_SEC0_END] = R0;			// R0 still contains the SID after the handler call
+
+#if WA_19000054
+
+		R0 = [_adi_isr_nesting_count];
+		R0 += -1;
+		CC = R0;
+		[_adi_isr_nesting_count] = R0;
+		IF CC JUMP .wa_19000054_still_nested;
+		R1 = [_adi_prev_bp_enable];
+		R0 = SYSCFG;
+		R0 = R0 | R1;
+		SYSCFG = R0;
+		.wa_19000054_still_nested:
+
+#endif /* WA_19000054 */ 
+
+		DISPATCHER_REG_POP;
+
+		RTI;
+
+dummy_sec_vector:
+
+		EMUEXCPT;
+		IDLE;
+		RTS;
+		JUMP dummy_sec_vector; 
+		
 dummy_exception:
 
 		EMUEXCPT;

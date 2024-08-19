@@ -102,12 +102,24 @@ u32 Get_SCLK1()	{ return SCLK1; }
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void InitIVG(u32 IVG, u32 PID, void (*EVT)())
+void InitIVG(u32 IVG, void (*EVT)())
 {
 	if (IVG <= 15)
 	{
 		HW::ICU->Evt[IVG]	 = (void*)EVT;		// *(pEVT0 + IVG) = (void*)EVT;
 		HW::ICU->IMask		|= 1<<IVG;			// *pIMASK |= 1<<IVG; 
+	};
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+extern "C" T_HW::S_SEC::EVT SEC_VecTable[PARAM_SEC0_SCOUNT];
+
+void InitSEC(u32 PID, void (*EVT)())
+{
+	if (PID < PARAM_SEC0_SCOUNT)
+	{
+		SEC_VecTable[PID] = EVT;
 	};
 }
 

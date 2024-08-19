@@ -240,7 +240,7 @@ static volatile byte * volatile twiReadData;
 static volatile DSCI2C* volatile twi_dsc = 0;
 static volatile DSCI2C* volatile twi_lastDsc = 0;
 
-void TWI_ISR()
+SEC_INTERRUPT_HANDLER(TWI_ISR)
 {
 	u16 stat = HW::TWI->ISTAT;
 

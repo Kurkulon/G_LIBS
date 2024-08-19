@@ -287,10 +287,9 @@ PROCESSOR P0
       
 		L1_data_b DEF_SECTION_QUAL
 		{
-			INPUT_SECTION_ALIGN(4)
-
 			___l1_data_cache_b = L1_DATA_CACHE_B; /* DATA B cache is not enabled */
-
+			
+			INPUT_SECTION_ALIGN(4)
 			INPUT_SECTIONS( $OBJS_LIBS(ctor) )   /* global C++ constructors list */
 			INPUT_SECTIONS( $OBJS_LIBS(ctorl) )  /* NULL terminator for ctor     */
 			INPUT_SECTIONS( $OBJS_LIBS(.gdt) )   /* C++ exceptions data          */
@@ -309,7 +308,6 @@ PROCESSOR P0
 		L1_data_b_bsz ZERO_INIT
 		{
 			INPUT_SECTION_ALIGN(4)
-
 			INPUT_SECTIONS( $OBJS_LIBS(L1_bsz_b L1_bsz) )
 			INPUT_SECTIONS( $OBJS_LIBS_INTERNAL(bsz) )
 			INPUT_SECTIONS( $OBJS_LIBS_NOT_EXTERNAL(bsz) )
@@ -320,7 +318,6 @@ PROCESSOR P0
 		L1_data_b_no_init NO_INIT
 		{
 			INPUT_SECTION_ALIGN(4)
-
 			INPUT_SECTIONS( $OBJS_LIBS(L1_noinit_data_b L1_noinit_data) )
 			INPUT_SECTIONS( $OBJS_LIBS_INTERNAL(noinit_data) )
 			INPUT_SECTIONS( $OBJS_LIBS_NOT_EXTERNAL(noinit_data) )
@@ -344,7 +341,6 @@ PROCESSOR P0
 		L1_data_a_bsz ZERO_INIT
 		{
 			INPUT_SECTION_ALIGN(4)
-
 			INPUT_SECTIONS( $OBJS_LIBS(L1_bsz_a L1_bsz) )
 			INPUT_SECTIONS( $OBJS_LIBS_INTERNAL(bsz) )
 			INPUT_SECTIONS( $OBJS_LIBS_NOT_EXTERNAL(bsz) )
@@ -355,7 +351,7 @@ PROCESSOR P0
 		L1_data_a_no_init NO_INIT
 		{
 			INPUT_SECTION_ALIGN(4)
-
+			INPUT_SECTIONS( $OBJS_LIBS(SEC_VecTable) )   
 			INPUT_SECTIONS( $OBJS_LIBS(L1_noinit_data_a L1_noinit_data) )
 			INPUT_SECTIONS( $OBJS_LIBS_INTERNAL(noinit_data) )
 			INPUT_SECTIONS( $OBJS_LIBS_NOT_EXTERNAL(noinit_data) )
