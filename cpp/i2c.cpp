@@ -358,7 +358,7 @@ void I2C_Init()
 	HW::TWI->IMSK		= 0;
 	HW::TWI->MSTRADDR	= 0;
 
-	//InitIVG(ivg_twi, pid_twi, TWI_ISR);
+	InitSEC(PID_TWI0_DATA, TWI_ISR);
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

@@ -115,11 +115,12 @@ void InitIVG(u32 IVG, void (*EVT)())
 
 extern "C" T_HW::S_SEC::EVT SEC_VecTable[PARAM_SEC0_SCOUNT];
 
-void InitSEC(u32 PID, void (*EVT)())
+void InitSEC(u32 PID, void (*EVT)(), byte prio)
 {
 	if (PID < PARAM_SEC0_SCOUNT)
 	{
-		SEC_VecTable[PID] = EVT;
+		SEC_VecTable[PID]	= EVT;
+		HW::SEC->SSI->SCTL	= SEC_IEN|SEC_SEN|SEC_PRIO(prio);
 	};
 }
 
@@ -127,8 +128,8 @@ void InitSEC(u32 PID, void (*EVT)())
 
 static void Init_PLL()
 {
-	u32      ctl = CGUCTL_VALUE;
-	u32 curr_ctl = HW::CGU->CTL & (CGU_CTL_MSEL(~0)|CGU_CTL_DF);
+	u32	ctl			= CGUCTL_VALUE;
+	u32 curr_ctl	= HW::CGU->CTL & (CGU_CTL_MSEL(~0)|CGU_CTL_DF);
 
 	if (curr_ctl == ctl)
 	{
@@ -150,6 +151,25 @@ static void Init_PLL()
 
 		while((HW::CGU->STAT & (CGU_STAT_PLOCK|CGU_STAT_PLLBP|CGU_STAT_CLKSALGN)) != CGU_STAT_PLOCK);
 	};
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static void Init_SEC()
+{
+	HW::SEC->SCI.CCTL = SEC_RESET;
+
+	HW::SEC->SCI.CSTAT = ~0; //SEC_NMI;
+
+	HW::SEC->GCTL = SEC_RESET;
+
+	HW::SEC->FCTL = SEC_RESET;
+
+	HW::SEC->GCTL = SEC_EN;
+
+	//HW::SEC->SCI.CCTL = SEC_NMIEN;
+
+	HW::SEC->SCI.CCTL = SEC_EN;
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -279,6 +299,8 @@ extern "C" void SystemInit()
 	HW::WDOG->CTL 		= INIT_WDOG_CTL;
 
 	Init_Cache();
+
+	Init_SEC();
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

@@ -24,7 +24,7 @@ typedef ADI_ROM_BOOT_HEADER ADI_BOOT_HEADER;
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 extern void InitIVG(u32 IVG, void (*EVT)());
-extern void InitSEC(u32 PID, void (*EVT)());
+extern void InitSEC(u32 PID, void (*EVT)(), byte prio = 0);
 
 extern u32 Get_CCLK();
 extern u32 Get_SCLK();
@@ -584,7 +584,45 @@ namespace T_HW
 		typedef void (*EVT)();
 	};
 
-	#define SEC_INTERRUPT_HANDLER(_NAME) _Pragma("regs_clobbered \"R1 R2 P0 P1 P2 ASTAT\"") void _NAME()
+	#define SEC_INTERRUPT_HANDLER(_NAME) _Pragma("diag(suppress:1658)") _Pragma("regs_clobbered \"R1 R2 P0 P1 P2 ASTAT\"") void _NAME()
+
+	#define SEC_LOCK	(1UL<<31)			/*	CCTL Lock */
+	#define SEC_NMIEN	(1UL<<16)			/*	CCTL NMI Enable */
+	#define SEC_WFI		(1UL<<12)			/*	CCTL Wait For Idle */
+	#define SEC_RESET	(1UL<<1)			/*	CCTL Reset */
+	#define SEC_EN		(1UL<<0)			/*	CCTL Enable */
+
+	#define SEC_NMI		(1UL<<16)			/*	CSTAT NMI */
+	//#define SEC_WFI		(1UL<<12)		/*	CSTAT Wait For Idle */
+	#define SEC_SIDV	(1UL<<10)			/*	CSTAT SID Valid */
+	#define SEC_ACTV	(1UL<<9)			/*	CSTAT ACT Valid */
+	#define SEC_PNDV	(1UL<<8)			/*	CSTAT PND Valid */
+	#define SEC_ERRC	(1UL<<4)			/*	CSTAT Error Cause */
+	#define SEC_ERR		(1UL<<1)			/*	CSTAT Error */
+
+	//#define SEC_LOCK	(1UL<<31)			/*	FCTL Lock */
+	#define SEC_TES		(1UL<<13)			/*	FCTL Trigger Event Select */
+	#define SEC_CMS		(1UL<<12)			/*	FCTL COP Mode Select */
+	#define SEC_FIEN	(1UL<<7)			/*	FCTL Fault Input Enable */
+	#define SEC_SREN	(1UL<<6)			/*	FCTL System Reset Enable */
+	#define SEC_TOEN	(1UL<<5)			/*	FCTL Trigger Output Enable */
+	#define SEC_FOEN	(1UL<<4)			/*	FCTL Fault Output Enable */
+	//#define SEC_RESET	(1UL<<1)			/*	FCTL Reset */
+	//#define SEC_EN	(1UL<<0)			/*	FCTL Enable */
+
+	//#define SEC_LOCK	(1UL<<31)			/*	GCTL Lock */
+	//#define SEC_RESET	(1UL<<1)			/*	GCTL Reset */
+	//#define SEC_EN	(1UL<<0)			/*	GCTL Enable */
+
+	//#define SEC_LOCK	(1UL<<31)			/*	SCTL Lock */
+	#define SEC_CTG(v)	(((v)&0xFF)<<24)	/*	SCTL Core Target Select */
+	#define SEC_GRP		(1UL<<16)			/*	SCTL Group Select */
+	#define SEC_PRIO(v)	(((v)&0xFF)<<8)		/*	SCTL Priority Level Select */
+	#define SEC_ERREN	(1UL<<4)			/*	SCTL Error Enable */
+	#define SEC_ES		(1UL<<3)			/*	SCTL Edge Select */
+	#define SEC_SEN		(1UL<<2)			/*	SCTL Source (signal) Enable */
+	#define SEC_FEN		(1UL<<1)			/*	SCTL Fault Enable */
+	#define SEC_IEN		(1UL<<0)			/*	SCTL Interrupt Enable */
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

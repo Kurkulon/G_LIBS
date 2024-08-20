@@ -79,7 +79,7 @@ $LIBRARIES =
 	,libc.dlb
 	//,librt_fileio.dlb
 	,libcpp.dlb
-	//,libdsp.dlb
+	,libdsp.dlb
 	//,libetsi.dlb
 	//,libssl.dlb
 	//,libdrv.dlb

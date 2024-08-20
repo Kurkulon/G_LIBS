@@ -101,7 +101,7 @@ adsp_cpu_options = -proc ADSP-BF592-A -si-revision 0.2 -DCPU_$(targetcpu)
 !else ifeq targetcpu BF706
 
 buildtool = ADSP
-adsp_cpu_options = -proc ADSP-BF706 -si-revision 1.1 -DCPU_$(targetcpu)
+adsp_cpu_options = -proc ADSP-BF706 -si-revision 1.1 -DCPU_$(targetcpu) 
 
 !else
 
@@ -181,7 +181,7 @@ win32_compiler_options = -nologo -DWIN32 -D_DEBUG -c -Z7 -Zp -I$(curdir)\cpp
 ##################################################################################################
 
 adsp_compiler_options = $(debug_compiler_options) -c -c++11 -g++ -g -structs-do-not-overlap -no-multiline &
-	-double-size-32 -decls-strong -warn-protos  $(adsp_cpu_options) -Wterse -I$(curdir)\cpp
+	-double-size-32 -ipa -decls-strong -warn-protos -warn-component $(adsp_cpu_options) -Wterse -I$(curdir)\cpp
 
 ##################################################################################################
 
