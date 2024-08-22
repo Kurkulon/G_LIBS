@@ -584,7 +584,7 @@ namespace T_HW
 		typedef void (*EVT)();
 	};
 
-	#define SEC_INTERRUPT_HANDLER(_NAME) _Pragma("diag(suppress:1658)") _Pragma("regs_clobbered \"R1 R2 P0 P1 P2 ASTAT\"") void _NAME()
+	#define SEC_INTERRUPT_HANDLER(_NAME) _Pragma("diag(suppress:1658)") _Pragma("regs_clobbered \"R0 R1 R2 P0 P1 P2 ASTAT\"") void _NAME()
 
 	#define SEC_LOCK	(1UL<<31)			/*	CCTL Lock */
 	#define SEC_NMIEN	(1UL<<16)			/*	CCTL NMI Enable */
@@ -813,11 +813,11 @@ namespace T_HW
 
 	struct S_TIMER_TMR
 	{
-		BF_RW32 CFG;                           /*!< Timer n Configuration Register */
-		BF_RO32 CNT;                           /*!< Timer n Counter Register */
-		BF_RW32 PER;                           /*!< Timer n Period Register */
-		BF_RW32 WID;                           /*!< Timer n Width Register */
-		BF_RW32 DLY;                           /*!< Timer n Delay Register */
+		BF_RW32 CFG;                           /* Timer n Configuration Register */
+		BF_RO32 CNT;                           /* Timer n Counter Register */
+		BF_RW32 PER;                           /* Timer n Period Register */
+		BF_RW32 WID;                           /* Timer n Width Register */
+		BF_RW32 DLY;                           /* Timer n Delay Register */
     												BF_RO8                  z__RESERVED0[12];
 	};
 
@@ -831,25 +831,34 @@ namespace T_HW
 	struct S_TIMER
 	{
     												BF_RO8                  z__RESERVED0[4];
-		BF_RW32 RUN;                           /*!< Run Register */
-		BF_RW32 RUN_SET;                       /*!< Run Set Register */
-		BF_RW32 RUN_CLR;                       /*!< Run Clear Register */
-		BF_RW32 STOP_CFG;                      /*!< Stop Configuration Register */
-		BF_RW32 STOP_CFG_SET;                  /*!< Stop Configuration Set Register */
-		BF_RW32 STOP_CFG_CLR;                  /*!< Stop Configuration Clear Register */
-		BF_RW32 DATA_IMSK;                     /*!< Data Interrupt Mask Register */
-		BF_RW32 STAT_IMSK;                     /*!< Status Interrupt Mask Register */
-		BF_RW32 TRG_MSK;                       /*!< Trigger Master Mask Register */
-		BF_RW32 TRG_IE;                        /*!< Trigger Slave Enable Register */
-		BF_RW32 DATA_ILAT;                     /*!< Data Interrupt Latch Register */
-		BF_RW32 STAT_ILAT;                     /*!< Status Interrupt Latch Register */
-		BF_RO32 ERR_TYPE;                      /*!< Error Type Status Register */
-		BF_RW32 BCAST_PER;                     /*!< Broadcast Period Register */
-		BF_RW32 BCAST_WID;                     /*!< Broadcast Width Register */
-		BF_RW32 BCAST_DLY;                     /*!< Broadcast Delay Register */
+		BF_RW32 RUN;							/* Run Register */
+		BF_RW32 RUN_SET;						/* Run Set Register */
+		BF_RW32 RUN_CLR;						/* Run Clear Register */
+		BF_RW32 STOP_CFG;						/* Stop Configuration Register */
+		BF_RW32 STOP_CFG_SET;					/* Stop Configuration Set Register */
+		BF_RW32 STOP_CFG_CLR;					/* Stop Configuration Clear Register */
+		BF_RW32 DATA_IMSK;						/* Data Interrupt Mask Register */
+		BF_RW32 STAT_IMSK;						/* Status Interrupt Mask Register */
+		BF_RW32 TRG_MSK;						/* Trigger Master Mask Register */
+		BF_RW32 TRG_IE;							/* Trigger Slave Enable Register */
+		BF_RW32 DATA_ILAT;						/* Data Interrupt Latch Register */
+		BF_RW32 STAT_ILAT;						/* Status Interrupt Latch Register */
+		BF_RO32 ERR_TYPE;						/* Error Type Status Register */
+		BF_RW32 BCAST_PER;						/* Broadcast Period Register */
+		BF_RW32 BCAST_WID;						/* Broadcast Width Register */
+		BF_RW32 BCAST_DLY;						/* Broadcast Delay Register */
     												BF_RO8                  z__RESERVED1[28];
-		S_TIMER_TMR	 TMR[8];                /*!<  */
+		S_TIMER_TMR	 TMR[8];					/* TMR register block */
 	};
+
+	#define TIMER_TMR0		(1UL<<0)			/* TMR0 Bit mask */
+	#define TIMER_TMR1		(1UL<<1)			/* TMR1 Bit mask */
+	#define TIMER_TMR2		(1UL<<2)			/* TMR2 Bit mask */
+	#define TIMER_TMR3		(1UL<<3)			/* TMR3 Bit mask */
+	#define TIMER_TMR4		(1UL<<4)			/* TMR4 Bit mask */
+	#define TIMER_TMR5		(1UL<<5)			/* TMR5 Bit mask */
+	#define TIMER_TMR6		(1UL<<6)			/* TMR6 Bit mask */
+	#define TIMER_TMR7		(1UL<<7)			/* TMR7 Bit mask */
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

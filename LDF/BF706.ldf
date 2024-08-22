@@ -147,9 +147,9 @@ $OBJS_LIBS_NOT_EXTERNAL =
   #define START_SYM start
 #endif
 
-#ifndef STACK_SIZE
-#define STACK_SIZE 0x1FF0
-#endif
+//#ifndef STACK_SIZE
+//#define STACK_SIZE 0x1FF0
+//#endif
 
 MEMORY
 {
@@ -208,15 +208,17 @@ MEMORY
 
 #endif
 
+	MEM_L1_DATA_A_STACK		{ TYPE(RAM) START(0x11800000) END(0x118003FF) WIDTH(8) }
+
 #ifdef USE_CACHE_DA
 
 	#define L1_DATA_CACHE_A	1
-	MEM_L1_DATA_A           { TYPE(RAM) START(0x11800000) END(0x11803FFF) WIDTH(8) }
+	MEM_L1_DATA_A           { TYPE(RAM) START(0x11800400) END(0x11803FFF) WIDTH(8) }
 
 #else
 
 	#define L1_DATA_CACHE_A	0
-	MEM_L1_DATA_A           { TYPE(RAM) START(0x11800000) END(0x11807FFF) WIDTH(8) }
+	MEM_L1_DATA_A           { TYPE(RAM) START(0x11800400) END(0x11807FFF) WIDTH(8) }
 
 #endif
 
@@ -278,13 +280,23 @@ PROCESSOR P0
 		{
 			INPUT_SECTION_ALIGN(4)
 
-			RESERVE(stack_in_L1_data_c, stack_in_L1_data_c_length = STACK_SIZE,4)
+			RESERVE(stack_in_L1_data_c, stack_in_L1_data_c_length, 0, 4)
 			RESERVE_EXPAND(stack_in_L1_data_c, stack_in_L1_data_c_length, 0, 4)
 			ldf_stack_space = stack_in_L1_data_c;
-			ldf_stack_end = (ldf_stack_space + (STACK_SIZE - 4)) & 0xfffffffc;
+			ldf_stack_end = (ldf_stack_space + stack_in_L1_data_c_length) & 0XFFFFFFFC;
 
 		} > MEM_L1_DATA_C_STACK
-      
+
+		L1_data_a_stack NO_INIT
+		{
+			INPUT_SECTION_ALIGN(4)
+
+			RESERVE(stack_in_L1_data_a, stack_in_L1_data_a_length, 0, 4)
+			ldf_sysstack_space = stack_in_L1_data_a;
+			ldf_sysstack_end = (ldf_sysstack_space + stack_in_L1_data_a_length) & 0XFFFFFFFC;
+
+		} > MEM_L1_DATA_A_STACK
+
 		L1_data_b DEF_SECTION_QUAL
 		{
 			___l1_data_cache_b = L1_DATA_CACHE_B; /* DATA B cache is not enabled */

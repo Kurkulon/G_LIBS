@@ -24,6 +24,10 @@
 //#include <sys/fatal_error_code.h>
 //#include <sys/exception.h>
 
+//#define LEGACY_SUPERVISOR_MODE
+//#define TEST_DCPLB
+//#define TEST_ICPLB
+
 #define DISPATCHER_REG_PUSH \
 		[--SP] = P0;  \
 		[--SP] = P1;  \
@@ -49,8 +53,11 @@
 
 #define LOADIMM32REG(R,VAL) R = VAL;
 
-/* Mask of interrupt bits to be enabled by default. Bits 0-4 unmaskable. */
-#define INTERRUPT_BITS (BITM_IMASK_IVG11 | BITM_IMASK_IVG15)
+#ifdef LEGACY_SUPERVISOR_MODE
+	#define INTERRUPT_BITS (BITM_IMASK_IVG11 | BITM_IMASK_IVG15)	/* Mask of interrupt bits to be enabled by default. Bits 0-4 unmaskable. */
+#else
+	#define INTERRUPT_BITS (BITM_IMASK_IVG11)						/* Mask of interrupt bits to be enabled by default. Bits 0-4 unmaskable. */
+#endif
 
 #define UNASSIGNED_VAL 0x81818181
 
@@ -119,9 +126,22 @@ start:
 
 		// Disable CPLBs as they might be enable by initialization code
 		// or still be enabled after a software reset.
-		.EXTERN __disable_cplbs;
-		.TYPE __disable_cplbs,STT_FUNC;
-		CALL.X __disable_cplbs;
+
+		P1 = REG_L1IM_ICTL;
+		R2 = [P1];
+		BITCLR(R2,BITP_L1IM_ICTL_ENCPLB);
+		SSYNC;                  // It is best practice to issue an
+								// SSYNC before changing a memory mode.
+		[P1] = R2;
+		SSYNC;
+
+		P1 = REG_L1DM_DCTL;
+		R2 = [P1];
+		BITCLR(R2,BITP_L1DM_DCTL_ENCPLB);
+		SSYNC;                  // It is best practice to issue an
+								// SSYNC before changing a memory mode.
+		[P1] = R2;
+		SSYNC; 
 
 		// Set RCU0_SVECT0 to allow a self-initiated core only reset to bypass
 		// the boot code and vector straight to the beginning of L1 memory.
@@ -129,15 +149,28 @@ start:
 		[REG_RCU0_SVECT0] = R0;
 
 		// Set registers to unassigned value.
-		LOADIMM32REG(R0, UNASSIGNED_VAL)
+		R0 = UNASSIGNED_VAL;
 
 		// Initialize the stack.
 		// Note: this points just past the end of the stack memory.
 		// So the first write must be with [--SP].
 		.EXTERN ldf_stack_end;
 		.TYPE ldf_stack_end,STT_OBJECT;
-		LOADIMM32REG(SP, ldf_stack_end)
-		USP = SP;
+
+#ifdef LEGACY_SUPERVISOR_MODE
+
+		SP	= ldf_stack_end;
+		USP	= SP;
+
+#else
+
+		.EXTERN ldf_sysstack_end;
+		.TYPE ldf_sysstack_end,STT_OBJECT;
+
+		SP	= ldf_sysstack_end;
+		USP	= ldf_stack_end;
+
+#endif
 
 		// Push UNASSIGNED_VAL as RETS and old FP onto the stack to terminate
 		// the call stack.
@@ -149,7 +182,7 @@ start:
 
 		// And make space for incoming "parameters" for functions
 		// we call from here.
-		SP += -12;
+		//SP += -12;
 
 		// Initialize loop counters to zero, to make sure that
 		// hardware loops are disabled (it can be really baffling
@@ -168,75 +201,61 @@ start:
 
 		// Initialize the Event Vector Table (EVT) entries other than
 		// EVT0 (Emulation) and EVT1 (Reset).
-		LOADIMM32REG(P0, EVT2)
-		LOADIMM32REG(R1, dummy_exception)
-		P1 = 13;
+		P0		= EVT2;
+		R1		= dummy_NMI;
+		[P0++]	= R1;
+		R1		= dummy_EVX;
+		[P0++]	= R1;
+		R1		= dummy_IVG;
+		[P0++]	= R1;
+		R1		= dummy_IVHW;
+		[P0++]	= R1;
+		R1		= dummy_IVTMR;
+		[P0++]	= R1;
+		R1		= dummy_IVG;
+
+		P1 = 9;
 		LSETUP (.ivt, .ivt) LC0 = P1;
 
 .ivt:	[P0++] = R1;
+
+#ifdef LEGACY_SUPERVISOR_MODE
 
 		// Set IVG15's handler to be the start of the mode-change
 		// code. Then, before we return from the Reset back to user
 		// mode, we'll raise IVG15. This will mean we stay in supervisor
 		// mode, and continue from the mode-change point at the
 		// lowest priority.
-		LOADIMM32REG(P1, supervisor_mode)
+
+		P0   = EVT15;
+		P1   = supervisor_mode;
 		[P0] = P1;
 
-		//// Set the handler for IVG11 to the SEC interrupt dispatcher.
-		//.EXTERN __sec_int_dispatcher;
-		//.TYPE __sec_int_dispatcher,STT_FUNC;
-		//LOADIMM32REG(R1, __sec_int_dispatcher)
-		//[P0+(EVT11-EVT15)] = R1;  // write &sec_int_dispatcher to EVT11.
+#endif // #ifdef LEGACY_SUPERVISOR_MODE
 
 		// Configure SYSCFG.
 		R1 = SYSCFG;
 
-		R0 = ( BITM_SYSCFG_CCEN |       // Enable the cycle counter.
-			 BITM_SYSCFG_SNEN |       // Enable self-nesting interrupts.
-			 BITM_SYSCFG_BPEN |       // Enable branch prediction.
-			 BITM_SYSCFG_MPWEN );     // Enable MMR posted writes.
+		R0 = (	BITM_SYSCFG_CCEN |		// Enable the cycle counter.
+				BITM_SYSCFG_SACC |		// Enable Supervisor Access
+				BITM_SYSCFG_SNEN |      // Enable self-nesting interrupts.
+				BITM_SYSCFG_BPEN |      // Enable branch prediction.
+				BITM_SYSCFG_MPWEN );    // Enable MMR posted writes.
+
 		R1 = R0 | R1;
 
 		SYSCFG = R1;
 
-		//// Initialize memory. L1 memory initialization allows parity errors
-		//// to be enabled.
-		//.EXTERN _adi_init_mem_error_detection;
-		//.TYPE _adi_init_mem_error_detection,STT_FUNC;
-		//CALL.X _adi_init_mem_error_detection;
-
-		// __install_default_handlers is called to allow the opportunity
-		// to install event handlers before main(). The default version of this
-		// function provided in the libraries just returns the mask passed in.
 		R0 = INTERRUPT_BITS (Z);
-		//.EXTERN __install_default_handlers;
-		//.TYPE __install_default_handlers,STT_FUNC;
-		//CALL.X __install_default_handlers;  // get the enable mask
-		R4 = R0;              // hold the modified mask in preserved register R4
 
-		// Initialize the jump target tables used by the interrupt dispatcher.
-		//.EXTERN __init_dispatch_tables;
-		//.TYPE __init_dispatch_tables,STT_FUNC;
-		//CALL.X __init_dispatch_tables;
+		STI R0;
 
+#ifdef LEGACY_SUPERVISOR_MODE
 
-		// Switch from reset to handling IVG15. This is Done before CPLB
-		// initialization so that CPLB events can be handled as soon as
-		// they are enabled.
-
-		// We are about to enable interrupts so stop suppressing the assembler
-		// warning for 05-00-0312.
-		.MESSAGE/RESTORE 5515;
-
-		// Enable interrupts using the mask returned from the call to
-		// __install_default_handlers.
-		STI R4;
 		RAISE 15;             // handled by supervisor_mode
 
-		// Move the processor into user mode.
-		LOADIMM32REG(P0, still_interrupt_in_ipend)
-		RETI = P0;
+		P0		= still_interrupt_in_ipend;
+		RETI	= P0;
 
 still_interrupt_in_ipend:
 
@@ -257,10 +276,28 @@ still_interrupt_in_ipend:
 		.MESSAGE/SUPPRESS 1056 FOR 1 LINES;  // Suppress stall information message
 
 		RTI;
+#else
+
+		P0		= supervisor_mode;
+		RETI	= P0;
+		RTI;
+
+#endif
 
 supervisor_mode:
 
+#ifdef LEGACY_SUPERVISOR_MODE
+
 		[--SP] = RETI;        // re-enables the interrupt system
+#else
+
+		R0		= UNASSIGNED_VAL;
+		[--SP]	= R0;
+		[--SP]	= R0;
+
+		FP = SP;
+
+#endif
 
 		// Load the data value into R0.
 		R0 = BITM_L1DM_DCPLB_DFLT_L1UREAD | BITM_L1DM_DCPLB_DFLT_L1UWRITE | BITM_L1DM_DCPLB_DFLT_L1SWRITE | BITM_L1DM_DCPLB_DFLT_L1EOM;
@@ -295,6 +332,49 @@ supervisor_mode:
 		.EXTERN _SystemInit;
 		.TYPE _SystemInit,STT_FUNC;
 		CALL.X _SystemInit;
+
+#ifdef TEST_DCPLB
+
+		P0 = 0;
+		R0 = [P0];
+
+		P0 = 0x04000000-4;
+		R0 = [P0];
+
+		P0 = 0x04080000;
+		R0 = [P0];
+
+		P0 = 0x08000000-4;
+		R0 = [P0];
+
+		P0 = 0x08100000;
+		R0 = [P0];
+
+		P0 = 0x11800000-4;
+		R0 = [P0];
+
+		P0 = 0x11808000;
+		R0 = [P0];
+
+		P0 = 0x11900000-4;
+		R0 = [P0];
+
+		P0 = 0x11908000;
+		R0 = [P0];
+
+		P0 = 0x11B00000-4;
+		R0 = [P0];
+
+		P0 = 0x11B02000;
+		R0 = [P0];
+
+		P0 = 0x1FC00000-4;
+		R0 = [P0];
+
+		P0 = 0x20301000;
+		R0 = [P0];
+
+#endif
 
 		// Call constructors for C++ global scope variables.
 		.EXTERN ___ctorloop;
@@ -338,16 +418,27 @@ __sec_int_dispatcher:
 #endif /* WA_19000054 */
 
 		P0 = [CEC_SID];					// read CEC_SID (32-bit MMR)
-		R0 = P0;						// copy SID to 1st handler arg
+		//R0 = P0;						// copy SID to 1st handler arg
 		[CEC_SID] = P0;					// interrupt acknowledgement
+		[--SP] = RETI;
+		[--SP] = P0;
 
 		P1 = _SEC_VecTable;
 
 		P1 = P1 + (P0 << 2);			// &_SEC_VecTable[index]
 
+		P1 = [P1];
+
+		SP += -12;
+
 		CALL (P1);						// call the handler, preserves R0
 
+		SP += 12;
+		
+		R0 = [SP++];
 		[REG_SEC0_END] = R0;			// R0 still contains the SID after the handler call
+
+		RETI = [SP++];
 
 #if WA_19000054
 
@@ -368,19 +459,55 @@ __sec_int_dispatcher:
 
 		RTI;
 
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 dummy_sec_vector:
 
 		EMUEXCPT;
-		IDLE;
 		RTS;
 		JUMP dummy_sec_vector; 
 		
-dummy_exception:
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+dummy_NMI:
 
 		EMUEXCPT;
-		IDLE;
-		RTI;
-		JUMP dummy_exception; 
+		RTN;
+		JUMP dummy_NMI; 
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+dummy_EVX:
+
+		EMUEXCPT;
+		RTX;
+		JUMP dummy_EVX; 
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+dummy_IVHW:
+
+	EMUEXCPT;
+	RTI;
+	JUMP dummy_IVHW; 
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+dummy_IVTMR:
+
+	EMUEXCPT;
+	RTI;
+	JUMP dummy_IVTMR; 
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+dummy_IVG:
+
+	EMUEXCPT;
+	RTI;
+	JUMP dummy_IVG; 
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 //.main_end_loop:
 //	  JUMP 	.main_end_loop;
