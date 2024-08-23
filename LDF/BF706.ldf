@@ -59,6 +59,10 @@ may be suppressed by defining the LDF macro NO_UTILITY_ROM.
     A loader initialization code to disable instruction cache during booting is required. This message may be suppressed by defining the LDF macro USING_ICACHE_DISABLE_INIT_CODE.
 #endif
 
+#define USE_L1_CODE
+#define USE_L1_DATA_A
+#define USE_L1_DATA_B
+
 #undef USE_CACHE_CODE
 #undef USE_CACHE_DA
 #undef USE_CACHE_DB
@@ -268,11 +272,17 @@ PROCESSOR P0
 			INPUT_SECTION_ALIGN(4)
 
 			___l1_code_cache = L1_CODE_CACHE;  /* 0 - Instruction cache is not enabled, 1 - enabled */
-         
-			INPUT_SECTIONS( $OBJS_LIBS(L1_code cplb_code cplb noncache_code) )
+
+			INPUT_SECTIONS( $OBJS_LIBS(L1_code) )
+		
+		#ifdef USE_L1_CODE
+
+			INPUT_SECTIONS( $OBJS_LIBS(cplb_code cplb noncache_code) )
 			INPUT_SECTIONS( $OBJS_LIBS_INTERNAL(program) )
 			INPUT_SECTIONS( $OBJS_LIBS_NOT_EXTERNAL(program) )
 			INPUT_SECTIONS( $OBJS_LIBS(program) )
+
+		#endif
 
 		} > MEM_L1_CODE
       
@@ -302,14 +312,19 @@ PROCESSOR P0
 			___l1_data_cache_b = L1_DATA_CACHE_B; /* DATA B cache is not enabled */
 			
 			INPUT_SECTION_ALIGN(4)
+			INPUT_SECTIONS( $OBJS_LIBS(L1_data_b L1_data) )
+
+		#ifdef USE_L1_DATA_B
+
 			INPUT_SECTIONS( $OBJS_LIBS(ctor) )   /* global C++ constructors list */
 			INPUT_SECTIONS( $OBJS_LIBS(ctorl) )  /* NULL terminator for ctor     */
 			INPUT_SECTIONS( $OBJS_LIBS(.gdt) )   /* C++ exceptions data          */
 			INPUT_SECTIONS( $OBJS_LIBS(.gdtl) )  /* NULL terminator for .gdt     */
-			INPUT_SECTIONS( $OBJS_LIBS(L1_data_b L1_data) )
 			INPUT_SECTIONS( $OBJS_LIBS_INTERNAL(data1 voldata vtbl constdata) )
 			INPUT_SECTIONS( $OBJS_LIBS_NOT_EXTERNAL(data1 voldata vtbl constdata) )
 			INPUT_SECTIONS( $OBJS_LIBS(data1 voldata cplb_data vtbl constdata .edt .cht .rtti) )
+		
+		#endif
 
 		} > MEM_L1_DATA_B
       
@@ -321,9 +336,14 @@ PROCESSOR P0
 		{
 			INPUT_SECTION_ALIGN(4)
 			INPUT_SECTIONS( $OBJS_LIBS(L1_bsz_b L1_bsz) )
+	
+		#ifdef USE_L1_DATA_B
+
 			INPUT_SECTIONS( $OBJS_LIBS_INTERNAL(bsz) )
 			INPUT_SECTIONS( $OBJS_LIBS_NOT_EXTERNAL(bsz) )
 			INPUT_SECTIONS( $OBJS_LIBS(bsz) )
+
+		#endif	
 
 		} > MEM_L1_DATA_B
 
@@ -331,9 +351,14 @@ PROCESSOR P0
 		{
 			INPUT_SECTION_ALIGN(4)
 			INPUT_SECTIONS( $OBJS_LIBS(L1_noinit_data_b L1_noinit_data) )
+
+		#ifdef USE_L1_DATA_B
+
 			INPUT_SECTIONS( $OBJS_LIBS_INTERNAL(noinit_data) )
 			INPUT_SECTIONS( $OBJS_LIBS_NOT_EXTERNAL(noinit_data) )
 			INPUT_SECTIONS( $OBJS_LIBS(noinit_data) )
+
+		#endif
 
 		} > MEM_L1_DATA_B
       
@@ -344,19 +369,26 @@ PROCESSOR P0
 			___l1_data_cache_a = L1_DATA_CACHE_A; /* DATA A cache is not enabled */
 
 			INPUT_SECTIONS( $OBJS_LIBS(L1_data_a L1_data) )
+
+#ifdef USE_L1_DATA_A
+
 			INPUT_SECTIONS( $OBJS_LIBS_INTERNAL(data1 voldata vtbl constdata) )
 			INPUT_SECTIONS( $OBJS_LIBS_NOT_EXTERNAL(data1 voldata vtbl constdata) )
 			INPUT_SECTIONS( $OBJS_LIBS(data1 voldata cplb_data vtbl constdata .edt .cht .rtti) )
-
+#endif
 		} > MEM_L1_DATA_A
 
 		L1_data_a_bsz ZERO_INIT
 		{
 			INPUT_SECTION_ALIGN(4)
 			INPUT_SECTIONS( $OBJS_LIBS(L1_bsz_a L1_bsz) )
+
+#ifdef USE_L1_DATA_A
+
 			INPUT_SECTIONS( $OBJS_LIBS_INTERNAL(bsz) )
 			INPUT_SECTIONS( $OBJS_LIBS_NOT_EXTERNAL(bsz) )
 			INPUT_SECTIONS( $OBJS_LIBS(bsz) )
+#endif
 
 		} > MEM_L1_DATA_A
 
@@ -365,10 +397,13 @@ PROCESSOR P0
 			INPUT_SECTION_ALIGN(4)
 			INPUT_SECTIONS( $OBJS_LIBS(SEC_VecTable) )   
 			INPUT_SECTIONS( $OBJS_LIBS(L1_noinit_data_a L1_noinit_data) )
+
+#ifdef USE_L1_DATA_A
+
 			INPUT_SECTIONS( $OBJS_LIBS_INTERNAL(noinit_data) )
 			INPUT_SECTIONS( $OBJS_LIBS_NOT_EXTERNAL(noinit_data) )
 			INPUT_SECTIONS( $OBJS_LIBS(noinit_data) )
-
+#endif
 		} > MEM_L1_DATA_A
       
 
