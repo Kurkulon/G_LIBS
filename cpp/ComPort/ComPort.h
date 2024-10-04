@@ -65,11 +65,17 @@ class ComPort : public USIC
 
 	#ifdef ADSP_BLACKFIN
 
+		dword			_ModeRegister;
+
 		word			_prevDmaCounter;
 
+#ifdef __ADSPBF59x__
 		word			_BaudRateRegister;
+		void		SetBoudRate(word presc);
+#elif defined(__ADSPBF70x__)
+		dword			_BaudRateRegister;
+#endif
 
-		dword			_ModeRegister;
 	//	dword			_maskRTS;
 
 		//CTM32			_startTransmitTime;
@@ -77,7 +83,6 @@ class ComPort : public USIC
 		//dword			_preReadTimeout;
 		//dword			_postReadTimeout;
 
-		void		SetBoudRate(word presc);
 
 		//bool IsTransmited() {return *pUART0_LSR & TEMT; }
 		//bool IsRecieved()	{  }
@@ -93,7 +98,7 @@ class ComPort : public USIC
 			DMA_CH		_DMARX;
 
 			bool IsTransmited() { bool c = _DMATX.CheckComplete(); return c && (_uhw->STAT & UART_TEMT); }
-			bool IsRecieved()	{ return _prevDmaCounter != _DMARX.GetBytesLeft(); }
+			bool IsRecieved()	{ bool c = _prevDmaCounter != _DMARX.GetBytesLeft(); _prevDmaCounter = _DMARX.GetBytesLeft(); return c; }
 			u32	GetDmaCounter() { return _DMARX.GetBytesLeft(); }
 			u16	GetRecievedLen() { return _pReadBuffer->maxLen - GetDmaCounter(); }
 

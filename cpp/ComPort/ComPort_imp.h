@@ -272,6 +272,9 @@ void ComPort::InitHW()
 
 	#elif defined(__ADSPBF70x__)
 
+		_uhw->CLK = _BaudRateRegister;
+		_uhw->CTL = _ModeRegister;
+
 		if (_usic_num == 0)
 		{
 			HW::PIOB->SetFER(PB8|PB9);
@@ -436,6 +439,24 @@ bool ComPort::Connect(CONNECT_TYPE ct, dword speed, byte parity, byte stopBits)
 
 	#elif defined(__ADSPBF70x__)
 
+		BoudToPresc(speed);
+
+		_ModeRegister = UART_MOD_UART|UART_8BIT|UART_EN;
+
+		if (stopBits == 2) { _ModeRegister |= UART_STB; };
+
+		switch (parity)
+		{
+			case 1:
+
+				_ModeRegister |= UART_PEN;
+				break;
+
+			case 2:
+
+				_ModeRegister |= UART_PEN|UART_EPS;
+				break;
+		};
 
 	#endif
 
@@ -512,7 +533,22 @@ word ComPort::BoudToPresc(dword speed)
 
 	#elif defined(__ADSPBF70x__)
 
-		return (word)((SCLK0 + (speed<<3)) / (speed << 4));
+		speed = (SCLK0 + (speed>>1)) / speed;
+
+		if (speed == 0) speed = 1;
+
+		if (speed > 0xFFFF) 
+		{
+			speed = (speed+8)>>4;
+
+			if (speed > 0xFFFF) speed = 0xFFFF;
+		}
+		else
+		{
+			speed |= UART_EDBO;
+		};
+
+		return _BaudRateRegister = speed;
 
 	#endif
 }
@@ -665,6 +701,16 @@ void ComPort::EnableTransmit(void* src, word count)
 
 		*pUART0_IER = ETBEI;
 
+	#elif defined(__ADSPBF70x__)
+
+		_DMATX.Disable();
+
+		_uhw->IMSK = 0;
+
+		_DMATX.Write8(src, count);
+
+		_uhw->IMSK_SET = UART_ETBEI;
+
 	#endif
 
 	_status485 = WRITEING;
@@ -719,6 +765,12 @@ void ComPort::DisableTransmit()
 
 		*pDMA8_CONFIG = 0;	// Disable transmit and receive
 		*pUART0_IER = 0;
+
+	#elif defined(__ADSPBF70x__)
+
+		_DMATX.Disable();
+
+		_uhw->IMSK = 0;
 
 	#endif
 
@@ -824,6 +876,18 @@ void ComPort::EnableReceive(void* dst, word count)
 		count = *pUART0_LSR;
 		*pUART0_IER = ERBFI;
 
+	#elif defined(__ADSPBF70x__)
+
+		_DMARX.Disable();
+
+		_uhw->IMSK = 0;
+
+		_DMARX.Read8(dst, count);
+
+		_prevDmaCounter = _DMARX.GetBytesLeft();
+
+		_uhw->IMSK_SET = UART_ERBFI;
+
 	#endif
 
 #endif
@@ -880,6 +944,12 @@ void ComPort::DisableReceive()
 
 		*pDMA7_CONFIG = 0;	// Disable transmit and receive
 		*pUART0_IER = 0;
+
+	#elif defined(__ADSPBF70x__)
+
+		_DMARX.Disable();
+
+		_uhw->IMSK = 0;
 
 	#endif
 

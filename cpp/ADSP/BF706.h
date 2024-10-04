@@ -158,15 +158,15 @@ namespace T_HW
 	struct S_L1DM
 	{
 		BF_RO32 SRAM_BASE_ADDR;					/*!< SRAM Base Address Register */
-		BF_RW32 DCTL;							/*!< Data Memory Control Register */
-		BF_RO32 DSTAT;							/*!< Data Memory CPLB Status Register */
-		BF_RO32 DCPLB_Fault_Addr;				/*!< Data Memory CPLB Fault Address Register (legacy name) */
-		BF_RW32 DCPLB_DFLT;						/*!< Data Memory CPLB Default Settings Register */
-		BF_RO32 DPERR_STAT;						/*!< Data Memory Parity Error Status Register */
+		BF_RW32 CTL;							/*!< Data Memory Control Register */
+		BF_RO32 STAT;							/*!< Data Memory CPLB Status Register */
+		BF_RO32 CPLB_FAULT_ADDR;				/*!< Data Memory CPLB Fault Address Register (legacy name) */
+		BF_RW32 CPLB_DFLT;						/*!< Data Memory CPLB Default Settings Register */
+		BF_RO32 PERR_STAT;						/*!< Data Memory Parity Error Status Register */
 													BF_RO8                  z__RESERVED0[232];
-		BF_RW32 DCPLB_ADDR[16];					/*!< Data Memory CPLB Address Registers */
+		BF_RW32 CPLB_ADDR[16];					/*!< Data Memory CPLB Address Registers */
 													BF_RO8                  z__RESERVED1[192];
-		BF_RW32 DCPLB_DATA[16];					/*!< Data Memory CPLB Data Registers */
+		BF_RW32 CPLB_DATA[16];					/*!< Data Memory CPLB Data Registers */
 	}; 
 
 	#define L1DM_ENX				(1UL<<16)		/* Enable Extended Data Access */
@@ -237,15 +237,15 @@ namespace T_HW
 	struct S_L1IM
 	{
     												BF_RO8                  z__RESERVED0[4];
-		BF_RW32 Ictl;                          /*!< Instruction Memory Control Register */
-		BF_RO32 Istat;                         /*!< Instruction Memory CPLB Status Register */
-		BF_RO32 Icplb_fault_addr;             /*!< Instruction Memory CPLB Fault Address Register (legacy name) */
-		BF_RW32 Icplb_dflt;                    /*!< Instruction Memory CPLB Default Settings Register */
-		BF_RW32 Iperr_stat;                    /*!< Instruction Parity Error Status Register */
-    												BF_RO8                  z__RESERVED1[232];
-		BF_RW32 Icplb_addr[16];                /*!< Instruction Memory CPLB Address Registers */
-    												BF_RO8                  z__RESERVED2[192];
-		BF_RW32 Icplb_data[16];                /*!< Instruction Memory CPLB Data Registers */
+		BF_RW32 CTL;                          /*!< Instruction Memory Control Register */
+		BF_RO32 STAT;                         /*!< Instruction Memory CPLB Status Register */
+		BF_RO32 CPLB_FAULT_ADDR;             /*!< Instruction Memory CPLB Fault Address Register (legacy name) */
+		BF_RW32 CPLB_DFLT;                    /*!< Instruction Memory CPLB Default Settings Register */
+		BF_RW32 PERR_STAT;                    /*!< Instruction Parity Error Status Register */
+    											BF_RO8                  z__RESERVED1[232];
+		BF_RW32 CPLB_ADDR[16];                /*!< Instruction Memory CPLB Address Registers */
+    											BF_RO8                  z__RESERVED2[192];
+		BF_RW32 CPLB_DATA[16];                /*!< Instruction Memory CPLB Data Registers */
 	};
 
 	#define L1IM_CPRIORST				(1UL<<13)							/* ICTL: Cache Line Priority Reset */
@@ -326,6 +326,11 @@ namespace T_HW
 		BF_RW32 SCALE;                       /*!< Timer Scale Register (legacy name) */
 		BF_RW32 COUNT;                       /*!< Timer Count Register (legacy name) */
 	}; 
+
+	#define TMR_INT							(1UL<<3)	/* Timer generated interrupt (sticky) */
+	#define TMR_AUTORLD						(1UL<<2)	/* Timer auto reload */
+	#define TMR_EN							(1UL<<1)	/* Timer enable */
+	#define TMR_PWR							(1UL<<0)	/* Timer Low Power Control */
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -1119,56 +1124,61 @@ namespace T_HW
 
 	typedef S_UART S_UART0, S_UART1;
 
-#define UART_RFRT                   (1UL<<30)                               /* Receive FIFO RTS Threshold */
-#define UART_RFIT                   (1UL<<29)                               /* Receive FIFO IRQ Threshold */
-#define UART_ACTS                   (1UL<<28)                               /* Automatic CTS */
-#define UART_ARTS                   (1UL<<27)                               /* Automatic RTS */
-#define UART_XOFF                   (1UL<<26)                               /* Transmitter off */
-#define UART_MRTS                   (1UL<<25)                               /* Manual Request to Send */
-#define UART_TPOLC                  (1UL<<24)                               /* IrDA TX Polarity Change */
-#define UART_RPOLC                  (1UL<<23)                               /* IrDA RX Polarity Change */
-#define UART_FCPOL                  (1UL<<22)                               /* Flow Control Pin Polarity */
-#define UART_SB                     (1UL<<19)                               /* Set Break */
-#define UART_FFE                    (1UL<<18)                               /* Force Framing Error on Transmit */
-#define UART_FPE                    (1UL<<17)                               /* Force Parity Error on Transmit */
-#define UART_STP                    (1UL<<16)                               /* Sticky Parity */
-#define UART_EPS                    (1UL<<15)                               /* Even Parity Select */
-#define UART_PEN                    (1UL<<14)                               /* Parity Enable */
-#define UART_STBH                   (1UL<<13)                               /* Stop Bits (Half Bit Time) */
-#define UART_STB                    (1UL<<12)                               /* Stop Bits */
-#define UART_WLS                    (1UL<<8)                              /* Word Length Select */
-#define UART_MOD                    (1UL<<4)                              /* Mode of Operation */
-#define UART_LOOP_EN                (1UL<<1)                              /* Loopback Enable */
-#define UART_EN                     (1UL<<0)                              /* Enable UART */
+	#define UART_RFRT                   (1UL<<30)                               /* Receive FIFO RTS Threshold */
+	#define UART_RFIT                   (1UL<<29)                               /* Receive FIFO IRQ Threshold */
+	#define UART_ACTS                   (1UL<<28)                               /* Automatic CTS */
+	#define UART_ARTS                   (1UL<<27)                               /* Automatic RTS */
+	#define UART_XOFF                   (1UL<<26)                               /* Transmitter off */
+	#define UART_MRTS                   (1UL<<25)                               /* Manual Request to Send */
+	#define UART_TPOLC                  (1UL<<24)                               /* IrDA TX Polarity Change */
+	#define UART_RPOLC                  (1UL<<23)                               /* IrDA RX Polarity Change */
+	#define UART_FCPOL                  (1UL<<22)                               /* Flow Control Pin Polarity */
+	#define UART_SB                     (1UL<<19)                               /* Set Break */
+	#define UART_FFE                    (1UL<<18)                               /* Force Framing Error on Transmit */
+	#define UART_FPE                    (1UL<<17)                               /* Force Parity Error on Transmit */
+	#define UART_STP                    (1UL<<16)                               /* Sticky Parity */
+	#define UART_EPS                    (1UL<<15)                               /* Even Parity Select */
+	#define UART_PEN                    (1UL<<14)                               /* Parity Enable */
+	#define UART_STBH                   (1UL<<13)                               /* Stop Bits (Half Bit Time) */
+	#define UART_STB                    (1UL<<12)                               /* Stop Bits */
+	#define UART_5BIT					(0UL<<8)                              /* Word Length Select */
+	#define UART_6BIT					(1UL<<8)                              /* Word Length Select */
+	#define UART_7BIT					(2UL<<8)                              /* Word Length Select */
+	#define UART_8BIT					(3UL<<8)                              /* Word Length Select */
+	#define UART_MOD_UART               (0UL<<4)                              /* Mode of Operation */
+	#define UART_MOD_MDB                (1UL<<4)                              /* Mode of Operation */
+	#define UART_MOD_IRDA               (2UL<<4)                              /* Mode of Operation */
+	#define UART_LOOP_EN                (1UL<<1)                              /* Loopback Enable */
+	#define UART_EN                     (1UL<<0)                              /* Enable UART */
 
-#define UART_RFCS                   (1UL<<17)                               /* Receive FIFO Count Status */
-#define UART_CTS                    (1UL<<16)                               /* Clear to Send */
-#define UART_SCTS                   (1UL<<12)                               /* Sticky CTS */
-#define UART_RO                     (1UL<<11)                               /* Reception On-going */
-#define UART_ADDR                   (1UL<<10)                               /* Address Bit Status */
-#define UART_ASTKY                  (1UL<<9)                              /* Address Sticky */
-#define UART_TFI                    (1UL<<8)                              /* Transmission Finished Indicator */
-#define UART_TEMT                   (1UL<<7)                              /* TSR and THR Empty */
-#define UART_THRE                   (1UL<<5)                               /* Transmit Hold Register Empty */
-#define UART_BI                     (1UL<<4)                               /* Break Indicator */
-#define UART_FE                     (1UL<<3)                               /* Framing Error */
-#define UART_PE                     (1UL<<2)                               /* Parity Error */
-#define UART_OE                     (1UL<<1)                               /* Overrun Error */
-#define UART_DR                     (1UL<<0)                               /* Data Ready */
+	#define UART_RFCS                   (1UL<<17)                               /* Receive FIFO Count Status */
+	#define UART_CTS                    (1UL<<16)                               /* Clear to Send */
+	#define UART_SCTS                   (1UL<<12)                               /* Sticky CTS */
+	#define UART_RO                     (1UL<<11)                               /* Reception On-going */
+	#define UART_ADDR                   (1UL<<10)                               /* Address Bit Status */
+	#define UART_ASTKY                  (1UL<<9)                              /* Address Sticky */
+	#define UART_TFI                    (1UL<<8)                              /* Transmission Finished Indicator */
+	#define UART_TEMT                   (1UL<<7)                              /* TSR and THR Empty */
+	#define UART_THRE                   (1UL<<5)                               /* Transmit Hold Register Empty */
+	#define UART_BI                     (1UL<<4)                               /* Break Indicator */
+	#define UART_FE                     (1UL<<3)                               /* Framing Error */
+	#define UART_PE                     (1UL<<2)                               /* Parity Error */
+	#define UART_OE                     (1UL<<1)                               /* Overrun Error */
+	#define UART_DR                     (1UL<<0)                               /* Data Ready */
 	
-#define UART_EDBO                   (1UL<<31)                               /* Enable Divide By One */
-#define UART_DIV(v)                 (((v)&0xFFFF)<<0)                               /* Divisor */
+	#define UART_EDBO                   (1UL<<31)                               /* Enable Divide By One */
+	#define UART_DIV(v)                 (((v)&0xFFFF)<<0)                               /* Divisor */
 
-#define UART_ETXS                   (1UL<<9)                               /* Enable TX to Status Interrupt Mask Status */
-#define UART_ERXS                   (1UL<<8)                               /* Enable RX to Status Interrupt Mask Status */
-#define UART_EAWI                   (1UL<<7)                               /* Enable Address Word Interrupt Mask Status */
-#define UART_ERFCI                  (1UL<<6)                               /* Enable Receive FIFO Count Interrupt Mask Status */
-#define UART_ETFI                   (1UL<<5)                               /* Enable Transmission Finished Interrupt Mask Status */
-#define UART_EDTPTI                 (1UL<<4)                               /* Enable DMA TX Peripheral Trigerred Interrupt Mask Status */
-#define UART_EDSSI                  (1UL<<3)                               /* Enable Modem Status Interrupt Mask Status */
-#define UART_ELSI                   (1UL<<2)                               /* Enable Line Status Interrupt Mask Status */
-#define UART_ETBEI                  (1UL<<1)                               /* Enable Transmit Buffer Empty Interrupt Mask Status */
-#define UART_ERBFI                  (1UL<<0)                               /* Enable Receive Buffer Full Interrupt Mask Status */
+	#define UART_ETXS                   (1UL<<9)                               /* Enable TX to Status Interrupt Mask Status */
+	#define UART_ERXS                   (1UL<<8)                               /* Enable RX to Status Interrupt Mask Status */
+	#define UART_EAWI                   (1UL<<7)                               /* Enable Address Word Interrupt Mask Status */
+	#define UART_ERFCI                  (1UL<<6)                               /* Enable Receive FIFO Count Interrupt Mask Status */
+	#define UART_ETFI                   (1UL<<5)                               /* Enable Transmission Finished Interrupt Mask Status */
+	#define UART_EDTPTI                 (1UL<<4)                               /* Enable DMA TX Peripheral Trigerred Interrupt Mask Status */
+	#define UART_EDSSI                  (1UL<<3)                               /* Enable Modem Status Interrupt Mask Status */
+	#define UART_ELSI                   (1UL<<2)                               /* Enable Line Status Interrupt Mask Status */
+	#define UART_ETBEI                  (1UL<<1)                               /* Enable Transmit Buffer Empty Interrupt Mask Status */
+	#define UART_ERBFI                  (1UL<<0)                               /* Enable Receive Buffer Full Interrupt Mask Status */
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
