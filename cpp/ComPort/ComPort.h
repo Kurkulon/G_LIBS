@@ -98,9 +98,9 @@ class ComPort : public USIC
 			DMA_CH		_DMARX;
 
 			bool IsTransmited() { bool c = _DMATX.CheckComplete(); return c && (_uhw->STAT & UART_TEMT); }
-			bool IsRecieved()	{ bool c = _prevDmaCounter != _DMARX.GetBytesLeft(); _prevDmaCounter = _DMARX.GetBytesLeft(); return c; }
-			u32	GetDmaCounter() { return _DMARX.GetBytesLeft(); }
-			u16	GetRecievedLen() { return _pReadBuffer->maxLen - GetDmaCounter(); }
+			bool IsRecieved()	{ u32 t = _uhw->STAT; bool c = _prevDmaCounter != _DMARX.GetBytesLeft() || (t & (UART_OE|UART_PE|UART_FE|UART_BI)); _uhw->STAT = t; _prevDmaCounter = _DMARX.GetBytesLeft(); return c; }
+			u32	GetDmaCounter() { return _DMARX.GetBytesLeft(); }											 
+			u16	GetRecievedLen() { return _pReadBuffer->maxLen - GetDmaCounter(); }							 
 
 		#endif
 
@@ -137,7 +137,7 @@ class ComPort : public USIC
 
 		u32 _status;
 
-		bool IsTransmited() { bool c = _DMA->CheckComplete(); return c && (_uhw.usart->INTFLAG & (USART_TXC|USART_DRE)); }
+		bool IsTransmited() { return (_uhw.usart->INTFLAG & (USART_TXC|USART_DRE)) == (USART_TXC|USART_DRE); }
 		bool IsRecieved()	{ _DMA->Update(); u32 s = _uhw.usart->INTFLAG & (USART_ERROR|USART_RXS); if (s) { _status |= s; _uhw.usart->INTFLAG = s; return true; } else return false; }
 		u32	GetDmaCounter() { return _DMA->GetBytesLeft(); }
 		u16	GetRecievedLen() { return _pReadBuffer->maxLen - GetDmaCounter(); }

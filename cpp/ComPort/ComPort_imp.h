@@ -312,7 +312,7 @@ bool ComPort::Connect(CONNECT_TYPE ct, dword speed, byte parity, byte stopBits)
 		{
 			case ASYNC:
 
-				_CTRLA = USART_MODE_INT_CLK|_TXPO|_RXPO|USART_DORD;
+				_CTRLA = USART_MODE_INT_CLK|_TXPO|_RXPO|USART_DORD|USART_SAMPR_8x_ARITH;
 				_BaudRateRegister = BoudToPresc(speed);
 
 				break;
@@ -441,7 +441,7 @@ bool ComPort::Connect(CONNECT_TYPE ct, dword speed, byte parity, byte stopBits)
 
 		BoudToPresc(speed);
 
-		_ModeRegister = UART_MOD_UART|UART_8BIT|UART_EN;
+		_ModeRegister = UART_MOD_UART|UART_8BIT|UART_RFIT;
 
 		if (stopBits == 2) { _ModeRegister |= UART_STB; };
 
@@ -513,7 +513,7 @@ word ComPort::BoudToPresc(dword speed)
 
 	#elif defined(CPU_SAME53)	
 
-		return 65536ULL*(_GEN_CLK - 16*speed)/_GEN_CLK;
+		return 65536ULL*(_GEN_CLK - 8*speed)/_GEN_CLK;
 
 	#elif defined(CPU_XMC48)
 
@@ -703,9 +703,7 @@ void ComPort::EnableTransmit(void* src, word count)
 
 	#elif defined(__ADSPBF70x__)
 
-		_DMATX.Disable();
-
-		_uhw->IMSK = 0;
+		_uhw->CTL = _ModeRegister|UART_EN;
 
 		_DMATX.Write8(src, count);
 
@@ -725,6 +723,8 @@ void ComPort::EnableTransmit(void* src, word count)
 void ComPort::DisableTransmit()
 {
 #ifndef WIN32
+
+	Clr_RTS();
 
 	#ifdef CPU_SAME53	
 
@@ -771,12 +771,12 @@ void ComPort::DisableTransmit()
 		_DMATX.Disable();
 
 		_uhw->IMSK = 0;
+		_uhw->STAT = ~0;
+		_uhw->CTL = _ModeRegister;
 
 	#endif
 
 	Usic_Unlock();
-
-	Clr_RTS();
 
 #endif
 }
@@ -878,9 +878,7 @@ void ComPort::EnableReceive(void* dst, word count)
 
 	#elif defined(__ADSPBF70x__)
 
-		_DMARX.Disable();
-
-		_uhw->IMSK = 0;
+		_uhw->CTL = _ModeRegister|UART_EN;
 
 		_DMARX.Read8(dst, count);
 
@@ -950,6 +948,9 @@ void ComPort::DisableReceive()
 		_DMARX.Disable();
 
 		_uhw->IMSK = 0;
+		_uhw->STAT = ~0;
+
+		_uhw->CTL = _ModeRegister;
 
 	#endif
 

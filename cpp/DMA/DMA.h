@@ -144,11 +144,11 @@ public:
 		inline u32 GetBytesLeft()	{ return _dmach->XCNT_CUR; }
 		inline u32 GetBytesReady()	{ return _dmach->XCNT - _dmach->XCNT_CUR; }
 
-		inline void Write8(volatile void *src, u16 len)		{ Trans(src, len, DMA_PSIZE8 );	}
+		inline void Write8(volatile void *src, u16 len)	{ Trans(src, len, DMA_PSIZE8 );	}
 		inline void Write16(volatile void *src, u16 len)	{ Trans(src, len, DMA_PSIZE16);	}
 		inline void Write32(volatile void *src, u16 len)	{ Trans(src, len, DMA_PSIZE32);	}
 
-		inline void Read8(volatile void *dst, u16 len)		{ Trans(dst, len, DMA_PSIZE8 |DMA_WNR);	}
+		inline void Read8(volatile void *dst, u16 len)	{ Trans(dst, len, DMA_PSIZE8 |DMA_WNR);	}
 		inline void Read16(volatile void *dst, u16 len) 	{ Trans(dst, len, DMA_PSIZE16|DMA_WNR);	}
 		inline void Read32(volatile void *dst, u16 len) 	{ Trans(dst, len, DMA_PSIZE32|DMA_WNR);	}
 
