@@ -299,6 +299,8 @@ supervisor_mode:
 
 #endif
 
+		SP += -8;
+
 		// Load the data value into R0.
 		R0 = BITM_L1DM_DCPLB_DFLT_L1UREAD | BITM_L1DM_DCPLB_DFLT_L1UWRITE | BITM_L1DM_DCPLB_DFLT_L1SWRITE | BITM_L1DM_DCPLB_DFLT_L1EOM;
 

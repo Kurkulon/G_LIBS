@@ -826,6 +826,35 @@ namespace T_HW
     												BF_RO8                  z__RESERVED0[12];
 	};
 
+
+	#define TMR_MODE_IDLE			(0x0UL)		/* TMODE: Idle Mode */
+	#define TMR_MODE_WIDCAP0		(0xAUL)		/* TMODE: Measurement report at asserting edge of waveform */
+	#define TMR_MODE_WIDCAP1		(0xBUL)		/* TMODE: Measurement report at de-asserting edge of waveform */
+	#define TMR_MODE_PWMCONT		(0xCUL)		/* TMODE: Continuous PWMOUT mode */
+	#define TMR_MODE_PWMSING		(0xDUL)		/* TMODE: Single pulse PWMOUT mode */
+	#define TMR_MODE_EXTCLK			(0xEUL)		/* TMODE: EXTCLK mode */
+	#define TMR_MODE_PININT			(0xFUL)		/* TMODE: PININT (pin interrupt) mode */
+	#define TMR_MODE_WDPER			(0x8UL)		/* TMODE: Period Watchdog Mode */
+	#define TMR_MODE_WDWID			(0x9UL)		/* TMODE: Width Watchdog Mode */
+
+	#define TMR_IRQ_EDGE			(0UL<<4)	/* IRQMODE: Active Edge Mode */
+	#define TMR_IRQ_DELAY			(1UL<<4)	/* IRQMODE: Delay Expired Mode */
+	#define TMR_IRQ_WIDTH_DELAY		(2UL<<4)	/* IRQMODE: Width Plus Delay Expired Mode */
+	#define TMR_IRQ_PERIOD			(3UL<<4)	/* IRQMODE: Period Expired Mode */
+
+	#define TMR_SLAVETRIG			(1UL<<6)	/* Slave Trigger Response */
+	#define TMR_PULSEHI				(1UL<<7)	/* Polarity Response Select */
+	#define TMR_CLKSEL_SCLK			(0UL<<8)	/* CLKSEL: Use SCLK */
+	#define TMR_CLKSEL_ALT0			(1UL<<8)	/* CLKSEL: Use TMR_ALT_CLK0 as the TMR clock */
+	#define TMR_CLKSEL_ALT1			(3UL<<8)	/* CLKSEL: Use TMR_ALT_CLK1 as the TMR clock */
+	#define TMR_TINSEL				(1UL<<10)	/* Timer Input Select (for WIDCAP, WATCHDOG, PININT modes) */
+	#define TMR_OUTDIS				(1UL<<11)	/* Output Disable */
+	#define TMR_BDLYEN				(1UL<<12)	/* Broadcast Delay Enable */
+	#define TMR_BWIDEN				(1UL<<13)	/* Broadcast Width Enable */
+	#define TMR_BPEREN				(1UL<<14)	/* Broadcast Period Enable */
+	#define TMR_EMURUN				(1UL<<15)	/* Run Timer (Counter) During Emulation */
+	#define TMR_TGLTRIG				(1UL<<16)	/* Slave Trigger Toggle Enable */
+
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 	/*!
@@ -1763,11 +1792,12 @@ namespace T_HW
 		inline void 	DirSet(u16 m) 		{ DIR_SET = m; }
 		inline void 	DirClr(u16 m) 		{ DIR_CLR = m; }
 
-		inline void		SetFER(u16 m)		{ FER_SET = m; }
-		inline void		ClrFER(u16 m)		{ FER_CLR = m; }
+		inline void	SetFER(u16 m)		{ FER_SET = m; }
+		inline void	ClrFER(u16 m)		{ FER_CLR = m; }
 
-		inline void		SetMUX(byte pin, byte v) { MUX = (MUX & ~(3UL<<pin)) | ((v&3)<<pin); }
+		inline void	SetMUX(byte pin, byte v) { MUX = (MUX & ~(3UL<<pin)) | ((v&3)<<pin); }
 
+		inline void	ClearTriggerIRQ(u32 m)	{ ((S_PINT*)(((u32)this & ~0x1FF)|(((u32)this & 0x1FF)<<1)|0x1000))->LATCH = m; }
 	};
 
 	typedef S_PORT S_PORTA, S_PORTB, S_PORTC, S_PIO, S_PIOA, S_PIOB, S_PIOC;
