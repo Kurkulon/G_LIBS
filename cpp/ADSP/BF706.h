@@ -1081,6 +1081,55 @@ namespace T_HW
 
 	typedef S_SPORT S_SPORT0, S_SPORT1;
 
+#define SPORT_SPENPRI					(1UL<<0)				/* Serial Port Enable (Primary) */
+#define SPORT_DTYPE_RJ_ZFILL			(0UL<<1)				/* DTYPE: Right-justify data, zero-fill unused MSBs */
+#define SPORT_DTYPE_RJ_SFILL			(1UL<<1)				/* DTYPE: Right-justify data, sign-extend unused MSBs */
+#define SPORT_DTYPE_ULAW				(2UL<<1)				/* DTYPE: m-law compand data */
+#define SPORT_DTYPE_ALAW				(3UL<<1)				/* DTYPE: A-law compand data */
+#define SPORT_LSBF						(1UL<<3)				/* Least-Significant Bit First */
+#define SPORT_SLEN(v)					(((v)&31)<<4)		/* Serial Word Length */
+#define SPORT_PACK						(1UL<<9)				/* Packing Enable */
+#define SPORT_ICLK						(1UL<<10)				/* Internal Clock */
+#define SPORT_OPMODE					(1UL<<11)				/* Operation mode */
+#define SPORT_CKRE						(1UL<<12)				/* Clock Rising Edge */
+#define SPORT_FSR						(1UL<<13)				/* Frame Sync Required */
+#define SPORT_IFS						(1UL<<14)				/* Internal Frame Sync */
+#define SPORT_DIFS						(1UL<<15)				/* Data-Independent Frame Sync */
+#define SPORT_LFS						(1UL<<16)				/* Active-Low Frame Sync / L_FIRST / PLFS */
+#define SPORT_LAFS						(1UL<<17)				/* Late Frame Sync / OPMODE2 */
+#define SPORT_RJUST						(1UL<<18)				/* Right-Justified Operation Mode */
+#define SPORT_FSED						(1UL<<19)				/* Frame Sync Edge Detect */
+#define SPORT_TFIEN						(1UL<<20)				/* Transmit Finish Interrupt Enable */
+#define SPORT_GCLKEN					(1UL<<21)				/* Gated Clock Enable */
+#define SPORT_SPENSEC					(1UL<<24)				/* Serial Port Enable (Secondary) */
+#define SPORT_SPTRAN					(1UL<<25)				/* Serial Port Transfer Direction */
+#define SPORT_DERRSEC					(1UL<<26)				/* Data Error Status (Secondary) */
+#define SPORT_DXSSEC					(3UL<<27)				/* Data Transfer Buffer Status (Secondary) */
+#define SPORT_DERRPRI					(1UL<<29)				/* Data Error Status (Primary) */
+#define SPORT_DXSPRI					(3UL<<30)				/* Data Transfer Buffer Status (Primary) */
+
+#define SPORT_FSDIV(v)					(((v)&0xFFFF)<<16)	/* Frame Sync Divisor */
+#define SPORT_CLKDIV(v)					(((v)&0xFFFF)<<0)	/* Clock Divisor */
+
+#define SPORT_WOFFSET					(((v)&0x3FF)<<16)       /* Window Offset */
+#define SPORT_WSIZE						(((v)&0x7F)<<8)     /* Window Size */
+#define SPORT_MFD						(((v)&0xF)<<4)          /* Multi-channel Frame Delay */
+#define SPORT_MCPDE						(1UL<<2)				/* Multi-Channel Packing DMA Enable */
+#define SPORT_MCE						(1UL<<0)				/* Multichannel enable */
+
+#define SPORT_CURCHAN					(0x3FFUL<<0)            /* Multichannel Status: Current Channel */
+
+#define SPORT_CKMUXSEL					(1UL<<1)                /* Clock Multiplexer Select */
+#define SPORT_FSMUXSEL					(1UL<<0)                /* Frame Sync Multiplexer Select */
+
+#define SPORT_FSERRSTAT					(1UL<<6)				/* Frame Sync Error Status */
+#define SPORT_DERRSSTAT					(1UL<<5)				/* Data Error Secondary Status */
+#define SPORT_DERRPSTAT					(1UL<<4)				/* Data Error Primary Status */
+#define SPORT_FSERRMSK					(1UL<<2)				/* Frame Sync Error (Interrupt) Mask */
+#define SPORT_DERRSMSK					(1UL<<1)				/* Data Error Secondary (Interrupt) Mask */
+#define SPORT_DERRPMSK					(1UL<<0)				/* Data Error Primary (Interrupt) Mask */
+
+
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 	/*!

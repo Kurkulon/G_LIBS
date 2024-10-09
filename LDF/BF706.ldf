@@ -307,6 +307,13 @@ PROCESSOR P0
 
 		} > MEM_L1_DATA_A_STACK
 
+		//L1_data_b_SEC_VecTable NO_INIT
+		//{
+		//	INPUT_SECTION_ALIGN(4)
+		//	INPUT_SECTIONS( $OBJS_LIBS(SEC_VecTable) )   
+
+		//} > MEM_L1_DATA_B
+			
 		L1_data_b DEF_SECTION_QUAL
 		{
 			___l1_data_cache_b = L1_DATA_CACHE_B; /* DATA B cache is not enabled */
@@ -362,6 +369,13 @@ PROCESSOR P0
 
 		} > MEM_L1_DATA_B
       
+		L1_data_a_SEC_VecTable NO_INIT
+		{
+			INPUT_SECTION_ALIGN(4)
+			INPUT_SECTIONS( $OBJS_LIBS(SEC_VecTable) )   
+
+		} > MEM_L1_DATA_A
+				
 		L1_data_a DEF_SECTION_QUAL
 		{
 			INPUT_SECTION_ALIGN(4)
@@ -395,7 +409,6 @@ PROCESSOR P0
 		L1_data_a_no_init NO_INIT
 		{
 			INPUT_SECTION_ALIGN(4)
-			INPUT_SECTIONS( $OBJS_LIBS(SEC_VecTable) )   
 			INPUT_SECTIONS( $OBJS_LIBS(L1_noinit_data_a L1_noinit_data) )
 
 #ifdef USE_L1_DATA_A
