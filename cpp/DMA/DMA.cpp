@@ -150,7 +150,7 @@ void DMA_CH::Trans(volatile void *stadr1, u16 len1, u16 mdfy1, u16 ctrl1, volati
 	_dmach->STAT = ~0;
 
 	_dmach->DSCPTR_NXT = &_dsc1;
-	_dmach->CFG = DMA_FLOW_DSCLIST|DMA_NDSIZE5|DMA_EN;
+	_dmach->CFG = DMA_FLOW_DSCLIST|DMA_NDSIZE5|DMA_SYNC|DMA_EN;
 }
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

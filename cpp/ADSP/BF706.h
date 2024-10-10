@@ -1738,70 +1738,138 @@ namespace T_HW
 
 	typedef S_SPI S_SPI0, S_SPI1, S_SPI2;
 
-	#define SPI_MMSE    (1UL<<31)       /* Memory-Mapped SPI Enable */
-	#define SPI_MMWEM   (1UL<<30)       /* Memory Mapped Write Error Mask */
-	#define SPI_SOSI    (1UL<<22)       /* Start on MOSI */
-	#define SPI_MIOM    (1UL<<20)       /* Multiple I/O Mode */
-	#define SPI_FMODE   (1UL<<18)       /* Fast-Mode Enable */
-	#define SPI_FCWM    (1UL<<16)       /* Flow Control Watermark */
-	#define SPI_FCPL    (1UL<<15)       /* Flow Control Polarity */
-	#define SPI_FCCH    (1UL<<14)       /* Flow Control Channel Selection */
-	#define SPI_FCEN    (1UL<<13)       /* Flow Control Enable */
-	#define SPI_LSBF    (1UL<<12)       /* Least Significant Bit First */
-	#define SPI_SIZE    (1UL<< 9)       /* Word Transfer Size */
-	#define SPI_EMISO   (1UL<< 8)       /* Enable MISO */
-	#define SPI_SELST   (1UL<< 7)       /* Slave Select Polarity Between Transfers */
-	#define SPI_ASSEL   (1UL<< 6)       /* Slave Select Pin Control */
-	#define SPI_CPOL    (1UL<< 5)       /* Clock Polarity */
-	#define SPI_CPHA    (1UL<< 4)       /* Clock Phase */
-	#define SPI_ODM     (1UL<<3)        /* Open Drain Mode */
-	#define SPI_PSSE    (1UL<<2)        /* Protected Slave Select Enable */
-	#define SPI_MSTR    (1UL<<1)        /* Master/Slave */
-	#define SPI_EN      (1UL<<0)        /* Enable */ 
-												
-	#define STAT_TFF		(1UL<<23)       /* SPI_TFIFO Full */
-	#define STAT_RFE		(1UL<<22)       /* SPI_RFIFO Empty */
-	#define STAT_FCS		(1UL<<20)       /* Flow Control Stall Indication */
-	#define STAT_TFS		(1UL<<16)       /* SPI_TFIFO Status */
-	#define STAT_RFS		(1UL<<12)       /* SPI_RFIFO Status */
-	#define STAT_TF 		(1UL<<11)       /* Transmit Finish Indication */
-	#define STAT_RF 		(1UL<<10)       /* Receive Finish Indication */
-	#define STAT_TS  		(1UL<<9)		/* Transmit Start */
-	#define STAT_RS  		(1UL<<8)        /* Receive Start */
-	#define STAT_MF  		(1UL<<7)        /* Mode Fault Indication */
-	#define STAT_TC  		(1UL<<6)        /* Transmit Collision Indication */
-	#define STAT_TUR 		(1UL<<5)        /* Transmit Underrun Indication */
-	#define STAT_ROR 		(1UL<<4)        /* Receive Overrun Indication */
-	#define STAT_TUWM		(1UL<<2)        /* Transmit Urgent Watermark Breached */
-	#define STAT_RUWM		(1UL<<1)        /* Receive Urgent Watermark Breached */
-	#define STAT_SPIF		(1UL<<0)        /* SPI Finished */ 
+	#define SPI_MMSE			(1UL<<31)       /* Memory-Mapped SPI Enable */
+	#define SPI_MM_DIS 			(0UL<<31)       /* Memory-Mapped SPI Enable MMSE: Hardware automated access of memory-mapped SPI memory disabled. */
+	#define SPI_MM_EN  			(1UL<<31)       /* Memory-Mapped SPI Enable MMSE: Hardware-automated access of memory-mapped SPI memory enabled. */
+	#define SPI_MMWEM			(1UL<<30)       /* Memory Mapped Write Error Mask */
+	#define SPI_WEM_UNMSK 		(0UL<<30)       /* Memory Mapped Write Error Mask MMWEM: Write error response returned upon write attempts to memory-mapped SPI memory */
+	#define SPI_WEM_MSK   		(1UL<<30)       /* Memory Mapped Write Error Mask MMWEM: Write error response masked (not returned) upon write attempts to memory-mapped SPI memory */
+	#define SPI_SOSI			(1UL<<22)       /* Start on MOSI */
+	#define SPI_STMISO 			(0UL<<22)       /* Start on MOSI SOSI: Start on MISO (DIOM) or start on SPIQ3 (QSPI) */
+	#define SPI_STMOSI 			(1UL<<22)       /* Start on MOSI SOSI: Start on MOSI */
+	#define SPI_MIO_DIS 		(0UL<<20)       /* Multiple I/O Mode: No MIOM (disabled) */
+	#define SPI_MIO_DUAL		(1UL<<20)       /* Multiple I/O Mode: dual I/O mode (DIOM) operation */
+	#define SPI_MIO_QUAD		(2UL<<20)       /* Multiple I/O Mode: quad I/O mode (QIOM) operation */
+	#define SPI_FMODE			(1UL<<18)       /* Fast-Mode Enable */
+	#define SPI_FAST_DIS 		(0UL<<18)       /* Fast-Mode Enable FMODE: Disable*/
+	#define SPI_FAST_EN  		(1UL<<18)       /* Fast-Mode Enable FMODE: Enable */
+	#define SPI_FCWM(v)			(((v)&3)<<16)	/* Flow Control Watermark */
+	#define SPI_FIFO0			(0UL<<16)       /* Flow Control Watermark FCWM: TFIFO empty or RFIFO full */
+	#define SPI_FIFO1			(1UL<<16)       /* Flow Control Watermark FCWM: TFIFO 75% or more empty, or RFIFO 75% or more full */
+	#define SPI_FIFO2			(2UL<<16)       /* Flow Control Watermark FCWM: TFIFO 50% or more empty, or RFIFO 50% or more full */
+	#define SPI_FCPL			(1UL<<15)       /* Flow Control Polarity */
+	#define SPI_FLOW_LO			(0UL<<15)       /* Flow Control Polarity FCPL: Active-low RDY */
+	#define SPI_FLOW_HI			(1UL<<15)       /* Flow Control Polarity FCPL: Active-high RDY*/
+	#define SPI_FCCH			(1UL<<14)       /* Flow Control Channel Selection */
+	#define SPI_FLOW_RX			(0UL<<14)       /* Flow Control Channel Selection FCCH: Flow control on RX buffer*/
+	#define SPI_FLOW_TX			(1UL<<14)       /* Flow Control Channel Selection FCCH: Flow control on TX buffer*/
+	#define SPI_FCEN			(1UL<<13)       /* Flow Control Enable */
+	#define SPI_FLOW_DIS		(0UL<<13)       /* Flow Control Enable FCEN: Disable*/
+	#define SPI_FLOW_EN 		(1UL<<13)       /* Flow Control Enable FCEN: Enable */
+	#define SPI_LSBF			(1UL<<12)       /* Least Significant Bit First */
+	#define SPI_MSB_FIRST		(0UL<<12)       /* Least Significant Bit First LSBF: MSB sent/received first (big endian)	*/
+	#define SPI_LSB_FIRST		(1UL<<12)       /* Least Significant Bit First LSBF: LSB sent/received first (little endian)*/
+	#define SPI_SIZE8			(0UL<<9)		/* Word Transfer Size: 8-bit word */
+	#define SPI_SIZE16			(1UL<<9)		/* Word Transfer Size: 16-bit word */
+	#define SPI_SIZE32			(2UL<<9)		/* Word Transfer Size: 32-bit word */
+	#define SPI_EMISO			(1UL<<8)		/* Enable MISO */
+	#define SPI_SELST			(1UL<<7)		/* Slave Select Polarity Between Transfers */
+	#define SPI_DEASSRT_SSEL	(0UL<<7)		/* Slave Select Polarity Between Transfers SELST: De-assert slave select (high) */
+	#define SPI_ASSRT_SSEL  	(1UL<<7)		/* Slave Select Polarity Between Transfers SELST: Assert slave select (low)		*/
+	#define SPI_ASSEL			(1UL<<6)		/* Slave Select Pin Control */
+	#define SPI_SW_SSEL			(0UL<<6)		/* Slave Select Pin Control ASSEL: Software Slave Select Control */
+	#define SPI_HW_SSEL			(1UL<<6)		/* Slave Select Pin Control ASSEL: Hardware Slave Select Control */
+	#define SPI_CPOL			(1UL<<5)		/* Clock Polarity */
+	#define SPI_SCKHI			(0UL<<5)		/* Clock Polarity CPOL: Active-high SPI CLK*/
+	#define SPI_SCKLO			(1UL<<5)		/* Clock Polarity CPOL: Active-low SPI CLK */
+	#define SPI_CPHA			(1UL<<4)		/* Clock Phase */
+	#define SPI_SCKMID			(0UL<<4)		/* Clock Phase CPHA: SPI CLK toggles from middle*/
+	#define SPI_SCKBEG			(1UL<<4)		/* Clock Phase CPHA: SPI CLK toggles from start */
+	#define SPI_ODM				(1UL<<3)        /* Open Drain Mode */
+	#define SPI_PSSE			(1UL<<2)        /* Protected Slave Select Enable */
+	#define SPI_MSTR			(1UL<<1)        /* Master/Slave */
+	#define SPI_SLAVE 			(0UL<<1)        /* Master/Slave MSTR: Slave */
+	#define SPI_MASTER			(1UL<<1)        /* Master/Slave MSTR: Master */
+	#define SPI_EN				(1UL<<0)        /* Enable */ 
+													
+	#define STAT_TFF			(1UL<<23)       /* SPI_TFIFO Full */
+	#define STAT_RFE			(1UL<<22)       /* SPI_RFIFO Empty */
+	#define STAT_FCS			(1UL<<20)       /* Flow Control Stall Indication */
+	#define STAT_TFS			(1UL<<16)       /* SPI_TFIFO Status */
+	#define STAT_RFS			(1UL<<12)       /* SPI_RFIFO Status */
+	#define STAT_TF 			(1UL<<11)       /* Transmit Finish Indication */
+	#define STAT_RF 			(1UL<<10)       /* Receive Finish Indication */
+	#define STAT_TS  			(1UL<<9)		/* Transmit Start */
+	#define STAT_RS  			(1UL<<8)        /* Receive Start */
+	#define STAT_MF  			(1UL<<7)        /* Mode Fault Indication */
+	#define STAT_TC  			(1UL<<6)        /* Transmit Collision Indication */
+	#define STAT_TUR 			(1UL<<5)        /* Transmit Underrun Indication */
+	#define STAT_ROR 			(1UL<<4)        /* Receive Overrun Indication */
+	#define STAT_TUWM			(1UL<<2)        /* Transmit Urgent Watermark Breached */
+	#define STAT_RUWM			(1UL<<1)        /* Receive Urgent Watermark Breached */
+	#define STAT_SPIF			(1UL<<0)        /* SPI Finished */ 
 
-	#define RXCTL_RUWM  	(1UL<<16)   	/* Receive FIFO Urgent Watermark */
-	#define RXCTL_RRWM  	(1UL<<12)   	/* Receive FIFO Regular Watermark */
-	#define RXCTL_RDO   	(1UL<< 8)   	/* Receive Data Overrun */
-	//#define RXCTL_RDR   	(1UL<< 4)   	/* Receive Data Request */
-	#define RXCTL_RDR_DIS   (0UL<< 4)		/* RDR: Disabled */
-	#define RXCTL_RDR_NE    (1UL<< 4)		/* RDR: Not empty RFIFO */
-	#define RXCTL_RDR_25    (2UL<< 4)		/* RDR: 25% full RFIFO */
-	#define RXCTL_RDR_50    (3UL<< 4)		/* RDR: 50% full RFIFO */
-	#define RXCTL_RDR_75    (4UL<< 4)		/* RDR: 75% full RFIFO */
-	#define RXCTL_RDR_FULL  (5UL<< 4)		/* RDR: Full RFIFO */ 
-	#define RXCTL_RWCEN 	(1UL<< 3)   	/* Receive Word Counter Enable */
-	#define RXCTL_RTI   	(1UL<< 2)   	/* Receive Transfer Initiate */
-	#define RXCTL_REN   	(1UL<< 0)   	/* Receive Enable */ 
-	#define TXCTL_TUWM  	(1UL<<16)   	/* FIFO Urgent Watermark */
-	#define TXCTL_TRWM  	(1UL<<12)   	/* FIFO Regular Watermark */
-	#define TXCTL_TDU   	(1UL<< 8)   	/* Transmit Data Under-run */
-	//#define TXCTL_TDR   	(1UL<< 4)   	/* Transmit Data Request */
-	#define TXCTL_TDR_DIS   (0UL<< 4)		/* TDR: Disabled */
-	#define TXCTL_TDR_NF    (1UL<< 4)		/* TDR: Not full TFIFO */
-	#define TXCTL_TDR_25    (2UL<< 4)		/* TDR: 25% empty TFIFO */
-	#define TXCTL_TDR_50    (3UL<< 4)		/* TDR: 50% empty TFIFO */
-	#define TXCTL_TDR_75    (4UL<< 4)		/* TDR: 75% empty TFIFO */
-	#define TXCTL_TDR_EMPTY (5UL<< 4)		/* TDR: Empty TFIFO */ 	
-	#define TXCTL_TWCEN 	(1UL<< 3)   	/* Transmit Word Counter Enable */
-	#define TXCTL_TTI   	(1UL<< 2)   	/* Transmit Transfer Initiate */
-	#define TXCTL_TEN   	(1UL<< 0)   	/* Transmit Enable */ 
+	#define RXCTL_RUWM  		(1UL<<16)   	/* Receive FIFO Urgent Watermark */
+	#define RXCTL_RRWM  		(1UL<<12)   	/* Receive FIFO Regular Watermark */
+	#define RXCTL_RDO   		(1UL<< 8)   	/* Receive Data Overrun */
+	//#define RXCTL_RDR   		(1UL<< 4)   	/* Receive Data Request */
+	#define RXCTL_RDR_DIS		(0UL<< 4)		/* RDR: Disabled */
+	#define RXCTL_RDR_NE		(1UL<< 4)		/* RDR: Not empty RFIFO */
+	#define RXCTL_RDR_25		(2UL<< 4)		/* RDR: 25% full RFIFO */
+	#define RXCTL_RDR_50		(3UL<< 4)		/* RDR: 50% full RFIFO */
+	#define RXCTL_RDR_75		(4UL<< 4)		/* RDR: 75% full RFIFO */
+	#define RXCTL_RDR_FULL		(5UL<< 4)		/* RDR: Full RFIFO */ 
+	#define RXCTL_RWCEN 		(1UL<< 3)   	/* Receive Word Counter Enable */
+	#define RXCTL_RTI   		(1UL<< 2)   	/* Receive Transfer Initiate */
+	#define RXCTL_REN   		(1UL<< 0)   	/* Receive Enable */ 
+	#define TXCTL_TUWM  		(1UL<<16)   	/* FIFO Urgent Watermark */
+	#define TXCTL_TRWM  		(1UL<<12)   	/* FIFO Regular Watermark */
+	#define TXCTL_TDU   		(1UL<< 8)   	/* Transmit Data Under-run */
+	//#define TXCTL_TDR   		(1UL<< 4)   	/* Transmit Data Request */
+	#define TXCTL_TDR_DIS		(0UL<< 4)		/* TDR: Disabled */
+	#define TXCTL_TDR_NF		(1UL<< 4)		/* TDR: Not full TFIFO */
+	#define TXCTL_TDR_25		(2UL<< 4)		/* TDR: 25% empty TFIFO */
+	#define TXCTL_TDR_50		(3UL<< 4)		/* TDR: 50% empty TFIFO */
+	#define TXCTL_TDR_75		(4UL<< 4)		/* TDR: 75% empty TFIFO */
+	#define TXCTL_TDR_EMPTY		(5UL<< 4)		/* TDR: Empty TFIFO */ 	
+	#define TXCTL_TWCEN 		(1UL<< 3)   	/* Transmit Word Counter Enable */
+	#define TXCTL_TTI   		(1UL<< 2)   	/* Transmit Transfer Initiate */
+	#define TXCTL_TEN   		(1UL<< 0)   	/* Transmit Enable */ 
+
+	#define SPI_LAGX			(1UL<<9)		/* Extended SPI Clock Lag Control */
+	#define SPI_LEADX			(1UL<<8)		/* Extended SPI Clock Lead Control */
+	#define SPI_STOP(v)			(((v)&0xFF)<<0)	/* Transfer delay time in multiples of SPI clock period */
+
+	#define SPI_SSEL7			(1UL<<15)		/* Slave Select 7 Input */
+	#define SPI_SSEL6			(1UL<<14)		/* Slave Select 6 Input */
+	#define SPI_SSEL5			(1UL<<13)		/* Slave Select 5 Input */
+	#define SPI_SSEL4			(1UL<<12)		/* Slave Select 4 Input */
+	#define SPI_SSEL3			(1UL<<11)		/* Slave Select 3 Input */
+	#define SPI_SSEL2			(1UL<<10)		/* Slave Select 2 Input */
+	#define SPI_SSEL1			(1UL<<9)		/* Slave Select 1 Input */
+	#define SPI_SSE7			(1UL<<7)		/* Slave Select 7 Enable */
+	#define SPI_SSE6			(1UL<<6)		/* Slave Select 6 Enable */
+	#define SPI_SSE5			(1UL<<5)		/* Slave Select 5 Enable */
+	#define SPI_SSE4			(1UL<<4)		/* Slave Select 4 Enable */
+	#define SPI_SSE3			(1UL<<3)		/* Slave Select 3 Enable */
+	#define SPI_SSE2			(1UL<<2)		/* Slave Select 2 Enable */
+	#define SPI_SSE1			(1UL<<1)		/* Slave Select 1 Enable */
+
+	#define SPI_CMDPINS			(1UL<<29)       /* Pins Used for Command: 0 - Use only one pin: MOSI (overrides SPI_CTL.MIOM bits); 1 - Use pins specified by SPI_CTL.MIOM bits */
+	#define SPI_CMDSKIP			(1UL<<28)       /* Command Skip Enable */
+	#define SPI_WRAP			(1UL<<27)       /* SPI Memory Wrap Indicator */
+	#define SPI_MERGE			(1UL<<26)       /* Merge Enable */
+	#define SPI_TRIDMY(v)		(((v)&3)<<24)   /* Tristate Dummy Timing */
+	#define SPI_TRIDMY_IMMED	(0UL<<24)		/* Tristate Dummy Timing: Tristate outputs immediately */
+	#define SPI_TRIDMY_4BITS	(1UL<<24)		/* Tristate Dummy Timing: Tristate outputs after 4 bits of dummy/mode are transmitted */
+	#define SPI_TRIDMY_8BITS	(2UL<<24)		/* Tristate Dummy Timing: Tristate outputs after 8 bits of dummy/mode are transmitted */
+	#define SPI_TRIDMY_NEVER	(3UL<<24)		/* Tristate Dummy Timing: Never tristate outputs (previously specified output state is held) */
+	#define SPI_MODE(v)			(((v)&0xFF)<<16)/* Mode Field */
+	#define SPI_DMYSIZE(v)		(((v)&7)<<12)   /* Bytes of Dummy/Mode */
+	#define SPI_ADRPINS			(1UL<<11)       /* Pins Used for Address: 0 - Use only one pin: MOSI (overrides SPI_CTL.MIOM bits); 1 - Use pins specified by SPI_CTL.MIOM bits */
+	#define SPI_ADRSIZE(v)		(((v)&7)<<8)    /* Bytes of Read Address */
+	#define SPI_OPCODE(v)		(((v)&0xFF)<<0) /* Read Opcode */
+
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

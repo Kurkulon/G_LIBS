@@ -213,8 +213,8 @@ public:
 		: _num(num), _PIO_CS(piocs), _MASK_CS(mcs), _MASK_CS_LEN(mcslen), _GEN_CLK(gen_clk),
 		_MASK_SCK_MOSI_MISO_D2_D3(mask_sck_mosi_miso_d2_d3), _DMATX(4+num*2), _DMARX(5+num*2), _dsc(0), _state(ST_WAIT), _spimode(0) {}
 
-	bool CheckWriteComplete()	{ return _DMATX.CheckComplete() && (_hw->STAT & (STAT_SPIF|STAT_TFF)) == STAT_SPIF; }
-	bool CheckReadComplete()	{ if (_DMARX.CheckComplete()) { _hw->CTL = 0; _DMARX.Disable(); return true;} else return false; }
+	bool CheckWriteComplete()	{ return /*_DMATX.CheckComplete() &&*/ (_hw->STAT & (STAT_TF|STAT_SPIF)) == (STAT_TF|STAT_SPIF); }
+	bool CheckReadComplete()	{ if (_hw->STAT & STAT_RF) { _hw->CTL = 0; _DMARX.Disable(); return true;} else return false; }
 
 	void ChipSelect(byte num, u16 spimode, u16 baud)	{ _hw->CLK = baud; _spimode = spimode & (SPI_CPOL|SPI_CPHA|SPI_LSBF); _PIO_CS->CLR(_MASK_CS[num]); }
 	void ChipDisable()									{ _PIO_CS->SET(_MASK_CS_ALL); }
@@ -241,6 +241,8 @@ public:
 			bool CheckReadComplete() { return _DMATX->CheckComplete() && _DMARX->CheckComplete(); }
 			void ChipSelect(byte num)	{ _PIO_CS->CLR(_MASK_CS[num]); }
 			void ChipDisable()			{ _PIO_CS->SET(_MASK_CS_ALL); }
+			void DisableTX() { _DMATX->Disable(); }
+			void DisableRX() { _uhw.spi->CTRLB &= ~SPI_RXEN; _DMATX->Disable(); _DMARX->Disable(); }
 
 #elif defined(CPU_XMC48)
 
@@ -254,6 +256,8 @@ public:
 			bool CheckWriteComplete() { return _DMA->CheckComplete() /*&& (_uhw.spi->INTFLAG & SPI_TXC)*/; }
 			bool CheckReadComplete() { return _DMA->CheckComplete(); }
 			void ChipDisable()			{ _PIO_CS->SET(_MASK_CS_ALL); }
+			void DisableTX() { _DMA->Disable();; }
+			void DisableRX() { _DMA->Disable();; }
 
 #elif defined(CPU_LPC824)
 
@@ -263,6 +267,8 @@ public:
 			bool CheckWriteComplete()	{ return _DMATX.CheckComplete() /*&& (_uhw.spi->INTFLAG & SPI_TXC)*/; }
 			bool CheckReadComplete()	{ return _DMARX.CheckComplete(); }
 			void ChipDisable()			{  }
+			void DisableTX() {  }
+			void DisableRX() {  }
 
 #elif defined(WIN32)
 
