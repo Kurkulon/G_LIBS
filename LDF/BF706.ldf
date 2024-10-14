@@ -231,10 +231,11 @@ MEMORY
 	/*
 	** L2 memory.
 	*/
-#define L2_SRAM_START	0x08000000
-#define L2_SRAM_END		0x080FFFFF
+//#define L2_SRAM_START	0x08000000
+//#define L2_SRAM_END		0x080FFFFF
 
-	MEM_L2_SRAM             { TYPE(RAM) START(L2_SRAM_START) END(L2_SRAM_END) WIDTH(8) }
+	MEM_L2_SRAM_UNCACHED	{ TYPE(RAM) START(0x08000000) END(0x0803FFFF) WIDTH(8) } 
+	MEM_L2_SRAM             { TYPE(RAM) START(0x08040000) END(0x080FFFFF) WIDTH(8) }
 	//MEM_L2_SRAM_UNCACHED    { TYPE(RAM) START(0x080F0000) END(0x080FFFFF) WIDTH(8) }
 	MEM_L2_ROM              { TYPE(ROM) START(0x04010000) END(0x0407FFFF) WIDTH(8) }
 	MEM_SPI_FLASH           { TYPE(ROM) START(0x40000000) END(0x47FFFFFF) WIDTH(8) }
@@ -449,12 +450,20 @@ PROCESSOR P0
 
 		} > MEM_L2_SRAM
       
+		L2_uncached DEF_SECTION_QUAL
+		{
+			INPUT_SECTION_ALIGN(4)
+
+			INPUT_SECTIONS( $OBJS_LIBS(L2_sram_uncached L2_sram_uncached) )
+
+		} > MEM_L2_SRAM_UNCACHED
+
 		L2_data DEF_SECTION_QUAL
 		{
 			INPUT_SECTION_ALIGN(4)
 
 			INPUT_SECTIONS( $OBJS_LIBS(L2_sram l2_sram L2_data l2_data) )
-			INPUT_SECTIONS( $OBJS_LIBS(program noncache_code data1 voldata cplb_data vtbl constdata .edt .cht .rtti) )
+//			INPUT_SECTIONS( $OBJS_LIBS(program noncache_code data1 voldata cplb_data vtbl constdata .edt .cht .rtti) )
 
 		} > MEM_L2_SRAM
 

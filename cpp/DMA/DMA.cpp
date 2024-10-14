@@ -116,7 +116,7 @@ void DMA_CH::Trans(volatile void *src, u16 len, u16 ctrl)
 	_dmach->XMOD = 1UL<<((ctrl>>4)&3);
 
 	_dmach->STAT = ~0;
-	_dmach->CFG = DMA_INT_XCNT|DMA_FLOW_STOP|(ctrl&(DMA_PSIZE(~0)|DMA_WNR))|DMA_SYNC|DMA_EN;
+	_dmach->CFG = DMA_INT_XCNT|DMA_FLOW_STOP|(ctrl&(DMA_PSIZE(~0)|DMA_MSIZE(~0)|DMA_WNR))|DMA_SYNC|DMA_EN;
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -125,8 +125,8 @@ void DMA_CH::Trans(volatile void *stadr1, u16 len1, u16 mdfy1, u16 ctrl1, volati
 {
 	_dmach->CFG = 0;
 
-	ctrl1 = (ctrl1&(DMA_PSIZE(~0)|DMA_WNR))|DMA_SYNC|DMA_EN;
-	ctrl2 = (ctrl2&(DMA_PSIZE(~0)|DMA_WNR))|DMA_SYNC|DMA_EN;
+	ctrl1 = (ctrl1&(DMA_PSIZE(~0)|DMA_MSIZE(~0)|DMA_WNR))|DMA_SYNC|DMA_EN;
+	ctrl2 = (ctrl2&(DMA_PSIZE(~0)|DMA_MSIZE(~0)|DMA_WNR))|DMA_SYNC|DMA_EN;
 
 	_dsc1.ADDRSTART	= (void*)stadr1;
 	_dsc1.XCNT		= len1;
@@ -158,7 +158,7 @@ void DMA_CH::Trans2D(volatile void *stadr1, u16 xcount1, u16 xmdfy1, u16 ycount1
 {
 	_dmach->CFG = 0;
 
-	ctrl = (ctrl&(DMA_PSIZE(~0)|DMA_WNR))|DMA_SYNC|DMA_EN;
+	ctrl = (ctrl&(DMA_PSIZE(~0)|DMA_MSIZE(~0)|DMA_WNR))|DMA_SYNC|DMA_EN;
 	u16 ctrl2 = ctrl;
 
 	if (ycount1 != 0 ) ctrl  |= DMA_TWOD;

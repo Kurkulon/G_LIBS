@@ -1467,7 +1467,7 @@ namespace T_HW
 	#define DMA_FLOW_DSCARRAY		(5UL<<12)   						/* Next Operation */
 	#define DMA_FLOW_DODLIST 		(6UL<<12)   						/* Next Operation */
 	#define DMA_FLOW_DODARRAY		(7UL<<12)   						/* Next Operation */
-	#define DMA_MSIZE               (((v)&7)<<8)    					/* Memory Transfer Word Size */
+	#define DMA_MSIZE(v)            (((v)&7)<<8)    					/* Memory Transfer Word Size */
 	#define DMA_MSIZE8              (0UL<<8)	    					/* Memory Transfer Word Size */
 	#define DMA_MSIZE16             (1UL<<8)	    					/* Memory Transfer Word Size */
 	#define DMA_MSIZE32             (2UL<<8)	    					/* Memory Transfer Word Size */

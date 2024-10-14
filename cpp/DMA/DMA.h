@@ -145,28 +145,28 @@ public:
 		inline u32 GetBytesReady()	{ return _dmach->XCNT - _dmach->XCNT_CUR; }
 
 		inline void Write8(volatile void *src, u16 len)	{ Trans(src, len, DMA_PSIZE8 );	}
-		inline void Write16(volatile void *src, u16 len)	{ Trans(src, len, DMA_PSIZE16);	}
-		inline void Write32(volatile void *src, u16 len)	{ Trans(src, len, DMA_PSIZE32);	}
+		inline void Write16(volatile void *src, u16 len)	{ Trans(src, len, DMA_PSIZE16|DMA_MSIZE16);	}
+		inline void Write32(volatile void *src, u16 len)	{ Trans(src, len, DMA_PSIZE32|DMA_MSIZE32);	}
 
 		inline void Read8(volatile void *dst, u16 len)	{ Trans(dst, len, DMA_PSIZE8 |DMA_WNR);	}
-		inline void Read16(volatile void *dst, u16 len) 	{ Trans(dst, len, DMA_PSIZE16|DMA_WNR);	}
-		inline void Read32(volatile void *dst, u16 len) 	{ Trans(dst, len, DMA_PSIZE32|DMA_WNR);	}
+		inline void Read16(volatile void *dst, u16 len) 	{ Trans(dst, len, DMA_PSIZE16|DMA_MSIZE16|DMA_WNR);	}
+		inline void Read32(volatile void *dst, u16 len) 	{ Trans(dst, len, DMA_PSIZE32|DMA_MSIZE32|DMA_WNR);	}
 
-		inline void Write8(volatile void *src1, u16 len1, volatile void *src2, u16 len2)	{ Trans(src1, len1, 1, DMA_PSIZE8 , src2, len2, 1, DMA_PSIZE8 );	 }
-		inline void Write16(volatile void *src1, u16 len1, volatile void *src2, u16 len2)	{ Trans(src1, len1, 2, DMA_PSIZE16, src2, len2, 2, DMA_PSIZE16); }
-		inline void Write32(volatile void *src1, u16 len1, volatile void *src2, u16 len2)	{ Trans(src1, len1, 4, DMA_PSIZE32, src2, len2, 4, DMA_PSIZE32); }
+		inline void Write8(volatile void *src1, u16 len1, volatile void *src2, u16 len2)	{ Trans(src1, len1, 1, DMA_PSIZE8,					src2, len2, 1, DMA_PSIZE8 );				}
+		inline void Write16(volatile void *src1, u16 len1, volatile void *src2, u16 len2)	{ Trans(src1, len1, 2, DMA_PSIZE16|DMA_MSIZE16,		src2, len2, 2, DMA_PSIZE16|DMA_MSIZE16);	}
+		inline void Write32(volatile void *src1, u16 len1, volatile void *src2, u16 len2)	{ Trans(src1, len1, 4, DMA_PSIZE32|DMA_MSIZE32,		src2, len2, 4, DMA_PSIZE32|DMA_MSIZE32);	}
 
-		inline void Read8(volatile void *dst1, u16 len1, volatile void *dst2, u16 len2)		{ Trans(dst1, len1, 1, DMA_PSIZE8 |DMA_WNR, dst2, len2, 1, DMA_PSIZE8 |DMA_WNR);	 }
-		inline void Read16(volatile void *dst1, u16 len1, volatile void *dst2, u16 len2)	{ Trans(dst1, len1, 2, DMA_PSIZE16|DMA_WNR, dst2, len2, 2, DMA_PSIZE16|DMA_WNR); }
-		inline void Read32(volatile void *dst1, u16 len1, volatile void *dst2, u16 len2)	{ Trans(dst1, len1, 4, DMA_PSIZE32|DMA_WNR, dst2, len2, 4, DMA_PSIZE32|DMA_WNR); }
+		inline void Read8(volatile void *dst1, u16 len1, volatile void *dst2, u16 len2)	{ Trans(dst1, len1, 1, DMA_PSIZE8 |DMA_WNR,					dst2, len2, 1, DMA_PSIZE8 |DMA_WNR);				}
+		inline void Read16(volatile void *dst1, u16 len1, volatile void *dst2, u16 len2)	{ Trans(dst1, len1, 2, DMA_PSIZE16|DMA_MSIZE16|DMA_WNR,		dst2, len2, 2, DMA_PSIZE16|DMA_MSIZE16|DMA_WNR);	}
+		inline void Read32(volatile void *dst1, u16 len1, volatile void *dst2, u16 len2)	{ Trans(dst1, len1, 4, DMA_PSIZE32|DMA_MSIZE32|DMA_WNR,		dst2, len2, 4, DMA_PSIZE32|DMA_MSIZE32|DMA_WNR);	}
 
-		inline void Read8(	volatile void *dst,  u16 dummy_len, u16 len)	{ Trans(dst, dummy_len, 0, DMA_PSIZE8 |DMA_WNR, dst, len, 1, DMA_PSIZE8 |DMA_WNR);	}
-		inline void Read16(	volatile void *dst,  u16 dummy_len, u16 len)	{ Trans(dst, dummy_len, 0, DMA_PSIZE16|DMA_WNR, dst, len, 2, DMA_PSIZE16|DMA_WNR);	}
-		inline void Read32(	volatile void *dst,  u16 dummy_len, u16 len)	{ Trans(dst, dummy_len, 0, DMA_PSIZE32|DMA_WNR, dst, len, 4, DMA_PSIZE32|DMA_WNR);	}
+		inline void Read8(	volatile void *dst,  u16 dummy_len, u16 len)		{ Trans(dst, dummy_len, 0, DMA_PSIZE8 |DMA_WNR,				dst, len, 1, DMA_PSIZE8 |DMA_WNR);				}
+		inline void Read16(	volatile void *dst,  u16 dummy_len, u16 len)	{ Trans(dst, dummy_len, 0, DMA_PSIZE16|DMA_MSIZE16|DMA_WNR,	dst, len, 2, DMA_PSIZE16|DMA_MSIZE16|DMA_WNR);	}
+		inline void Read32(	volatile void *dst,  u16 dummy_len, u16 len)	{ Trans(dst, dummy_len, 0, DMA_PSIZE32|DMA_MSIZE32|DMA_WNR,	dst, len, 4, DMA_PSIZE32|DMA_MSIZE32|DMA_WNR);	}
 
-		inline void ReadInterleaved8( volatile void *dst, u16 dummy_len, u16 len) { Trans2D(dst, dummy_len*2, 0, 0, 0, dst, 2, len,   len, 1-len,   DMA_PSIZE8 |DMA_WNR);	}
-		inline void ReadInterleaved16(volatile void *dst, u16 dummy_len, u16 len) { Trans2D(dst, dummy_len*2, 0, 0, 0, dst, 2, len*2, len, 2-len*2, DMA_PSIZE16|DMA_WNR);	}
-		inline void ReadInterleaved32(volatile void *dst, u16 dummy_len, u16 len) { Trans2D(dst, dummy_len*2, 0, 0, 0, dst, 2, len*4, len, 4-len*4, DMA_PSIZE32|DMA_WNR);	}
+		inline void ReadInterleaved8( volatile void *dst, u16 dummy_len, u16 len) { Trans2D(dst, dummy_len*2, 0, 0, 0, dst, 2, len,   len, 1-len,   DMA_PSIZE8 |DMA_WNR);				}
+		inline void ReadInterleaved16(volatile void *dst, u16 dummy_len, u16 len) { Trans2D(dst, dummy_len*2, 0, 0, 0, dst, 2, len*2, len, 2-len*2, DMA_PSIZE16|DMA_MSIZE16|DMA_WNR);	}
+		inline void ReadInterleaved32(volatile void *dst, u16 dummy_len, u16 len) { Trans2D(dst, dummy_len*2, 0, 0, 0, dst, 2, len*4, len, 4-len*4, DMA_PSIZE32|DMA_MSIZE32|DMA_WNR);	}
 
 	#endif
 
