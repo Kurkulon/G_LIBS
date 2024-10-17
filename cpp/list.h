@@ -137,7 +137,7 @@ protected:
 
 	List* _selfPtr;
 
-	void Assert(T* r) { DEBUG_ASSERT(r->next == 0); }
+	void Assert(T* r) { DEBUG_ASSERT(r->next == 0 && HW::RamCheck(r)); }
 
   public:
 

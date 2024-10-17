@@ -59,9 +59,24 @@ may be suppressed by defining the LDF macro NO_UTILITY_ROM.
     A loader initialization code to disable instruction cache during booting is required. This message may be suppressed by defining the LDF macro USING_ICACHE_DISABLE_INIT_CODE.
 #endif
 
+#ifdef USE_L1_CODE_DA_DB
 #define USE_L1_CODE
 #define USE_L1_DATA_A
 #define USE_L1_DATA_B
+#elif defined(USE_L1_DA)
+#define USE_L1_DATA_A
+#elif defined(USE_L1_DB)
+#define USE_L1_DATA_B
+#elif defined(USE_L1_CODE_DA)
+#define USE_L1_CODE
+#define USE_L1_DATA_A
+#elif defined(USE_L1_CODE_DB)
+#define USE_L1_CODE
+#define USE_L1_DATA_B
+#elif defined(USE_L1_DA_DB)
+#define USE_L1_DATA_A
+#define USE_L1_DATA_B
+#endif
 
 #undef USE_CACHE_CODE
 #undef USE_CACHE_DA
@@ -235,8 +250,8 @@ MEMORY
 //#define L2_SRAM_END		0x080FFFFF
 
 	MEM_L2_SRAM_UNCACHED	{ TYPE(RAM) START(0x08000000) END(0x0803FFFF) WIDTH(8) } 
-	MEM_L2_SRAM             { TYPE(RAM) START(0x08040000) END(0x080FFFFF) WIDTH(8) }
-	//MEM_L2_SRAM_UNCACHED    { TYPE(RAM) START(0x080F0000) END(0x080FFFFF) WIDTH(8) }
+	MEM_L2_SRAM_WT          { TYPE(RAM) START(0x08040000) END(0x0807FFFF) WIDTH(8) }
+	MEM_L2_SRAM				{ TYPE(RAM) START(0x08080000) END(0x080FFFFF) WIDTH(8) }
 	MEM_L2_ROM              { TYPE(ROM) START(0x04010000) END(0x0407FFFF) WIDTH(8) }
 	MEM_SPI_FLASH           { TYPE(ROM) START(0x40000000) END(0x47FFFFFF) WIDTH(8) }
 
@@ -368,6 +383,13 @@ PROCESSOR P0
 
 		#endif
 
+			RESERVE(heap_L1_dataB, heap_L1_dataB_len, 0, 4)
+			RESERVE_EXPAND(heap_L1_dataB, heap_L1_dataB_len, 0, 4)
+
+			ldf_heap_L1_DataB_adr	= heap_L1_dataB;
+			ldf_heap_L1_DataB_len	= heap_L1_dataB_len /*& 0xfffffffc*/;
+			ldf_heap_L1_DataB_end	= ldf_heap_L1_DataB_adr + ldf_heap_L1_DataB_len;
+
 		} > MEM_L1_DATA_B
       
 		L1_data_a_SEC_VecTable NO_INIT
@@ -418,6 +440,13 @@ PROCESSOR P0
 			INPUT_SECTIONS( $OBJS_LIBS_NOT_EXTERNAL(noinit_data) )
 			INPUT_SECTIONS( $OBJS_LIBS(noinit_data) )
 #endif
+			RESERVE(heap_L1_dataA, heap_L1_dataA_len, 0, 4)
+			RESERVE_EXPAND(heap_L1_dataA, heap_L1_dataA_len, 0, 4)
+
+			ldf_heap_L1_DataA_adr	= heap_L1_dataA;
+			ldf_heap_L1_DataA_len	= heap_L1_dataA_len /*& 0xfffffffc*/;
+			ldf_heap_L1_DataA_end	= ldf_heap_L1_DataA_adr + ldf_heap_L1_DataA_len;
+
 		} > MEM_L1_DATA_A
       
 
@@ -456,14 +485,36 @@ PROCESSOR P0
 
 			INPUT_SECTIONS( $OBJS_LIBS(L2_sram_uncached L2_sram_uncached) )
 
+			RESERVE(heap_L2_NoCache, heap_L2_NoCache_len, 0, 4)
+			RESERVE_EXPAND(heap_L2_NoCache, heap_L2_NoCache_len, 0, 4)
+
+			ldf_heap_L2_NoCache_adr	= heap_L2_NoCache;
+			ldf_heap_L2_NoCache_len	= heap_L2_NoCache_len /*& 0xfffffffc*/;
+			ldf_heap_L2_NoCache_end	= ldf_heap_L2_NoCache_adr + ldf_heap_L2_NoCache_len;
+
 		} > MEM_L2_SRAM_UNCACHED
 
-		L2_data DEF_SECTION_QUAL
+		L2_Cache_WT DEF_SECTION_QUAL // Cached write thrue
+		{
+			INPUT_SECTION_ALIGN(4)
+
+			INPUT_SECTIONS( $OBJS_LIBS(L2_SRAM_WT l2_sram_wt) )
+
+			RESERVE(heap_L2_CacheWT, heap_L2_CacheWT_len, 0, 4)
+			RESERVE_EXPAND(heap_L2_CacheWT, heap_L2_CacheWT_len, 0, 4)
+
+			ldf_heap_L2_CacheWT_adr	= heap_L2_CacheWT;
+			ldf_heap_L2_CacheWT_len	= heap_L2_CacheWT_len /*& 0xfffffffc*/;
+			ldf_heap_L2_CacheWT_end	= ldf_heap_L2_CacheWT_adr + ldf_heap_L2_CacheWT_len;
+
+		} > MEM_L2_SRAM_WT
+
+		L2_data DEF_SECTION_QUAL // Cached Write Back
 		{
 			INPUT_SECTION_ALIGN(4)
 
 			INPUT_SECTIONS( $OBJS_LIBS(L2_sram l2_sram L2_data l2_data) )
-//			INPUT_SECTIONS( $OBJS_LIBS(program noncache_code data1 voldata cplb_data vtbl constdata .edt .cht .rtti) )
+			INPUT_SECTIONS( $OBJS_LIBS(program noncache_code data1 voldata cplb_data vtbl constdata .edt .cht .rtti) )
 
 		} > MEM_L2_SRAM
 

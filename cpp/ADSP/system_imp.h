@@ -174,6 +174,114 @@ static void Init_SEC()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+static byte* l1_DataA_adr = 0;
+static byte* l1_DataB_adr = 0;
+static byte* l2_NoCache_adr = 0;
+static byte* l2_CacheWT_adr = 0;
+
+static u32 l1_DataA_len = 0;
+static u32 l1_DataB_len = 0;
+static u32 l2_NoCache_len = 0;
+static u32 l2_CacheWT_len = 0;
+
+static void Init_Heap()
+{
+	asm (	".extern ldf_heap_L1_DataA_adr;\n	.type ldf_heap_L1_DataA_adr, STT_OBJECT;\n		%0 = ldf_heap_L1_DataA_adr;"	: "=d" (l1_DataA_adr)	: : );
+	asm (	".extern ldf_heap_L1_DataA_len;\n	.type ldf_heap_L1_DataA_len, STT_OBJECT;\n		%0 = ldf_heap_L1_DataA_len;"	: "=d" (l1_DataA_len)	: : );
+	asm (	".extern ldf_heap_L1_DataB_adr;\n	.type ldf_heap_L1_DataB_adr, STT_OBJECT;\n		%0 = ldf_heap_L1_DataB_adr;"	: "=d" (l1_DataB_adr)	: : );
+	asm (	".extern ldf_heap_L1_DataB_len;\n	.type ldf_heap_L1_DataB_len, STT_OBJECT;\n		%0 = ldf_heap_L1_DataB_len;"	: "=d" (l1_DataB_len)	: : );
+	asm (	".extern ldf_heap_L2_NoCache_adr;\n	.type ldf_heap_L2_NoCache_adr, STT_OBJECT;\n	%0 = ldf_heap_L2_NoCache_adr;"	: "=d" (l2_NoCache_adr)	: : );
+	asm (	".extern ldf_heap_L2_NoCache_len;\n	.type ldf_heap_L2_NoCache_len, STT_OBJECT;\n	%0 = ldf_heap_L2_NoCache_len;"	: "=d" (l2_NoCache_len)	: : );
+	asm (	".extern ldf_heap_L2_CacheWT_adr;\n	.type ldf_heap_L2_CacheWT_adr, STT_OBJECT;\n	%0 = ldf_heap_L2_CacheWT_adr;"	: "=d" (l2_CacheWT_adr)	: : );
+	asm (	".extern ldf_heap_L2_CacheWT_len;\n	.type ldf_heap_L2_CacheWT_len, STT_OBJECT;\n	%0 = ldf_heap_L2_CacheWT_len;"	: "=d" (l2_CacheWT_len)	: : );
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void* Alloc_L1_DataA(u32 size)
+{
+	size = (size+3) & ~3;
+
+	void *p = 0;
+
+	if (l1_DataA_len >= size)
+	{
+		p = l1_DataA_adr;
+		l1_DataA_adr += size;	
+		l1_DataA_len -= size;
+	};
+
+	return p;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void* Alloc_L1_DataB(u32 size)
+{
+	size = (size+3) & ~3;
+
+	void *p = 0;
+
+	if (l1_DataB_len >= size)
+	{
+		p = l1_DataB_adr;
+		l1_DataB_adr += size;	
+		l1_DataB_len -= size;
+	};
+
+	return p;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void* Alloc_L2_NoCache(u32 size)
+{
+	size = (size+3) & ~3;
+
+	void *p = 0;
+
+	if (l2_NoCache_len >= size)
+	{
+		p = l2_NoCache_adr;
+		l2_NoCache_adr += size;	
+		l2_NoCache_len -= size;
+	};
+
+	return p;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void* Alloc_L2_CacheWT(u32 size)
+{
+	size = (size+3) & ~3;
+
+	void *p = 0;
+
+	if (l2_CacheWT_len >= size)
+	{
+		p = l2_CacheWT_adr;
+		l2_CacheWT_adr += size;	
+		l2_CacheWT_len -= size;
+	};
+
+	return p;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void* Alloc_UnCached(u32 size)
+{
+	void *p = Alloc_L1_DataA(size);
+
+	if (p == 0) p = Alloc_L1_DataB(size);
+	if (p == 0) p = Alloc_L2_NoCache(size);
+
+	return p;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 section ("L1_code")
 
 static void Init_Cache()
@@ -240,7 +348,8 @@ static void Init_Cache()
 
 		const u32 DCPLB_L2_ROM				= L1DM_PSIZE_256KB	| L1DM_WB_L1	| L1DM_DIRTY |								L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
 		const u32 DCPLB_L2_SRAM_NOCACHE	= L1DM_PSIZE_256KB	| L1DM_NOCACHE	| L1DM_DIRTY | L1DM_SWRITE | L1DM_UWRITE |	L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
-		const u32 DCPLB_L2_SRAM_CACHE		= L1DM_PSIZE_256KB	| L1DM_WB_L1	| L1DM_DIRTY | L1DM_SWRITE | L1DM_UWRITE |	L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
+		const u32 DCPLB_L2_SRAM_CACHEWT	= L1DM_PSIZE_256KB	| L1DM_WT_L1	| L1DM_DIRTY | L1DM_SWRITE | L1DM_UWRITE |	L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
+		const u32 DCPLB_L2_SRAM_CACHEWB	= L1DM_PSIZE_256KB	| L1DM_WB_L1	| L1DM_DIRTY | L1DM_SWRITE | L1DM_UWRITE |	L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
 		const u32 DCPLB_L1_SRAM			= L1DM_PSIZE_16KB	| L1DM_NOCACHE	| L1DM_DIRTY | L1DM_SWRITE | L1DM_UWRITE |	L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
 		const u32 DCPLB_OTP				= L1DM_PSIZE_1KB	| L1DM_NOCACHE	| L1DM_DIRTY |								L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
 		const u32 DCPLB_SPI2				= L1DM_PSIZE_64MB	| L1DM_WB_L1	| L1DM_DIRTY |								L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
@@ -249,10 +358,10 @@ static void Init_Cache()
 
 									HW::L1DM->CPLB_ADDR[n] = 0x04000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ROM;				// L2 ROM
 									HW::L1DM->CPLB_ADDR[n] = 0x04040000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ROM;				// L2 ROM
-									HW::L1DM->CPLB_ADDR[n] = 0x08000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_SRAM_NOCACHE;	// L2 SRAM (1024 KB)
-									HW::L1DM->CPLB_ADDR[n] = 0x08040000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_SRAM_CACHE;		// L2 SRAM (1024 KB)
-									HW::L1DM->CPLB_ADDR[n] = 0x08080000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_SRAM_CACHE;		// L2 SRAM (1024 KB)
-									HW::L1DM->CPLB_ADDR[n] = 0x080C0000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_SRAM_CACHE;		// L2 SRAM (1024 KB)
+									HW::L1DM->CPLB_ADDR[n] = 0x08000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_SRAM_NOCACHE;	// L2 SRAM (256 KB)
+									HW::L1DM->CPLB_ADDR[n] = 0x08040000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_SRAM_CACHEWT;	// L2 SRAM (256 KB)
+									HW::L1DM->CPLB_ADDR[n] = 0x08080000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_SRAM_CACHEWT;	// L2 SRAM (256 KB)
+									HW::L1DM->CPLB_ADDR[n] = 0x080C0000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_SRAM_CACHEWT;	// L2 SRAM (256 KB)
 									HW::L1DM->CPLB_ADDR[n] = 0x11800000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L1_SRAM;				// L1 Data Block A SRAM (16 KB)
 		if (l1_data_cache_a == 0)	HW::L1DM->CPLB_ADDR[n] = 0x11804000, HW::L1DM->CPLB_DATA[n++] = DCPLB_L1_SRAM;				// L1 Data Block A SRAM/Cache (16 KB)
 									HW::L1DM->CPLB_ADDR[n] = 0x11900000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L1_SRAM;				// L1 Data Block B SRAM (16 KB)
@@ -348,6 +457,8 @@ extern "C" void SystemInit()
 	Init_Cache();
 
 	Init_SEC();
+
+	Init_Heap();
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

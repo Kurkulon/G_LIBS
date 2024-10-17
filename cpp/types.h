@@ -54,7 +54,7 @@
 
 #endif 
 
-#ifdef _DEBUG
+#if defined(_DEBUG) || defined(__DEBUG)
 #define DEBUG_ASSERT(v) if (!(v)) __breakpoint(0)
 #else
 #define DEBUG_ASSERT(v)

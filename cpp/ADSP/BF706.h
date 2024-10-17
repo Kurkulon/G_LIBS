@@ -35,6 +35,12 @@ extern u32 Get_SCLK_MHz();
 extern u32 Get_SCLK0_MHz();	
 extern u32 Get_SCLK1_MHz();	
 
+extern void* Alloc_L1_DataA(u32 size);
+extern void* Alloc_L1_DataB(u32 size);
+extern void* Alloc_L2_NoCache(u32 size);
+extern void* Alloc_UnCached(u32 size);
+extern void* Alloc_L2_CacheWT(u32 size);
+
 //#pragma always_inline
 //inline void SIC_EnableIRQ(byte pid) { *pSIC_IMASK |= 1UL<<pid; }
 //inline void SIC_DisableIRQ(byte pid) { *pSIC_IMASK &= ~(1UL<<pid); }
@@ -1425,14 +1431,17 @@ namespace T_HW
 
 	struct S_DMA
 	{
-		S_DMACH	CH[18];
+		S_DMACH	CH[16];
 		
-		S_DMACH	z__Reserved1[2];
+		S_DMACH	 SRC0;
+		S_DMACH	 DST0;
 
-		S_DMACH	 MDMA_D0;
-		S_DMACH	 MDMA_S0;
-		S_DMACH	 MDMA_D1;
-		S_DMACH	 MDMA_S1;
+		S_DMACH	z__Reserved1[18];
+
+		S_DMACH	 SRC1;
+		S_DMACH	 DST1;
+		S_DMACH	 SRC2;
+		S_DMACH	 DST2;
 
 	};
 
@@ -2073,9 +2082,9 @@ namespace HW
 	 //MK_PTR(DMA15  ,	ADI_DMA15_BASE      ); /*!<  Pointer to DMA Channel (DMA15) */
 	 //MK_PTR(DMA15  ,	ADI_DMA15_BASE      ); /*!<  Pointer to DMA Channel (EPPI0_CH1_DMA) */
 	 //MK_PTR(DMA16  ,	ADI_DMA16_BASE      ); /*!<  Pointer to DMA Channel (DMA16) */
-	 //MK_PTR(DMA16  ,	ADI_DMA16_BASE      ); /*!<  Pointer to DMA Channel (MDMA0_SRC) */
+	 //MK_PTR(MDMA0S  ,	ADI_DMA16_BASE      ); /*!<  Pointer to DMA Channel (MDMA0_SRC) */ 
 	 //MK_PTR(DMA17  ,	ADI_DMA17_BASE      ); /*!<  Pointer to DMA Channel (DMA17) */
-	 //MK_PTR(DMA17  ,	ADI_DMA17_BASE      ); /*!<  Pointer to DMA Channel (MDMA0_DST) */
+	 //MK_PTR(MDMA0D  ,	ADI_DMA17_BASE      ); /*!<  Pointer to DMA Channel (MDMA0_DST) */
 	 //MK_PTR(DMA18  ,	ADI_DMA18_BASE      ); /*!<  Pointer to DMA Channel (DMA18) */
 	 //MK_PTR(DMA18  ,	ADI_DMA18_BASE      ); /*!<  Pointer to DMA Channel (MDMA1_SRC) */
 	 //MK_PTR(DMA19  ,	ADI_DMA19_BASE      ); /*!<  Pointer to DMA Channel (DMA19) */
@@ -2105,6 +2114,17 @@ namespace HW
 	inline void ResetWDT()		{ WDOG->Reset();	}
 	inline void DisableWDT()	{ WDOG->Disable();	}
 
+	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	inline bool RamCheck(const void *ptr)
+	{
+		u32 v = (u32)ptr;
+
+		return ((v&~0x107FFF) == 0x11800000 || (v&~0xFFFFF) == 0x8000000);
+
+	};
+
+	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
