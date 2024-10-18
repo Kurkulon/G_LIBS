@@ -41,6 +41,11 @@ extern void* Alloc_L2_NoCache(u32 size);
 extern void* Alloc_UnCached(u32 size);
 extern void* Alloc_L2_CacheWT(u32 size);
 
+extern bool IsCodeCacheEnabled();
+extern bool IsDataCacheEnabled();
+extern bool IsDataCacheA_Enabled();
+extern bool IsDataCacheB_Enabled();
+
 //#pragma always_inline
 //inline void SIC_EnableIRQ(byte pid) { *pSIC_IMASK |= 1UL<<pid; }
 //inline void SIC_DisableIRQ(byte pid) { *pSIC_IMASK &= ~(1UL<<pid); }
@@ -743,6 +748,27 @@ namespace T_HW
 		BF_RO32 REVID;                         /*!< Revision ID Register */
 	};
 
+	#define L2CTL_LOCK                  (1UL<<31)	/* Lock */
+	#define L2CTL_DISURP                (1UL<<28)	/* Disable Urgent Request Priority */
+	#define L2CTL_ECCMAP8               (1UL<<24)	/* ECC Map Bank 8 (ROM) */
+	#define L2CTL_ECCMAP7               (1UL<<23)	/* ECC Map Bank 7 */
+	#define L2CTL_ECCMAP6               (1UL<<22)	/* ECC Map Bank 6 */
+	#define L2CTL_ECCMAP5               (1UL<<21)	/* ECC Map Bank 5 */
+	#define L2CTL_ECCMAP4               (1UL<<20)	/* ECC Map Bank 4 */
+	#define L2CTL_ECCMAP3               (1UL<<19)	/* ECC Map Bank 3 */
+	#define L2CTL_ECCMAP2               (1UL<<18)	/* ECC Map Bank 2 */
+	#define L2CTL_ECCMAP1               (1UL<<17)	/* ECC Map Bank 1 */
+	#define L2CTL_ECCMAP0               (1UL<<16)	/* ECC Map Bank 0 */
+	#define L2CTL_BK8EDIS               (1UL<<8)	/* Bank 8 (ROM) ECC Disable */
+	#define L2CTL_BK7EDIS               (1UL<<7)	/* Bank 7 ECC Disable */
+	#define L2CTL_BK6EDIS               (1UL<<6)	/* Bank 6 ECC Disable */
+	#define L2CTL_BK5EDIS				(1UL<<5)	/* Bank 5 ECC Disable */
+	#define L2CTL_BK4EDIS				(1UL<<4)	/* Bank 4 ECC Disable */
+	#define L2CTL_BK3EDIS				(1UL<<3)	/* Bank 3 ECC Disable */
+	#define L2CTL_BK2EDIS				(1UL<<2)	/* Bank 2 ECC Disable */
+	#define L2CTL_BK1EDIS				(1UL<<1)	/* Bank 1 ECC Disable */
+	#define L2CTL_BK0EDIS				(1UL<<0)	/* Bank 0 ECC Disable */
+
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 	/*!
@@ -791,6 +817,9 @@ namespace T_HW
     												BF_RO8                  z__RESERVED0[4];
 		BF_RW32 PCFG0;                         /*!< Peripheral Configuration0 Register */
 	};
+
+	#define PADS_PUE                  (1UL<<12)		/* Pull-Up Enable */
+	#define PADS_TWI0VSEL             (1UL<<9)      /* Drive/tolerate for TWI0 Pins SCL & SDA */
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

@@ -89,10 +89,20 @@ static void LowLevelInit()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#ifndef INIT_L2CTL_CTL
+#define INIT_L2CTL_CTL L2CTL_BK0EDIS|L2CTL_BK1EDIS|L2CTL_BK2EDIS|L2CTL_BK3EDIS|L2CTL_BK4EDIS|L2CTL_BK5EDIS|L2CTL_BK6EDIS|L2CTL_BK7EDIS|L2CTL_BK8EDIS
+#endif
+
+#ifndef INIT_PADS_PCFG0
+#define INIT_PADS_PCFG0 PADS_PUE
+#endif
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 u32 Get_CCLK_MHz()	{ return CCLK_MHz;	}
 u32 Get_SCLK_MHz()	{ return SCLK_MHz;	}
-u32 Get_SCLK0_MHz()	{ return SCLK0_MHz; }
-u32 Get_SCLK1_MHz()	{ return SCLK1_MHz; }
+u32 Get_SCLK0_MHz()	{ return SCLK0_MHz;	}
+u32 Get_SCLK1_MHz()	{ return SCLK1_MHz;	}
 
 u32 Get_CCLK()	{ return CCLK;	}
 u32 Get_SCLK()	{ return SCLK;	}
@@ -313,7 +323,7 @@ static void Init_Cache()
 
 		csync();
 
-		HW::L1IM->CTL |= L1IM_ENCPLB;
+		HW::L1IM->CTL = L1IM_CFG|L1IM_ENCPLB;
 
 		ssync();
 	}
@@ -321,7 +331,7 @@ static void Init_Cache()
 	{
 		ssync();
 
-		HW::L1IM->CTL		= L1IM_CBYPASS;
+		HW::L1IM->CTL		= 0;
 		HW::L1IM->CPLB_DFLT	= L1IM_DFLT_NOCACHE;
 
 		byte n = 0;
@@ -334,7 +344,7 @@ static void Init_Cache()
 
 		csync();
 
-		HW::L1IM->CTL |= L1IM_ENCPLB;
+		HW::L1IM->CTL = L1IM_ENCPLB;
 
 		ssync();
 	};
@@ -384,7 +394,7 @@ static void Init_Cache()
 	{
 		ssync();
 
-		HW::L1DM->CTL		= L1DM_SRAM_AB | L1DM_CBYPASS;
+		HW::L1DM->CTL		= L1DM_SRAM_AB;
 		HW::L1DM->CPLB_DFLT	= L1DM_DFLT_NOCACHE;
 
 		const u32 DCPLB_L2_ROM		= L1DM_PSIZE_256KB	| L1DM_NOCACHE	| L1DM_DIRTY |								L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
@@ -413,11 +423,57 @@ static void Init_Cache()
 
 		csync();
 
-		HW::L1DM->CTL |= L1DM_ENCPLB;
+		HW::L1DM->CTL = L1DM_SRAM_AB|L1DM_ENCPLB;
 
 		ssync();
 	};
 
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+bool IsCodeCacheEnabled()
+{
+	int l1_code_cache;
+
+	asm (	".extern ___l1_code_cache;\n	.type ___l1_code_cache, STT_OBJECT;\n	%0 = ___l1_code_cache (Z);"		: "=d" (l1_code_cache)		: : );						
+
+	return l1_code_cache;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+bool IsDataCacheEnabled()
+{
+	int l1_data_cache_a;
+	int l1_data_cache_b;
+
+	asm (	".extern ___l1_data_cache_a;\n	.type ___l1_data_cache_a, STT_OBJECT;\n	%0 = ___l1_data_cache_a (Z);"	: "=d" (l1_data_cache_a)	: : );
+	asm (	".extern ___l1_data_cache_b;\n	.type ___l1_data_cache_b, STT_OBJECT;\n	%0 = ___l1_data_cache_b (Z);"	: "=d" (l1_data_cache_b)	: : );
+
+	return l1_data_cache_a || l1_data_cache_b;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+bool IsDataCacheA_Enabled()
+{
+	int l1_data_cache_a;
+
+	asm (	".extern ___l1_data_cache_a;\n	.type ___l1_data_cache_a, STT_OBJECT;\n	%0 = ___l1_data_cache_a (Z);"	: "=d" (l1_data_cache_a)	: : );
+
+	return l1_data_cache_a;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+bool IsDataCacheB_Enabled()
+{
+	int l1_data_cache_b;
+
+	asm (	".extern ___l1_data_cache_b;\n	.type ___l1_data_cache_b, STT_OBJECT;\n	%0 = ___l1_data_cache_b (Z);"	: "=d" (l1_data_cache_b)	: : );
+
+	return l1_data_cache_b;
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -453,6 +509,9 @@ extern "C" void SystemInit()
 
 	HW::WDOG->CNT 		= INIT_WDOG_CNT;
 	HW::WDOG->CTL 		= INIT_WDOG_CTL;
+
+	HW::L2CTL->CTL		= INIT_L2CTL_CTL;
+	HW::PADS->PCFG0		= INIT_PADS_PCFG0;
 
 	Init_Cache();
 

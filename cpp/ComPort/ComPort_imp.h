@@ -441,7 +441,7 @@ bool ComPort::Connect(CONNECT_TYPE ct, dword speed, byte parity, byte stopBits)
 
 		BoudToPresc(speed);
 
-		_ModeRegister = UART_MOD_UART|UART_8BIT|UART_RFIT;
+		_ModeRegister = UART_MOD_UART|UART_8BIT|UART_RFIT|UART_EN;
 
 		if (stopBits == 2) { _ModeRegister |= UART_STB; };
 
@@ -703,7 +703,7 @@ void ComPort::EnableTransmit(void* src, word count)
 
 	#elif defined(__ADSPBF70x__)
 
-		_uhw->CTL = _ModeRegister|UART_EN;
+		_uhw->CTL = _ModeRegister;
 
 		_DMATX.Write8(src, count);
 
@@ -772,7 +772,7 @@ void ComPort::DisableTransmit()
 
 		_uhw->IMSK = 0;
 		_uhw->STAT = ~0;
-		_uhw->CTL = _ModeRegister;
+		//_uhw->CTL = _ModeRegister;
 
 	#endif
 
@@ -878,7 +878,7 @@ void ComPort::EnableReceive(void* dst, word count)
 
 	#elif defined(__ADSPBF70x__)
 
-		_uhw->CTL = _ModeRegister|UART_EN;
+		_uhw->CTL = _ModeRegister;
 
 		_DMARX.Read8(dst, count);
 
@@ -950,7 +950,7 @@ void ComPort::DisableReceive()
 		_uhw->IMSK = 0;
 		_uhw->STAT = ~0;
 
-		_uhw->CTL = _ModeRegister;
+		//_uhw->CTL = _ModeRegister;
 
 	#endif
 
