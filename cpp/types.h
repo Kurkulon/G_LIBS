@@ -3,6 +3,14 @@
 
 #pragma once
 
+#if defined(_DEBUG) && !defined(__DEBUG)
+#define __DEBUG
+#endif
+
+#if defined(__DEBUG) && !defined(_DEBUG)
+#define _DEBUG
+#endif
+
 #ifdef _ADI_COMPILER
 
 	#include <ccblkfn.h>

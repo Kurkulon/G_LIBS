@@ -20,13 +20,13 @@ curdir = $+ $(%cdrive):$(%cwd) $-
 ##################################################################################################
 
 !include $(objdir)\cppdirlist
-#!include $(objdir)\incdirlist
+!include $(objdir)\objdirlist
 
 ##################################################################################################
 #	.<dependent_extension> : <path_specification>
 #	.c: $(program_dir);$(screen_dir)
 
-.doj:	$(objdir)
+.doj:	$(obj_dir_list)
 .h:		$(hdir)
 .s:		$(cppdir)
 .d:		$(objdir)
@@ -289,11 +289,11 @@ $(objdir)\initcode_osc16.dxe : $(objdir)\initcode_osc16.doj
 	@echo Linking $^@ ...
 	@"$(bindir)\ccblkfn" $(adsp_link_options_initcode) -T LDF\initcode.ldf -o $^@ $<
 
-##################################################################################################
+################################################################################################## 
 
-.cpp.doj: .AUTODEPEND
+.cpp.doj: 
 	@echo Compiling $[. ...
-	@ccbl.bat $(adsp_compiler_options) -save-temps -path-output $^: -i -absolute-path-dependencies -MD -Mo="$^*.d" -o "$^@" $[@
+	@ccbl.bat $(adsp_compiler_options) -save-temps -path-output $^: -i -absolute-path-dependencies -gnu-style-dependencies -MD -Mo="$^*.d" -o "$^@" $[@
 
 ##################################################################################################
 ##################################################################################################

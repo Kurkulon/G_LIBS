@@ -11,6 +11,7 @@
 #error  Must #include "core.h"
 #endif
 
+#include <ADSP-BF706_device.h>
 #include <blackfin.h>
 #include <bfrom.h>
 #include <sys\exception.h>
@@ -1766,7 +1767,13 @@ namespace T_HW
 		BF_RW32 _ILAT;                      /*!< Masked Interrupt Condition Register (_ILAT to avoid conflict with legacy macro) */
 		BF_RW32 ILAT_CLR;                   /*!< Masked Interrupt Clear Register */
 							BF_RO32                  z__RESERVED3;
-		BF_RW32 RFIFO;                      /*!< Receive FIFO Data Register */
+		union
+		{
+			BF_RW32	D;                      /*!< Receive FIFO Data Register */
+			BF_RW16	W;
+			BF_RW8	B;
+		}
+		RFIFO;
 							BF_RO32                  z__RESERVED4;
 		BF_RW32 TFIFO;                      /*!< Transmit FIFO Data Register */
 							BF_RO32                  z__RESERVED5;
@@ -1830,22 +1837,32 @@ namespace T_HW
 	#define SPI_MASTER			(1UL<<1)        /* Master/Slave MSTR: Master */
 	#define SPI_EN				(1UL<<0)        /* Enable */ 
 													
-	#define STAT_TFF			(1UL<<23)       /* SPI_TFIFO Full */
-	#define STAT_RFE			(1UL<<22)       /* SPI_RFIFO Empty */
-	#define STAT_FCS			(1UL<<20)       /* Flow Control Stall Indication */
-	#define STAT_TFS			(1UL<<16)       /* SPI_TFIFO Status */
-	#define STAT_RFS			(1UL<<12)       /* SPI_RFIFO Status */
-	#define STAT_TF 			(1UL<<11)       /* Transmit Finish Indication */
-	#define STAT_RF 			(1UL<<10)       /* Receive Finish Indication */
-	#define STAT_TS  			(1UL<<9)		/* Transmit Start */
-	#define STAT_RS  			(1UL<<8)        /* Receive Start */
-	#define STAT_MF  			(1UL<<7)        /* Mode Fault Indication */
-	#define STAT_TC  			(1UL<<6)        /* Transmit Collision Indication */
-	#define STAT_TUR 			(1UL<<5)        /* Transmit Underrun Indication */
-	#define STAT_ROR 			(1UL<<4)        /* Receive Overrun Indication */
-	#define STAT_TUWM			(1UL<<2)        /* Transmit Urgent Watermark Breached */
-	#define STAT_RUWM			(1UL<<1)        /* Receive Urgent Watermark Breached */
-	#define STAT_SPIF			(1UL<<0)        /* SPI Finished */ 
+	#define SPI_TFF				(1UL<<23)       /* SPI_TFIFO Full */
+	#define SPI_RFE				(1UL<<22)       /* SPI_RFIFO Empty */
+	#define SPI_FCS				(1UL<<20)       /* Flow Control Stall Indication */
+	#define SPI_TFS_MASK		(7UL<<16)       /* SPI_TFIFO Status */
+	#define SPI_TFS_FULL		(0UL<<16)       /* TFS: Full TFIFO */
+	#define SPI_TFS_25			(1UL<<16)       /* TFS: 25% empty TFIFO */
+	#define SPI_TFS_50			(2UL<<16)       /* TFS: 50% empty TFIFO */
+	#define SPI_TFS_75			(3UL<<16)       /* TFS: 75% empty TFIFO */
+	#define SPI_TFS_EMPTY		(4UL<<16)       /* TFS: Empty TFIFO */
+	#define SPI_RFS_MASK		(7UL<<12)       /* SPI_RFIFO Status */
+	#define SPI_RFS_EMPTY		(0UL<<16)       /* RFS: Empty RFIFO */
+	#define SPI_RFS_25			(1UL<<16)       /* RFS: 25% full RFIFO */
+	#define SPI_RFS_50			(2UL<<16)       /* RFS: 50% full RFIFO */
+	#define SPI_RFS_75			(3UL<<16)       /* RFS: 75% full RFIFO */
+	#define SPI_RFS_FULL		(4UL<<16)       /* RFS: Full RFIFO */
+	#define SPI_TF 				(1UL<<11)       /* Transmit Finish Indication */
+	#define SPI_RF 				(1UL<<10)       /* Receive Finish Indication */
+	#define SPI_TS  			(1UL<<9)		/* Transmit Start */
+	#define SPI_RS  			(1UL<<8)        /* Receive Start */
+	#define SPI_MF  			(1UL<<7)        /* Mode Fault Indication */
+	#define SPI_TC  			(1UL<<6)        /* Transmit Collision Indication */
+	#define SPI_TUR 			(1UL<<5)        /* Transmit Underrun Indication */
+	#define SPI_ROR 			(1UL<<4)        /* Receive Overrun Indication */
+	#define SPI_TUWM			(1UL<<2)        /* Transmit Urgent Watermark Breached */
+	#define SPI_RUWM			(1UL<<1)        /* Receive Urgent Watermark Breached */
+	#define SPI_SPIF			(1UL<<0)        /* SPI Finished */ 
 
 	#define RXCTL_RUWM  		(1UL<<16)   	/* Receive FIFO Urgent Watermark */
 	#define RXCTL_RRWM  		(1UL<<12)   	/* Receive FIFO Regular Watermark */

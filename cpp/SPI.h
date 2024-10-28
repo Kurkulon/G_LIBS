@@ -20,6 +20,7 @@ typedef T_HW::S_SPI *SPIHWT;
 #elif defined(__ADSPBF70x__)
 
 #define SPI_NUM 3
+#define SPIMODE_MASK (SPI_FMODE|SPI_MIO_DUAL|SPI_MIO_QUAD|SPI_CPOL|SPI_CPHA|SPI_LSBF)
 
 typedef T_HW::S_SPI *SPIHWT;
 
@@ -171,7 +172,12 @@ protected:
 	u16		_baud;
 	u16		_ctl;
 	u16		_MASK_CS_ALL;
-	u16		_spimode;
+
+	#ifdef __ADSPBF59x__
+		u16		_spimode;
+	#elif defined __ADSPBF70x__
+		u32		_spimode;
+	#endif
 
 #else
 
@@ -195,17 +201,25 @@ public:
 		: _num(num), _pid(_spi_pid[num]), _PIO_CS(piocs), _MASK_CS(mcs), _MASK_CS_LEN(mcslen), _GEN_CLK(gen_clk),
 		_MASK_SCK_MOSI_MISO(mask_sck_mosi_miso), _DMA(5+num), _dsc(0), _state(ST_WAIT), _spimode(0) {}
 
-	bool CheckWriteComplete()	{ return _DMA.CheckComplete() && (_hw->Stat & (SPIF|TXS)) == SPIF; }
-	bool CheckReadComplete()	{ if (_DMA.CheckComplete()) { _hw->Ctl = 0; _DMA.Disable(); return true;} else return false; }
+			bool CheckWriteComplete()	{ return _DMA.CheckComplete() && (_hw->Stat & (SPIF|TXS)) == SPIF; }
+			bool CheckReadComplete()	{ if (_DMA.CheckComplete()) { _hw->Ctl = 0; _DMA.Disable(); return true;} else return false; }
 
-	void ChipSelect(byte num, u16 spimode, u16 baud)	{ _hw->Baud = baud; _spimode = spimode & (CPOL|CPHA|LSBF); _PIO_CS->CLR(_MASK_CS[num]); }
-	void ChipDisable()									{ _PIO_CS->SET(_MASK_CS_ALL); }
+			void ChipSelect(byte num, u16 spimode, u16 baud)	{ _hw->Baud = baud; _spimode = spimode & (CPOL|CPHA|LSBF); _PIO_CS->CLR(_MASK_CS[num]); }
+			void ChipDisable()									{ _PIO_CS->SET(_MASK_CS_ALL); }
 
-	inline void SetMode(u16 mode) { _spimode = mode & (CPOL|CPHA|LSBF); }
+			void SetMode(u16 mode) { _spimode = mode & (CPOL|CPHA|LSBF); }
 
-	inline void Disable()	{ _hw->Ctl = 0; _DMA.Disable(); }
-	inline void DisableTX() { Disable(); }
-	inline void DisableRX() { Disable(); }
+			inline void Disable()	{ _hw->Ctl = 0; _DMA.Disable(); }
+			inline void DisableTX() { Disable(); }
+			inline void DisableRX() { Disable(); }
+
+			void WriteByteSync(byte v)		{ WriteReadByte(v); }
+			void WriteByteAsync(byte v);
+			void WaitWriteByte()			{ while((_hw->Stat & (SPIF|TXS)) != SPIF); }
+
+			void ReadByteStart(u16 count) {}
+			byte ReadByteAsync() { return WriteReadByte(0); }
+			byte ReadByteSync(u16 count) { return WriteReadByte(0); }
 
 #elif defined(__ADSPBF70x__)
 
@@ -213,17 +227,25 @@ public:
 		: _num(num), _PIO_CS(piocs), _MASK_CS(mcs), _MASK_CS_LEN(mcslen), _GEN_CLK(gen_clk),
 		_MASK_SCK_MOSI_MISO_D2_D3(mask_sck_mosi_miso_d2_d3), _DMATX(4+num*2), _DMARX(5+num*2), _dsc(0), _state(ST_WAIT), _spimode(0) {}
 
-	bool CheckWriteComplete()	{ return /*_DMATX.CheckComplete() &&*/ (_hw->STAT & (STAT_TF|STAT_SPIF)) == (STAT_TF|STAT_SPIF); }
-	bool CheckReadComplete()	{ if (_hw->STAT & STAT_RF) { _hw->CTL = 0; _DMARX.Disable(); return true;} else return false; }
+			bool CheckWriteComplete()	{ return /*_DMATX.CheckComplete() &&*/ (_hw->STAT & (SPI_TF|SPI_SPIF)) == (SPI_TF|SPI_SPIF); }
+			bool CheckReadComplete()	{ if (_hw->STAT & SPI_RF) { _hw->CTL = 0; _DMARX.Disable(); return true;} else return false; }
 
-	void ChipSelect(byte num, u16 spimode, u16 baud)	{ _hw->CLK = baud; _spimode = spimode & (SPI_CPOL|SPI_CPHA|SPI_LSBF); _PIO_CS->CLR(_MASK_CS[num]); }
-	void ChipDisable()									{ _PIO_CS->SET(_MASK_CS_ALL); }
+			void ChipSelect(byte num, u32 spimode, u16 baud)	{ _hw->CLK = baud; _hw->CTL = _spimode = SPI_EN|SPI_MSTR|(spimode & SPIMODE_MASK); _PIO_CS->CLR(_MASK_CS[num]); }
+			void ChipDisable()									{ _PIO_CS->SET(_MASK_CS_ALL); _hw->TXCTL = 0; _hw->RXCTL = 0; _hw->CTL = 0; }
 
-	inline void SetMode(u16 mode) { _spimode = mode & (SPI_CPOL|SPI_CPHA|SPI_LSBF); }
+			void SetMode(u16 mode) { _spimode = SPI_EN|SPI_MSTR|(mode & SPIMODE_MASK); }
 
-	void Disable()	 { _hw->CTL = 0; _hw->TXCTL = 0; _hw->RXCTL = 0; _DMATX.Disable(); _DMARX.Disable();}
-	void DisableTX() { _hw->CTL = 0; _hw->TXCTL = 0; _DMATX.Disable(); }
-	void DisableRX() { _hw->CTL = 0; _hw->RXCTL = 0; _DMARX.Disable(); }
+			void Disable()	 { _hw->CTL = 0; _hw->TXCTL = 0; _hw->RXCTL = 0; _DMATX.Disable(); _DMARX.Disable();}
+			void DisableTX() { /*_hw->CTL = 0;*/ _hw->TXCTL = 0; _DMATX.Disable(); }
+			void DisableRX() { /*_hw->CTL = 0;*/ _hw->RXCTL = 0; _DMARX.Disable(); }
+
+			void WriteByteSync(byte v);
+			void WriteByteAsync(byte v);
+			void WaitWriteByte()			{ while((_hw->STAT & (SPI_SPIF|SPI_TFS_MASK)) != (SPI_SPIF|SPI_TFS_EMPTY)); }
+
+			void ReadByteStart(u16 count);
+			byte ReadByteAsync() { while(_hw->STAT & SPI_RFE); return _hw->RFIFO.B; }
+			byte ReadByteSync(u16 count) { ReadByteStart(count); return ReadByteAsync(); }
 
 #elif defined(CPU_SAME53)
 
@@ -243,6 +265,14 @@ public:
 			void ChipDisable()			{ _PIO_CS->SET(_MASK_CS_ALL); }
 			void DisableTX() { _DMATX->Disable(); }
 			void DisableRX() { _uhw.spi->CTRLB &= ~SPI_RXEN; _DMATX->Disable(); _DMARX->Disable(); }
+
+			void WriteByteSync(byte v)		{ WriteReadByte(v); }
+			void WriteByteAsync(byte v);
+			void WaitWriteByte()			{ while((_uhw.spi->INTFLAG & (SPI_TXC|SPI_DRE)) != (SPI_TXC|SPI_DRE)); }
+
+			void ReadByteStart(u16 count) {}
+			byte ReadByteAsync() { return WriteReadByte(0); }
+			byte ReadByteSync(u16 count) { return WriteReadByte(0); }
 
 #elif defined(CPU_XMC48)
 
@@ -275,6 +305,8 @@ public:
 	S_SPIM() : USIC(0) {}
 
 	bool CheckWriteComplete() { return true; }
+	void DisableTX() {  }
+	void DisableRX() {  }
 
 #endif
 

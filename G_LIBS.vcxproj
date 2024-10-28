@@ -336,12 +336,10 @@
     <ClInclude Include="cpp\FLASH\at25df021.h" />
     <ClInclude Include="cpp\FLASH\at25df021_imp.h" />
     <ClInclude Include="cpp\FLASH\at25df021_imp_v2.h" />
-    <ClInclude Include="cpp\FLASH\flash.h" />
     <ClInclude Include="cpp\FLASH\FlashInt_imp.h" />
     <ClInclude Include="cpp\FLASH\FlashMem.h" />
     <ClInclude Include="cpp\FLASH\FlashSPI_imp.h" />
-    <ClInclude Include="cpp\FLASH\flash_def.h" />
-    <ClInclude Include="cpp\FLASH\flash_imp.h" />
+    <ClInclude Include="cpp\FLASH\FlashSPI_imp_v2.h" />
     <ClInclude Include="cpp\FLASH\hw_nand_imp.h" />
     <ClInclude Include="cpp\FLASH\NandFlash.h" />
     <ClInclude Include="cpp\FLASH\NandFlash_def.h" />

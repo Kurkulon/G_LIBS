@@ -3100,10 +3100,9 @@ namespace HW
 
 	inline bool RamCheck(const void *ptr)
 	{
-		u32 v = (u32)ptr;
+		u32 v = ((u32)ptr);
 
-		return (v >= 0x20000000 && v < 0x20030000);
-
+		return ((v & ~0x3FFFF) == 0x20000000);
 	};
 
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

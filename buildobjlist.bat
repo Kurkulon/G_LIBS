@@ -5,6 +5,7 @@ set LIST_CPP=modules_cpp =
 set LIST_OBJ=modules_obj = 
 set LIST_DIR=cpp_dir_list = %1
 set LIST_INC=inc_dir_list = %1
+set LIST_OBJ_DIR=obj_dir_list = %2
 
 @rem echo %1 %2
 
@@ -13,13 +14,14 @@ for /D /R %1 %%i in ("*") do (
 	set LIST_DIR=!LIST_DIR!;!TEMP!
 	set LIST_INC=!LIST_INC!,!TEMP!
 	set TEMP=!TEMP:%1=%2!
-	rem set LIST_OBJ_DIR=!LIST_OBJ_DIR!;!TEMP!
+	set LIST_OBJ_DIR=!LIST_OBJ_DIR!;!TEMP!
 	if NOT EXIST !TEMP! md !TEMP!
 	rem echo %%i
 	rem echo !TEMP!
 )
 echo !LIST_DIR! > %2\cppdirlist
 echo !LIST_INC! > %2\incdirlist
+echo !LIST_OBJ_DIR! > %2\objdirlist
  
 if EXIST %2mkoutdep del /Q %2mkoutdep
 

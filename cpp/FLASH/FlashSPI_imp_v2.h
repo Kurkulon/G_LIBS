@@ -12,6 +12,12 @@
 #include "time.h"
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#ifdef FLASH_AT25DF021
+#elif defined(FLASH_IS25LP080D)
+#else
+//#error !!! Must defined flash type !!!
+#define FLASH_AT25DF021
+#endif
 
 #ifndef FLASH_START_ADR
 #define FLASH_START_ADR 0x10000 	
@@ -60,34 +66,112 @@
 #define SPIMODE	(SPI_CPOL|SPI_CPHA)
 #endif
 
-static char 		*pFlashDesc =		"Atmel AT25DF021";
-static char 		*pDeviceCompany	=	"Atmel Corporation";
+//static char 		*pFlashDesc =		"Atmel AT25DF021";
+//static char 		*pDeviceCompany	=	"Atmel Corporation";
 
-static int			gNumSectors = NUM_SECTORS;
 
 //static u32			bufsect[(SECTOR_SIZE+3)/4];
 
 
 /* flash commands */
-#define SPI_WREN            (0x06)  //Set Write Enable Latch
-#define SPI_WRDI            (0x04)  //Reset Write Enable Latch
-#define SPI_RDID            (0x9F)  //Read Identification
-#define SPI_RDSR            (0x05)  //Read Status Register
-#define SPI_WRSR            (0x01)  //Write Status Register
-#define SPI_READ            (0x03)  //Read data from memory
-#define SPI_FAST_READ       (0x0B)  //Read data from memory
-#define SPI_PP              (0x02)  //Program Data into memory
-#define SPI_SE              (0x20)  //Erase one sector in memory
-#define SPI_BE              (0xC7)  //Erase all memory
-#define RDY_BSY 			(0x1)	//Check the write in progress bit of the SPI status register
-#define WEL					(0x2)	//Check the write enable bit of the SPI status register
-#define SWP					(0xC)	//Software Protection Status
-#define WPP					(0x10)	//Write Protect (WP) Pin Status
-#define EPE					(0x20)	//Erase/Program Error
-#define SPRL				(0x80)	//Sector Protection Registers Locked
+#define CMD_WREN            (0x06)  //	Set Write Enable Latch
+#define CMD_WRDI            (0x04)  //	Reset Write Enable Latch
+#define CMD_RDJDID          (0x9F)  //	Read Identification
+#define CMD_RDSR            (0x05)  //	Read Status Register
+#define CMD_WRSR            (0x01)  //	Write Status Register
+#define CMD_READ            (0x03)  //	Read data from memory
+#define CMD_FAST_READ       (0x0B)  //	Read data from memory
+#define CMD_PP              (0x02)  //	Program Data into memory
+#define CMD_SE              (0x20)  //	Erase one sector in memory
+#define CMD_BE              (0xC7)  //	Erase all memory
 
-#define SPI_UPS				(0x39)  //Unprotect Sector 
-#define SPI_PRS				(0x36)  //Protect Sector 
+#define SR_RDY_BSY 			(0x1)	//	Check the write in progress bit of the SPI status register
+#define SR_WEL				(0x2)	//	Check the write enable bit of the SPI status register
+
+#define CMD_BER32K			(0x52)	//	Block Erase (32 Kbytes)
+#define CMD_BER64K			(0xD8)	//	Block Erase (64 Kbytes)
+#define CMD_EDPD			(0xB9)	//	ENTER DEEP POWER DOWN (DP, B9h)
+#define CMD_RDRP			(0xAB)	//	RELEASE DEEP POWER DOWN (RDPD, ABh)
+
+//#ifdef FLASH_AT25DF021
+
+	#define CMD_UPS			(0x39)  //	Unprotect Sector 
+	#define CMD_PRS			(0x36)  //	Protect Sector 
+	#define CMD_RSPR		(0x3C)  //	Read Sector Protection Registers 
+	#define CMD_POSR		(0x9B)  //	Program OTP Security Register 
+	#define CMD_ROSR		(0x77)  //	Read OTP Security Register
+
+	#define SR_SPRL			(0x80)	//	Sector Protection Registers Locked
+	#define SR_SWP			(0xC)	//	Software Protection Status
+	#define SR_WPP			(0x10)	//	Write Protect (WP) Pin Status
+	#define SR_EPE			(0x20)	//	Erase/Program Error
+
+//#endif
+
+//#ifdef FLASH_IS25LP080D
+
+	#define SR_SPWD			(0x80)	//	Status Register Write Disable
+	#define SR_QE			(0x40)	//	indicates the Quad output function enable
+	#define SR_BP3			(0x20)	//	Block Protection Bit3
+	#define SR_BP2			(0x10)	//	Block Protection Bit2
+	#define SR_BP1			(0x08)	//	Block Protection Bit1
+	#define SR_BP0			(0x04)	//	Block Protection Bit0
+
+	#define CMD_NOP			(0x00)	//	NO OPERATION (NOP, 00h)
+	#define CMD_FRDTR		(0x0D)	//	FAST READ DTR MODE OPERATION IN SPI MODE (FRDTR, 0Dh)
+	#define CMD_RDABR		(0x14)	//	AUTOBOOT REGISTER READ OPERATION (RDABR, 14h)
+	#define CMD_WRABR		(0x15)	//	AUTOBOOT REGISTER WRITE OPERATION (WRABR, 15h)
+	#define CMD_SER			(0x20)	//	SECTOR ERASE OPERATION (SER, D7h/20h)
+	#define CMD_SECLOCK		(0x24)	//	SECTOR LOCK OPERATION (SECLOCK, 24h)
+	#define CMD_SECUNLOCK	(0x26)	//	SECTOR UNLOCK OPERATION (SECUNLOCK, 26h)
+	#define CMD_PPQ			(0x32)	//	QUAD INPUT PAGE PROGRAM OPERATION (PPQ, 32h/38h)
+	#define CMD_QPIEN		(0x35)  //	ENTER QUAD PERIPHERAL INTERFACE (QPI) MODE OPERATION 
+	#define CMD_FRDO		(0x3B)	//	FAST READ DUAL OUTPUT OPERATION (FRDO, 3Bh)
+	#define CMD_WRFR		(0x42)	//	WRITE FUNCTION REGISTER OPERATION (WRFR, 42h)
+	#define CMD_RDFR		(0x48)	//	READ FUNCTION REGISTER OPERATION (RDFR, 48h)
+	#define CMD_RDUID		(0x4B)	//	READ UNIQUE ID NUMBER (RDUID, 4Bh)
+	#define CMD_RDSFDP		(0x5A)	//	READ SFDP OPERATION (RDSFDP, 5Ah)
+	#define CMD_RRDPOP		(0x61)	//	READ READ PARAMETERS OPERATION (RDRP, 61 h)
+	#define CMD_IRP			(0x62)	//	INFORMATION ROW PROGRAM OPERATION (IRP, 62h)
+	#define CMD_IRER		(0x64)	//	INFORMATION ROW ERASE OPERATION (IRER, 64h)
+	#define CMD_SRPNV		(0x65)	//	SET READ PARAMETERS OPERATION (SRPNV: 65h, SRPV: C0h/63h)
+	#define CMD_RSTEN		(0x66)	//	RESET-ENABLE (RSTEN, 66h) 
+	#define CMD_IRRD		(0x68)	//	INFORMATION ROW READ OPERATION (IRRD, 68h)
+	#define CMD_FRQO		(0x6B)	//	FAST READ QUAD OUTPUT OPERATION (FRQO, 6Bh)
+	#define CMD_PERSUS		(0x75)	//	SUSPEND DURING SECTOR-ERASE OR BLOCK-ERASE (PERSUS 75h/B0h)
+	#define CMD_PERRSM		(0x7A)	//	PROGRAM/ERASE RESUME (PERRSM 7Ah/30h)
+	#define CMD_RDERP		(0x81)	//	READ EXTENDED READ PARAMETERS OPERATION (RDERP, 81 h)
+	#define CMD_CLERP		(0x82)	//	CLEAR EXTENDED READ PARAMETERS OPERATION (CLERP, 82h)
+	#define CMD_SERPNV		(0x85)	//	SET EXTENDED READ PARAMETERS OPERATION (SERPNV: 85h, SERPV: 83h)
+	#define CMD_RDMDID		(0x90)	//	READ DEVICE MANUFACTURER AND DEVICE ID OPERATION (RDMDID, 90h)
+	#define CMD_RST			(0x99)	//	RESET (RST, 99h)
+	#define CMD_RDJDID		(0x9F)	//	READ PRODUCT IDENTIFICATION BY JEDEC ID OPERATION (RDJDID, 9Fh; RDJDIDQ, AFh)
+	#define CMD_RDID		(0xAB)	//	READ PRODUCT IDENTIFICATION (RDID, ABh)
+	#define CMD_RDJDIDQ		(0xAF)	//	READ PRODUCT IDENTIFICATION BY JEDEC ID OPERATION (RDJDID, 9Fh; RDJDIDQ, AFh)
+	#define CMD_FRDIO		(0xBB)	//	FAST READ DUAL I/O OPERATION (FRDIO, BBh)
+	#define CMD_PRSUS		(0xB0)	//	SUSPEND DURING PAGE PROGRAMMING (PERSUS 75h/B0h)
+	#define CMD_SRPV		(0xC0)	//	SET READ PARAMETERS OPERATION (SRPNV: 65h, SRPV: C0h/63h)
+	#define CMD_CER			(0xC7)	//	CHIP ERASE OPERATION (CER, C7h/60h)
+	#define CMD_FRQIO		(0xEB)	//	FAST READ QUAD I/O OPERATION (FRQIO, EBh)
+	#define CMD_FRDDTR		(0xBD)	//	FAST READ DUAL IO DTR MODE OPERATION (FRDDTR, BDh)
+	#define CMD_FRQDTR		(0xED)	//	FAST READ QUAD IO DTR MODE OPERATION IN SPI MODE (FRQDTR, EDh)
+	#define CMD_QPIDI		(0xF5)  //	Exit Quad Peripheral Interface (QPI) Mode
+
+	#define ERP_WIP			(0x01)	//	Write In Progress Bit: Has exactly same function as the bit0 (WIP) of Status Register “0”: Ready, “1”: Busy
+	#define ERP_PROT_E		(0x02)	//	Protection Error Bit: "0" indicates no error, "1" indicates protection error in an Erase or a Program operation
+	#define ERP_P_ERR		(0x04)	//	Program Error Bit: "0" indicates no error, "1" indicates an Program operation failure or protection error
+	#define ERP_E_ERR		(0x08)	//	Erase Error Bit: "0" indicates no error, "1" indicates a Erase operation failure or protection error
+	#define ERP_ODS0		(0x20)
+	#define ERP_ODS1		(0x40)
+	#define ERP_ODS2		(0x80)
+	#define ERP_ODS12		(ERP_ODS0)						//	Output Driver Strength: 12.5%
+	#define ERP_ODS25		(ERP_ODS1)						//	Output Driver Strength: 25%
+	#define ERP_ODS37		(ERP_ODS0|ERP_ODS1)				//	Output Driver Strength: 37.5%
+	#define ERP_ODS75		(ERP_ODS0|ERP_ODS2)				//	Output Driver Strength: 75%
+	#define ERP_ODS100		(ERP_ODS1|ERP_ODS2)				//	Output Driver Strength: 100%
+	#define ERP_ODS50		(ERP_ODS0|ERP_ODS1|ERP_ODS2)	//	Output Driver Strength: 50%
+
+//#endif
 
 
 #define SPI_PAGE_SIZE		(256)
@@ -168,6 +252,7 @@ public:
 protected:
 	
 #ifdef FLASHSPI_REQUESTUPDATE
+
 	enum FlashState 
 	{ 
 		FLASH_STATE_WAIT = 0, 
@@ -175,11 +260,11 @@ protected:
 		FLASH_STATE_ERASE_WAIT,
 		FLASH_STATE_ERASE_WAIT_2,
 		FLASH_STATE_ERASE_CHECK,
-		//FLASH_STATE_WRITE_START, 
 		FLASH_STATE_WRITE_PAGE, 
 		FLASH_STATE_WRITE_PAGE_2, 
 		FLASH_STATE_WRITE_PAGE_3, 
 		FLASH_STATE_WRITE_PAGE_4, 
+		FLASH_STATE_WRITE_PAGE_CHECK, 
 		FLASH_STATE_VERIFY_PAGE
 	};
 
@@ -199,6 +284,8 @@ protected:
 
 #endif
 
+	u32	gNumSectors;
+
 	S_SPIM	&spi;
 
 	ERROR_CODE	lastError;
@@ -214,17 +301,58 @@ protected:
 		#endif
 	#endif
 
+	enum FlashTypeID 
+	{ 
+		FLID_UNKNOWN = 0, 
+		FLID_AT25DF021, 
+		FLID_IS25LP080D
+	};
+
+	FlashTypeID flashID;
+
+	byte cmd_ProgramEraseStatus;
+	byte mask_ProgramEraseStatus;
+	byte _manCode;
+	u16 _devCode;
+
+	bool _flashTypeModeDetected;
+
 	byte _csnum;
 	byte buf[10];
 	byte bufpage[SPI_PAGE_SIZE];
 
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	#ifdef _ADI_COMPILER
-	inline void ChipEnable() {	spi.ChipSelect(0, SPIMODE, BAUD_RATE_DIVISOR); }
+	#ifdef __ADSPBF59x__
+
+		inline void ChipEnable() {	spi.ChipSelect(0, SPIMODE, BAUD_RATE_DIVISOR); }
+
+		inline void SetModeStandart()	{ }
+		inline void SetModeDual()		{ }
+		inline void SetModeQuad()		{ }
+
+	#elif defined(__ADSPBF70x__)
+
+		u32 _spimode;
+
+		inline void ChipEnable()		{ spi.ChipSelect(0, _spimode,												BAUD_RATE_DIVISOR); }
+		inline void ChipEnableDual()	{ spi.ChipSelect(0, (_spimode & ~(SPI_MIO_QUAD|SPI_MIO_DUAL))|SPI_MIO_DUAL,	BAUD_RATE_DIVISOR); }
+		inline void ChipEnableQuad()	{ spi.ChipSelect(0, (_spimode & ~(SPI_MIO_QUAD|SPI_MIO_DUAL))|SPI_MIO_QUAD,	BAUD_RATE_DIVISOR); }
+
+		inline void SetModeStandart()	{ _spimode = SPIMODE; }
+		inline void SetModeDual()		{ _spimode = (_spimode & ~(SPI_MIO_QUAD|SPI_MIO_DUAL))|SPI_MIO_DUAL; }
+		inline void SetModeQuad()		{ _spimode = (_spimode & ~(SPI_MIO_QUAD|SPI_MIO_DUAL))|SPI_MIO_QUAD; }
+
 	#else
-	inline void ChipEnable() {	spi.ChipSelect(_csnum); }
+
+		inline void ChipEnable() {	spi.ChipSelect(_csnum); }
+
+		inline void SetModeStandart()	{ }
+		inline void SetModeDual()		{ }
+		inline void SetModeQuad()		{ }
+
 	#endif
+
 	inline void ChipDisable() { spi.ChipDisable(); }
 
 	void Delay(u32 us);
@@ -233,8 +361,8 @@ protected:
 
 	void __SendSingleCommand( const int iCommand );
 
-	void CmdWriteEnable() {	__SendSingleCommand(SPI_WREN); }
-	void CmdWriteDisable(){	__SendSingleCommand(SPI_WRDI); }
+	void CmdWriteEnable() {	__SendSingleCommand(CMD_WREN); }
+	void CmdWriteDisable(){	__SendSingleCommand(CMD_WRDI); }
 	void CmdEraseSector(u32 sec);
 	void CmdWriteStatusReg(byte stat);
 
@@ -252,7 +380,11 @@ protected:
 	ERROR_CODE Wait_For_WEL(void);
 	ERROR_CODE Wait_For_Status( char Statusbit );
 
-	byte ReadStatusRegister(void);
+	byte ReadStatusRegister();
+	byte ReadProgramEraseStatus();
+	void ReadDeviceID();
+	bool GetFlashType();
+	void DetectFlashTypeMode();
 
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -294,7 +426,12 @@ public:
 	ERROR_CODE WriteSync(const byte *data, u32 stAdr, u32 count, bool verify);
 #endif
 
+#ifdef __ADSPBF70x__
+	FlashSPI(S_SPIM &sp, byte csnum = 0) : FlashMem(FLASH_PAGE_SIZE, FLASH_START_ADR), spi(sp), _csnum(csnum), _spimode(SPIMODE) {}
+#else
 	FlashSPI(S_SPIM &sp, byte csnum = 0) : FlashMem(FLASH_PAGE_SIZE, FLASH_START_ADR), spi(sp), _csnum(csnum) {}
+#endif
+
 
 #ifdef ADSP_CHECKFLASH
 
@@ -330,12 +467,104 @@ void FlashSPI::Init()
 	lastErasedBlock 	= ~0;
 	lastError			= NO_ERR;
 
+#ifdef __ADSPBF70x__
+
+	SetModeStandart();
+
+	ReadStatusRegister(); 
+
+	//CmdWriteEnable();
+
+	//__SendSingleCommand(CMD_QPIEN);
+
+	DetectFlashTypeMode();
+
+#else
+	gNumSectors = NUM_SECTORS;
+#endif
+
+
 #ifdef ADSP_CHECKFLASH
 
 	ADSP_CheckFlash();
 
 #endif
 
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void FlashSPI::ReadDeviceID()
+{
+	ChipEnable();
+
+	spi.WriteByteSync(CMD_RDJDID);
+	spi.ReadByteStart(3);
+	_manCode = spi.ReadByteAsync();
+	_devCode = (spi.ReadByteAsync()<<8)|spi.ReadByteAsync();
+
+	ChipDisable();		
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+bool FlashSPI::GetFlashType()
+{
+	bool res = false;
+
+	ReadDeviceID();
+
+	flashID = FLID_UNKNOWN;
+	gNumSectors = 0;
+
+	if (_manCode == 0x1F) // Atmel Corporation
+	{
+		switch (_devCode)
+		{
+			case 0x4300: flashID = FLID_AT25DF021; gNumSectors = 128; cmd_ProgramEraseStatus = CMD_RDSR; mask_ProgramEraseStatus = SR_EPE; res = true; break; // str = "Atmel AT25DF021 2-Mbit"; 
+		};
+	}
+	else if (_manCode == 0x9D) // Integrated Silicon Solution
+	{
+		switch (_devCode)
+		{
+			case 0x6014:	flashID = FLID_IS25LP080D; gNumSectors = 512; cmd_ProgramEraseStatus = CMD_RDERP; mask_ProgramEraseStatus = ERP_PROT_E|ERP_P_ERR|ERP_E_ERR; res = true; break; //str = "ISSI IS25LP080D 8-Mbit"; 
+			case 0x7014:	flashID = FLID_IS25LP080D; gNumSectors = 512; cmd_ProgramEraseStatus = CMD_RDERP; mask_ProgramEraseStatus = ERP_PROT_E|ERP_P_ERR|ERP_E_ERR; res = true; break; //str = "ISSI IS25WP080D 8-Mbit"; 
+			case 0x7013:	flashID = FLID_IS25LP080D; gNumSectors = 256; cmd_ProgramEraseStatus = CMD_RDERP; mask_ProgramEraseStatus = ERP_PROT_E|ERP_P_ERR|ERP_E_ERR; res = true; break; //str = "ISSI IS25WP040D 4-Mbit"; 
+			case 0x7012:	flashID = FLID_IS25LP080D; gNumSectors = 128; cmd_ProgramEraseStatus = CMD_RDERP; mask_ProgramEraseStatus = ERP_PROT_E|ERP_P_ERR|ERP_E_ERR; res = true; break; //str = "ISSI IS25WP020D 2-Mbit"; 
+		};
+
+		//SendSingleCommand(0x66);
+		//SendSingleCommand(0x99);
+
+	};
+
+	return res;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void FlashSPI::DetectFlashTypeMode()
+{
+	SetModeStandart();
+
+	bool res = GetFlashType();
+
+	if (res) goto exit;		
+
+	SetModeDual();
+
+	res = GetFlashType();
+
+	if (res) goto exit;		
+
+	SetModeQuad();
+
+	res = GetFlashType();
+
+exit:
+
+	_flashTypeModeDetected = res;
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -422,7 +651,7 @@ void FlashSPI::__SendSingleCommand( const int iCommand )
 {
 	ChipEnable();
 
-	spi.WriteReadByte(iCommand);
+	spi.WriteByteSync(iCommand);
 
 	ChipDisable();
 
@@ -435,7 +664,7 @@ void FlashSPI::CmdEraseSector(u32 sec)
 {
 	ChipEnable();
 
-	buf[0] = SPI_SE;
+	buf[0] = CMD_SE;
 	buf[1] = sec >> 16;
 	buf[2] = sec >> 8;
 	buf[3] = sec;
@@ -451,7 +680,7 @@ void FlashSPI::CmdWriteStatusReg(byte stat)
 {
 	ChipEnable();
 
-	buf[0] = SPI_WRSR;
+	buf[0] = CMD_WRSR;
 	buf[1] = stat;
 
 	spi.WriteSyncDMA(buf, 2);
@@ -463,7 +692,7 @@ void FlashSPI::CmdWriteStatusReg(byte stat)
 
 u32 FlashSPI::Read(u32 addr, void *data, u32 size)
 {
-    buf[0] = SPI_FAST_READ;
+    buf[0] = CMD_FAST_READ;
     buf[1] = addr >> 16;
     buf[2] = addr >> 8;
     buf[3] = addr;
@@ -490,7 +719,7 @@ u16 FlashSPI::GetCRC16(u32 stAdr, u16 count)
 
 	u16 t = 0;
 
-    buf[0] = SPI_FAST_READ;
+    buf[0] = CMD_FAST_READ;
     buf[1] = stAdr >> 16;
     buf[2] = stAdr >> 8;
     buf[3] = stAdr;
@@ -550,7 +779,7 @@ ERROR_CODE FlashSPI::WritePage(const void *data, u32 stAdr, u16 count )
     {
 		ChipEnable();
 
-		buf[0] = SPI_PP;		//spi.WriteReadByte(SPI_PP);
+		buf[0] = CMD_PP;		//spi.WriteReadByte(SPI_PP);
 		buf[1] = stAdr >> 16;	//spi.WriteReadByte(stAdr >> 16);
 		buf[2] = stAdr >> 8;	//spi.WriteReadByte(stAdr >> 8);
 		buf[3] = stAdr;			//spi.WriteReadByte(stAdr);
@@ -560,7 +789,7 @@ ERROR_CODE FlashSPI::WritePage(const void *data, u32 stAdr, u16 count )
 		ChipDisable();
     };
 
-	return lastError = Wait_For_Status(RDY_BSY);
+	return lastError = Wait_For_Status(SR_RDY_BSY);
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -576,7 +805,7 @@ ERROR_CODE FlashSPI::VerifyPage(const byte *data, u32 stAdr, u16 count )
 
 	ChipEnable();
 
-    buf[0] = SPI_FAST_READ;
+    buf[0] = CMD_FAST_READ;
     buf[1] = stAdr >> 16;
     buf[2] = stAdr >> 8;
     buf[3] = stAdr;
@@ -620,7 +849,7 @@ ERROR_CODE FlashSPI::EraseBlock(int nBlock)
 
 	CmdEraseSector(ulSectStart);
 
-	lastError = Wait_For_Status(RDY_BSY);
+	lastError = Wait_For_Status(SR_RDY_BSY);
 
 	return lastError;
 }
@@ -648,14 +877,47 @@ ERROR_CODE FlashSPI::GetSectorStartEnd( unsigned long *ulStartOff, unsigned long
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//#ifdef __ADSPBF70x__
 
 byte FlashSPI::ReadStatusRegister(void)
 {
 	ChipEnable();
 
-	spi.WriteReadByte(SPI_RDSR);
+	spi.WriteByteSync(CMD_RDSR);
 
-	byte usStatus = spi.WriteReadByte(0);
+	byte usStatus = spi.ReadByteSync(1);
+
+	ChipDisable();		
+
+	return usStatus;
+}
+
+//#else
+//
+//byte FlashSPI::ReadStatusRegister(void)
+//{
+//	ChipEnable();
+//
+//	spi.WriteReadByte(CMD_RDSR);
+//
+//	byte usStatus = spi.WriteReadByte(0);
+//
+//	ChipDisable();		
+//
+//	return usStatus;
+//}
+//
+//#endif
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+byte FlashSPI::ReadProgramEraseStatus(void)
+{
+	ChipEnable();
+
+	spi.WriteByteSync(cmd_ProgramEraseStatus);
+
+	byte usStatus = spi.ReadByteSync(1);
 
 	ChipDisable();		
 
@@ -675,7 +937,7 @@ ERROR_CODE FlashSPI::Wait_For_WEL(void)
 	{
 		status_register = ReadStatusRegister();
 
-		if( (status_register & WEL) )
+		if( (status_register & SR_WEL) )
 		{
 			lastError = NO_ERR;	// tells us if there was an error erasing flash
 			break;
@@ -792,7 +1054,7 @@ void FlashSPI::Update()
 
 			break;
 
-		case FLASH_STATE_ERASE_START:
+		case FLASH_STATE_ERASE_START:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 			GlobalUnProtect();
 			GlobalUnProtect();
@@ -805,11 +1067,11 @@ void FlashSPI::Update()
 
 			break;
 
-		case FLASH_STATE_ERASE_WAIT:
+		case FLASH_STATE_ERASE_WAIT:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		{ 
 			byte st = ReadStatusRegister();
 
-			if ((st & RDY_BSY) == 0 && (st & WEL) != 0)
+			if ((st & SR_RDY_BSY) == 0 && (st & SR_WEL) != 0)
 			{
 				lastError = NO_ERR;
 
@@ -829,24 +1091,13 @@ void FlashSPI::Update()
 			break;
 		};
 
-		case FLASH_STATE_ERASE_WAIT_2:
+		case FLASH_STATE_ERASE_WAIT_2:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		{
 			byte st = ReadStatusRegister();
 
-			if ((st & RDY_BSY) == 0)
+			if ((st & SR_RDY_BSY) == 0)
 			{
-				if (st & EPE)
-				{
-					DEBUG_ASSERT(0);
-					lastError = ERROR_ERASE;
-					flashState = FLASH_STATE_WAIT;
-				}
-				else
-				{
-					lastError = NO_ERR;
-
-					flashState = (flashWritePtr != 0 && flashWriteLen != 0) ? FLASH_STATE_WRITE_PAGE : FLASH_STATE_ERASE_WAIT;
-				};
+					flashState = FLASH_STATE_ERASE_CHECK;
 			}
 			else if (tm.Check(MS2CTM(1000)))
 			{
@@ -858,27 +1109,28 @@ void FlashSPI::Update()
 			break;
 		};
 
-		//case FLASH_STATE_WRITE_START:
-		//{
-		//	//ReqDsp06 &req = request->req;
+		case FLASH_STATE_ERASE_CHECK:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		{
+			byte st = ReadProgramEraseStatus();
 
-		//	flashWriteAdr = FLASH_START_ADR + request->stAdr;
-		//	flashWritePtr = (byte*)request->GetDataPtr();
-		//	flashWriteLen = request->len;
+			if (st & mask_ProgramEraseStatus)
+			{
+				DEBUG_ASSERT(0);
 
-		//	u16 block = flashWriteAdr/FLASH_SECTOR_SIZE;
+				lastError = ERROR_ERASE;
+				flashState = FLASH_STATE_WAIT;
+			}
+			else
+			{
+				lastError = NO_ERR;
 
-		//	if (lastErasedBlock != block)
-		//	{
-		//		lastErasedBlock = block;
+				flashState = (flashWritePtr != 0 && flashWriteLen != 0) ? FLASH_STATE_WRITE_PAGE : FLASH_STATE_ERASE_WAIT;
+			};
 
-		//		flashState = FLASH_STATE_ERASE_START;
+			break;
+		};
 
-		//		break;
-		//	};
-		//};
-
-		case FLASH_STATE_WRITE_PAGE:
+		case FLASH_STATE_WRITE_PAGE:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 			CmdWriteEnable();
 
@@ -888,17 +1140,17 @@ void FlashSPI::Update()
 
 			break;
 
-		case FLASH_STATE_WRITE_PAGE_2:
+		case FLASH_STATE_WRITE_PAGE_2:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		{ 
 			byte st = ReadStatusRegister();
 
-			if ((st & RDY_BSY) == 0 && (st & WEL) != 0)
+			if ((st & SR_RDY_BSY) == 0 && (st & SR_WEL) != 0)
 			{
 				lastError = NO_ERR;
 
 				ChipEnable();
 				
-				buf[0] = SPI_PP;
+				buf[0] = CMD_PP;
 				buf[1] = flashWriteAdr >> 16;
 				buf[2] = flashWriteAdr >> 8;
 				buf[3] = flashWriteAdr;
@@ -919,7 +1171,7 @@ void FlashSPI::Update()
 			break;
 		};
 
-		case FLASH_STATE_WRITE_PAGE_3:
+		case FLASH_STATE_WRITE_PAGE_3:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 			if (spi.CheckWriteComplete())
 			{
@@ -932,37 +1184,13 @@ void FlashSPI::Update()
 
 			break;
 
-		case FLASH_STATE_WRITE_PAGE_4:
+		case FLASH_STATE_WRITE_PAGE_4:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		{ 
 			byte st = ReadStatusRegister();
 
-			if ((st & RDY_BSY) == 0)
+			if ((st & SR_RDY_BSY) == 0)
 			{
-				if (st & EPE)
-				{
-					DEBUG_ASSERT(0);
-					lastError = ERROR_PROGRAM;
-					flashState = FLASH_STATE_WAIT;
-				}
-				else
-				{
-					lastError = NO_ERR;
-
-					ChipEnable();
-				
-					buf[0] = SPI_FAST_READ;
-					buf[1] = flashWriteAdr >> 16;
-					buf[2] = flashWriteAdr >> 8;
-					buf[3] = flashWriteAdr;
-					buf[4] = 0;
-
-					spi.WriteSyncDMA(buf, 5);
-					spi.ReadAsyncDMA(bufpage, flashWriteLen);
-
-					//ReadAsyncDMA(bufpage, flashWriteAdr, flashWriteLen);
-
-					flashState = FLASH_STATE_VERIFY_PAGE;
-				};
+				flashState = FLASH_STATE_WRITE_PAGE_CHECK;
 			}
 			else if (tm.Check(MS2CTM(10)))
 			{
@@ -974,7 +1202,40 @@ void FlashSPI::Update()
 			break;
 		};
 
-		case FLASH_STATE_VERIFY_PAGE:
+		case FLASH_STATE_WRITE_PAGE_CHECK:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		{ 
+			byte st = ReadProgramEraseStatus();
+
+			if (st & mask_ProgramEraseStatus)
+			{
+				DEBUG_ASSERT(0);
+				lastError = ERROR_PROGRAM;
+				flashState = FLASH_STATE_WAIT;
+			}
+			else
+			{
+				lastError = NO_ERR;
+
+				ChipEnable();
+				
+				buf[0] = CMD_FAST_READ;
+				buf[1] = flashWriteAdr >> 16;
+				buf[2] = flashWriteAdr >> 8;
+				buf[3] = flashWriteAdr;
+				buf[4] = 0;
+
+				spi.WriteSyncDMA(buf, 5);
+				spi.ReadAsyncDMA(bufpage, flashWriteLen);
+
+				//ReadAsyncDMA(bufpage, flashWriteAdr, flashWriteLen);
+
+				flashState = FLASH_STATE_VERIFY_PAGE;
+			};
+
+			break;
+		};
+
+		case FLASH_STATE_VERIFY_PAGE:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 			if (spi.CheckReadComplete())
 			{
@@ -1005,8 +1266,6 @@ void FlashSPI::Update()
 			};
 
 			break;
-
-
 	};
 }
 

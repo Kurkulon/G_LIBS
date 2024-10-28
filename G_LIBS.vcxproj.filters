@@ -149,27 +149,6 @@
     <ClInclude Include="cpp\DMA\DMA.h">
       <Filter>CPP\DMA</Filter>
     </ClInclude>
-    <ClInclude Include="cpp\FLASH\at25df021.h">
-      <Filter>CPP\FLASH</Filter>
-    </ClInclude>
-    <ClInclude Include="cpp\FLASH\at25df021_imp.h">
-      <Filter>CPP\FLASH</Filter>
-    </ClInclude>
-    <ClInclude Include="cpp\FLASH\at25df021_imp_v2.h">
-      <Filter>CPP\FLASH</Filter>
-    </ClInclude>
-    <ClInclude Include="cpp\FLASH\flash.h">
-      <Filter>CPP\FLASH</Filter>
-    </ClInclude>
-    <ClInclude Include="cpp\FLASH\flash_def.h">
-      <Filter>CPP\FLASH</Filter>
-    </ClInclude>
-    <ClInclude Include="cpp\FLASH\flash_imp.h">
-      <Filter>CPP\FLASH</Filter>
-    </ClInclude>
-    <ClInclude Include="cpp\FLASH\hw_nand_imp.h">
-      <Filter>CPP\FLASH</Filter>
-    </ClInclude>
     <ClInclude Include="cpp\CRC\CRC16.h">
       <Filter>CPP\CRC</Filter>
     </ClInclude>
@@ -275,6 +254,15 @@
     <ClInclude Include="cpp\WAVEPACK\wavepack.h">
       <Filter>CPP\WAVEPACK</Filter>
     </ClInclude>
+    <ClInclude Include="cpp\FLASH\at25df021.h">
+      <Filter>CPP\FLASH</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\FLASH\at25df021_imp.h">
+      <Filter>CPP\FLASH</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\FLASH\at25df021_imp_v2.h">
+      <Filter>CPP\FLASH</Filter>
+    </ClInclude>
     <ClInclude Include="cpp\FLASH\FlashInt_imp.h">
       <Filter>CPP\FLASH</Filter>
     </ClInclude>
@@ -282,6 +270,9 @@
       <Filter>CPP\FLASH</Filter>
     </ClInclude>
     <ClInclude Include="cpp\FLASH\FlashSPI_imp.h">
+      <Filter>CPP\FLASH</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\FLASH\hw_nand_imp.h">
       <Filter>CPP\FLASH</Filter>
     </ClInclude>
     <ClInclude Include="cpp\FLASH\nand_ecc.h">
@@ -294,6 +285,9 @@
       <Filter>CPP\FLASH</Filter>
     </ClInclude>
     <ClInclude Include="cpp\FLASH\NandFlash_imp.h">
+      <Filter>CPP\FLASH</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\FLASH\FlashSPI_imp_v2.h">
       <Filter>CPP\FLASH</Filter>
     </ClInclude>
   </ItemGroup>

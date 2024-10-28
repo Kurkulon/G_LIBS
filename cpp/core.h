@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "types.h"
+
 #ifdef CPU_SAME53
 
 	#define	CORETYPE_SAME53
@@ -135,6 +137,17 @@
 		#include "ADSP\bf706.h"
 
 	#endif
+
+#elif defined(WIN32)
+
+	namespace HW
+	{
+		//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+		inline bool RamCheck(const void *ptr) { return true; }
+
+		//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	} // namespace HW
 
 #endif
 

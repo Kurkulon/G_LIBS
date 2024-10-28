@@ -335,7 +335,7 @@ void S_SPIM::WritePIO(const void *data, u16 count)
 
 #elif defined(__ADSPBF70x__)
 
-	_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&(SPI_CPOL|SPI_CPHA|SPI_LSBF));	
+	_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&SPIMODE_MASK);	
 	_hw->TXCTL	= 0;
 	_hw->RXCTL	= 0;//RXCTL_REN/*|RXCTL_RTI*/;
 	_hw->TWC	= count;
@@ -346,10 +346,10 @@ void S_SPIM::WritePIO(const void *data, u16 count)
 	{
 		_hw->TFIFO = *(p++); count--;
 
-		while (_hw->STAT & STAT_TFF) HW::ResetWDT();
+		while (_hw->STAT & SPI_TFF) HW::ResetWDT();
 	};
 
-	while((_hw->STAT & (STAT_TF|STAT_SPIF)) != (STAT_TF|STAT_SPIF));
+	while((_hw->STAT & (SPI_TF|SPI_SPIF)) != (SPI_TF|SPI_SPIF));
 
 	_hw->TXCTL	= 0;
 	_hw->RXCTL	= 0;
@@ -387,7 +387,7 @@ void S_SPIM::WriteAsyncDMA(const void *data, u16 count)
 	_hw->STAT	= ~0;
 	_hw->TXCTL	= TXCTL_TEN|TXCTL_TTI|TXCTL_TWCEN|TXCTL_TDR_EMPTY;
 	_hw->RXCTL	= 0;
-	_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&(SPI_CPOL|SPI_CPHA|SPI_LSBF));	
+	_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&SPIMODE_MASK);	
 	_hw->TWC	= count;
 	_hw->TWCR	= 0;
 
@@ -477,7 +477,7 @@ void S_SPIM::WriteAsyncDMA(const void *data1, u16 count1, const void *data2, u16
 	_hw->STAT	= ~0;
 	_hw->TXCTL	= TXCTL_TEN|TXCTL_TTI|TXCTL_TWCEN|TXCTL_TDR_EMPTY;
 	_hw->RXCTL	= 0;
-	_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&(SPI_CPOL|SPI_CPHA|SPI_LSBF));	
+	_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&SPIMODE_MASK);	
 	_hw->TWC	= count1+count2;
 	_hw->TWCR	= 0;
 
@@ -547,11 +547,11 @@ void S_SPIM::ReadPIO(void *data, u16 count)
 
 	_hw->TXCTL	= 0;
 	_hw->RXCTL	= 0;
-	_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&(SPI_CPOL|SPI_CPHA|SPI_LSBF));	
+	_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&SPIMODE_MASK);	
 	_hw->RWC	= count;
 	_hw->RWCR	= 0;
 
-	while((_hw->STAT & STAT_RFE) == 0)
+	while((_hw->STAT & SPI_RFE) == 0)
 	{
 		asm("%0 = W[%1];" : "=D" (t) : "p" (&(_hw->RFIFO)));
 	};
@@ -560,9 +560,9 @@ void S_SPIM::ReadPIO(void *data, u16 count)
 
 	while (count != 0)
 	{
-		while ((_hw->STAT & STAT_RFE) != 0);
+		while ((_hw->STAT & SPI_RFE) != 0);
 
-		*(p++) = _hw->RFIFO; count--;
+		*(p++) = _hw->RFIFO.B; count--;
 	};
 
 	_hw->TXCTL	= 0;
@@ -607,7 +607,7 @@ void S_SPIM::ReadAsyncDMA(void *data, u16 count)
 	_hw->STAT	= ~0;
 	_hw->TXCTL	= 0;
 	_hw->RXCTL	= 0;
-	_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&(SPI_CPOL|SPI_CPHA|SPI_LSBF));	
+	_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&SPIMODE_MASK);	
 	_hw->RWC	= count;
 	_hw->RWCR	= 0;
 
@@ -710,14 +710,15 @@ byte S_SPIM::WriteReadByte(byte v)
 
 #elif defined(__ADSPBF70x__)
 
-	_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&(SPI_CPOL|SPI_CPHA|SPI_LSBF));	
+	_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&SPIMODE_MASK);	
+	_hw->RXCTL	= RXCTL_REN;
 	_hw->TXCTL	= TXCTL_TEN|TXCTL_TTI;
 
 	_hw->TFIFO = v;
+	
+	while((_hw->STAT & (SPI_SPIF|SPI_RFE)) != SPI_SPIF);
 
-	while((_hw->STAT & (STAT_SPIF|STAT_RFE)) != STAT_SPIF);
-
-	return _hw->RFIFO; 
+	return _hw->RFIFO.B; 
 
 #elif defined(CPU_SAME53)	
 
@@ -742,6 +743,48 @@ byte S_SPIM::WriteReadByte(byte v)
 #endif
 }
 
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#ifdef __ADSPBF70x__
+
+void S_SPIM::WriteByteSync(byte v)
+{
+	//_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&SPIMODE_MASK);	
+	_hw->RXCTL	= 0;
+	//_hw->TWC	= 1;	
+	_hw->TXCTL	= TXCTL_TEN|TXCTL_TTI/*|TXCTL_TWCEN*/;
+	_hw->TFIFO = v;
+
+	while((_hw->STAT & SPI_SPIF) == 0);
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void S_SPIM::WriteByteAsync(byte v)
+{
+	//_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&SPIMODE_MASK);	
+	_hw->RXCTL	= 0;
+	_hw->TXCTL	= TXCTL_TEN|TXCTL_TTI;
+
+	while((_hw->STAT & SPI_TFF) != 0);
+
+	_hw->TFIFO = v;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void S_SPIM::ReadByteStart(u16 count)
+{
+	u32 temp;
+
+	while((_hw->STAT & SPI_RFE) == 0)	{ asm("%0 = W[%1];" : "=D" (temp) : "p" (&(_hw->RFIFO))); };
+
+	//_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&SPIMODE_MASK);	
+	_hw->TXCTL	= 0;
+	_hw->RWC	= count;
+	_hw->RXCTL	= RXCTL_REN|RXCTL_RTI|RXCTL_RWCEN;
+}
+
+#endif
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 bool S_SPIM::AddRequest(DSCSPI *d)
