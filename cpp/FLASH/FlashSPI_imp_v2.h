@@ -12,12 +12,12 @@
 #include "time.h"
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#ifdef FLASH_AT25DF021
-#elif defined(FLASH_IS25LP080D)
-#else
-//#error !!! Must defined flash type !!!
-#define FLASH_AT25DF021
-#endif
+//#ifdef FLASH_AT25DF021
+//#elif defined(FLASH_IS25LP080D)
+//#else
+////#error !!! Must defined flash type !!!
+//#define FLASH_AT25DF021
+//#endif
 
 #ifndef FLASH_START_ADR
 #define FLASH_START_ADR 0x10000 	
@@ -52,9 +52,17 @@
 #endif
 
 
+#ifndef PAGEDWORDS
 #define PAGEDWORDS		(FLASH_PAGE_SIZE/4)
+#endif
+
+#ifndef FLASH_START
 #define FLASH_START		FLASH_START_ADR
+#endif
+
+#ifndef ISP_PAGESIZE
 #define ISP_PAGESIZE	FLASH_PAGE_SIZE
+#endif
 
 #ifndef NS2CCLK
 #define NS2CCLK(x)	NS2CLK(x)
@@ -175,6 +183,7 @@
 
 
 #define SPI_PAGE_SIZE		(256)
+//#define SPI_SECTOR_SIZE		(0x1000)
 
 #define DELAY			15
 #define TIMEOUT        35000*64
@@ -312,13 +321,21 @@ protected:
 
 	byte cmd_ProgramEraseStatus;
 	byte mask_ProgramEraseStatus;
+	byte cmd_EnterQPI;
+	byte cmd_ExitQPI;
+
 	byte _manCode;
 	u16 _devCode;
 
+	char *_manStr;
+	char *_devStr;
+
 	bool _flashTypeModeDetected;
+	bool _QPI_mode;
 
 	byte _csnum;
 	byte buf[10];
+
 	byte bufpage[SPI_PAGE_SIZE];
 
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -365,6 +382,8 @@ protected:
 	void CmdWriteDisable(){	__SendSingleCommand(CMD_WRDI); }
 	void CmdEraseSector(u32 sec);
 	void CmdWriteStatusReg(byte stat);
+	void CmdEnterQPI()	{ __SendSingleCommand(cmd_EnterQPI);	_QPI_mode = cmd_EnterQPI != 0; }
+	void CmdExitQPI()	{ __SendSingleCommand(cmd_ExitQPI);		_QPI_mode = false; }
 
 	u32 GetNumSectors() { return gNumSectors; }
 	u32 GetSectorSize() { return FLASH_SECTOR_SIZE; }
@@ -375,8 +394,6 @@ protected:
 	
 	ERROR_CODE WritePage(const void *data, u32 stAdr, u16 count);
 	ERROR_CODE VerifyPage(const byte *data, u32 stAdr, u16 count);
-	ERROR_CODE EraseBlock(int nBlock);
-	ERROR_CODE GetSectorStartEnd( unsigned long *ulStartOff, unsigned long *ulEndOff, int nSector );
 	ERROR_CODE Wait_For_WEL(void);
 	ERROR_CODE Wait_For_Status( char Statusbit );
 
@@ -385,6 +402,24 @@ protected:
 	void ReadDeviceID();
 	bool GetFlashType();
 	void DetectFlashTypeMode();
+
+#ifdef FLASHSPI_AFP
+
+  public:
+
+	ERROR_CODE EraseFlash();
+	ERROR_CODE GetCodes(int *pnManCode, int *pnDevCode);
+	ERROR_CODE GetStr(char **manStr, char **devStr);
+	ERROR_CODE GetSectorNumber( unsigned long ulAddr, int *pnSector );
+	ERROR_CODE GetSectorStartEnd( unsigned long *ulStartOff, unsigned long *ulEndOff, int nSector );
+	ERROR_CODE ResetFlash() { return NO_ERR; }
+
+#else
+  protected:
+#endif
+
+	ERROR_CODE EraseBlock(int nBlock);
+
 
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -405,8 +440,8 @@ public:
 	
 	#endif
 
-	u32		GetSectorAdrLen(u32 sadr, u32 *radr);
-	u32		Read(u32 addr, void *data, u32 size);
+	u32				GetSectorAdrLen(u32 sadr, u32 *radr);
+	ERROR_CODE		Read(u32 addr, void *data, u32 size);
 
 #ifdef FLASHSPI_REQUESTUPDATE
 	void	InitFlashWrite() { /*state_write_flash = WRITE_INIT;*/ }
@@ -467,17 +502,17 @@ void FlashSPI::Init()
 	lastErasedBlock 	= ~0;
 	lastError			= NO_ERR;
 
+	_QPI_mode = false;
+
 #ifdef __ADSPBF70x__
 
 	SetModeStandart();
 
 	ReadStatusRegister(); 
 
-	//CmdWriteEnable();
-
-	//__SendSingleCommand(CMD_QPIEN);
-
 	DetectFlashTypeMode();
+
+	CmdEnterQPI();
 
 #else
 	gNumSectors = NUM_SECTORS;
@@ -517,21 +552,46 @@ bool FlashSPI::GetFlashType()
 	flashID = FLID_UNKNOWN;
 	gNumSectors = 0;
 
+	_manStr = "Unknow";
+	_devStr = "Unknow";
+
 	if (_manCode == 0x1F) // Atmel Corporation
 	{
+		_manStr = "Atmel Corporation";
+
 		switch (_devCode)
 		{
-			case 0x4300: flashID = FLID_AT25DF021; gNumSectors = 128; cmd_ProgramEraseStatus = CMD_RDSR; mask_ProgramEraseStatus = SR_EPE; res = true; break; // str = "Atmel AT25DF021 2-Mbit"; 
+			case 0x4300:	_devStr = "Atmel AT25DF021 2-Mbit"; gNumSectors = 128;
+				
+				flashID = FLID_AT25DF021;
+				cmd_ProgramEraseStatus = CMD_RDSR;
+				mask_ProgramEraseStatus = SR_EPE;
+				cmd_EnterQPI = 0;
+				cmd_ExitQPI = 0;
+				res = true; 
+				break; 
 		};
 	}
 	else if (_manCode == 0x9D) // Integrated Silicon Solution
 	{
+		_manStr = "Integrated Silicon Solution";
+
 		switch (_devCode)
 		{
-			case 0x6014:	flashID = FLID_IS25LP080D; gNumSectors = 512; cmd_ProgramEraseStatus = CMD_RDERP; mask_ProgramEraseStatus = ERP_PROT_E|ERP_P_ERR|ERP_E_ERR; res = true; break; //str = "ISSI IS25LP080D 8-Mbit"; 
-			case 0x7014:	flashID = FLID_IS25LP080D; gNumSectors = 512; cmd_ProgramEraseStatus = CMD_RDERP; mask_ProgramEraseStatus = ERP_PROT_E|ERP_P_ERR|ERP_E_ERR; res = true; break; //str = "ISSI IS25WP080D 8-Mbit"; 
-			case 0x7013:	flashID = FLID_IS25LP080D; gNumSectors = 256; cmd_ProgramEraseStatus = CMD_RDERP; mask_ProgramEraseStatus = ERP_PROT_E|ERP_P_ERR|ERP_E_ERR; res = true; break; //str = "ISSI IS25WP040D 4-Mbit"; 
-			case 0x7012:	flashID = FLID_IS25LP080D; gNumSectors = 128; cmd_ProgramEraseStatus = CMD_RDERP; mask_ProgramEraseStatus = ERP_PROT_E|ERP_P_ERR|ERP_E_ERR; res = true; break; //str = "ISSI IS25WP020D 2-Mbit"; 
+			case 0x6014:	_devStr = "ISSI IS25LP080D 8-Mbit";	gNumSectors = 512; goto _is25lp080d; 
+			case 0x7014:	_devStr = "ISSI IS25WP080D 8-Mbit";	gNumSectors = 512; goto _is25lp080d;  
+			case 0x7013:	_devStr = "ISSI IS25WP040D 4-Mbit";	gNumSectors = 256; goto _is25lp080d;  
+			case 0x7012:	_devStr = "ISSI IS25WP020D 2-Mbit";	gNumSectors = 128; goto _is25lp080d;  
+		
+			_is25lp080d:
+
+				flashID = FLID_IS25LP080D;
+				cmd_ProgramEraseStatus = CMD_RDERP;
+				mask_ProgramEraseStatus = ERP_PROT_E|ERP_P_ERR|ERP_E_ERR;
+				cmd_EnterQPI = 0x35; 
+				cmd_ExitQPI = 0xF5;
+				res = true;
+		
 		};
 
 		//SendSingleCommand(0x66);
@@ -690,7 +750,7 @@ void FlashSPI::CmdWriteStatusReg(byte stat)
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-u32 FlashSPI::Read(u32 addr, void *data, u32 size)
+ERROR_CODE FlashSPI::Read(u32 addr, void *data, u32 size)
 {
     buf[0] = CMD_FAST_READ;
     buf[1] = addr >> 16;
@@ -700,16 +760,18 @@ u32 FlashSPI::Read(u32 addr, void *data, u32 size)
 
 	ChipEnable();
 
-	spi.WriteSyncDMA(buf, 5);
+	spi.WriteSyncDMA(buf, (_QPI_mode)?7:5);
 
 	spi.ReadSyncDMA(data, size);
 
 	ChipDisable();
 
-	return size;
+	return NO_ERR;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#pragma optimize_for_speed
 
 u16 FlashSPI::GetCRC16(u32 stAdr, u16 count)
 {
@@ -725,23 +787,29 @@ u16 FlashSPI::GetCRC16(u32 stAdr, u16 count)
     buf[3] = stAdr;
     buf[4] = 0;
 
+	HW::ResetWDT();
+
 	ChipEnable();
 
-	spi.WriteSyncDMA(buf, 5);
+	spi.WriteSyncDMA(buf, (_QPI_mode)?7:5);
+
+	spi.ReadByteStart(count);
 
 	for ( ; count > 0; count--)
 	{
-		t = spi.WriteReadByte(0);
+		t = spi.ReadByteAsync();
 
 		crc.w = tableCRC[crc.b[0] ^ t] ^ crc.b[1];
 		
-		HW::ResetWDT();
+		if ((count&0xFF) == 0) HW::ResetWDT();
 	};
 	
 	ChipDisable();
 
 	return crc.w;
 }
+
+#pragma optimize_as_cmd_line
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -855,6 +923,83 @@ ERROR_CODE FlashSPI::EraseBlock(int nBlock)
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#ifdef FLASHSPI_AFP
+
+ERROR_CODE FlashSPI::EraseFlash()
+{
+
+	GlobalUnProtect();
+	GlobalUnProtect();
+
+	CmdWriteEnable();
+
+	__SendSingleCommand(CMD_BE);
+
+	lastError = Wait_For_Status(SR_RDY_BSY);
+
+	return lastError;
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+ERROR_CODE FlashSPI::GetCodes(int *pnManCode, int *pnDevCode)
+{
+	*pnManCode = _manCode;
+	*pnDevCode = _devCode;
+
+	return NO_ERR;
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+ERROR_CODE FlashSPI::GetStr(char **manStr, char **devStr)
+{
+	*manStr = _manStr;
+	*devStr = _devStr;
+
+	return NO_ERR;
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+ERROR_CODE FlashSPI::GetSectorNumber( unsigned long ulAddr, int *pnSector )
+{
+	int nSector = 0;
+	int i;
+	int error_code = 1;
+	unsigned long ulMask;					//offset mask
+	unsigned long ulOffset;					//offset
+	unsigned long ulStartOff;
+	unsigned long ulEndOff;
+
+	ulMask      	  = 0x7ffffff;
+	ulOffset		  = ulAddr & ulMask;
+
+	for(i = 0; i < gNumSectors; i++)
+	{
+		GetSectorStartEnd(&ulStartOff, &ulEndOff, i);
+		if ( (ulOffset >= ulStartOff)
+			&& (ulOffset <= ulEndOff) )
+		{
+			error_code = 0;
+			nSector = i;
+			break;
+		}
+	}
+
+	// if it is a valid sector, set it
+	if (error_code == 0)
+		*pnSector = nSector;
+	// else it is an invalid sector
+	else
+		return INVALID_SECTOR;
+
+	// ok
+	return NO_ERR;
+}
+
+#endif 
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

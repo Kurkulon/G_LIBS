@@ -142,7 +142,7 @@ $(objdir)\$(target_name).ldr : $(target_name).dxe #$(initcode_name) -init $(init
 ####################################################################################################################################################################################################
 #-Map "$(objdir)\$^&.xml" $(startup_obj)
 
-$(target_name).dxe : $(modules_obj) #$(libname)
+$(target_name).dxe : $(modules_obj) $(libname)
 	@echo Linking ...
 	@echo -Map "$(objdir)\$^&_$(buildtool).xml" > $(objdir)\link_input.txt
 	@"$(bindir)\ccblkfn" $(link_options) -o "$(objdir)\$^." $< 
@@ -154,9 +154,9 @@ $(target_name).dxe : $(modules_obj) #$(libname)
 
 ####################################################################################################################################################################################################
 
-.cpp.doj: .AUTODEPEND		#-gnu-style-dependencies
+.cpp.doj: .AUTODEPEND		#-absolute-path-dependencies
 	@echo Compiling $[. ...
-	@$(libdir)\ccbl.bat $(compiler_options) -save-temps -path-output $^: -i  -absolute-path-dependencies -MD -Mo="$^*.d" -o "$^@" $[@
+	@$(libdir)\ccbl.bat $(compiler_options) -save-temps -path-output $(objdir) -i -gnu-style-dependencies -MD -Mo=$(objdir)\$^&.d -o $^. $[@
 
 ####################################################################################################################################################################################################
 

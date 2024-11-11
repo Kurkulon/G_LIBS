@@ -1210,7 +1210,7 @@ bool ComPort::Write(ComPort::WriteBuffer *writeBuffer, dword timeout)
 	_pWriteBuffer = writeBuffer;
 	_pWriteBuffer->transmited = false;
 
-	if (timeout >= US2COM(10)) _writeTimeout = timeout;
+	//if (timeout >= US2COM(10)) _writeTimeout = timeout;
 
 	EnableTransmit(_pWriteBuffer->data, _pWriteBuffer->len);
 

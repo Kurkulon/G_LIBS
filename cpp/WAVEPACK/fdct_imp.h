@@ -74,6 +74,12 @@ static FDCT_TRIG fdct_trig[FDCT_N] = {0};
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#if FDCT_LOG2N > 8
+static FDCT_DATA fdct_temp[FDCT_N];
+#endif
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 void FDCT_Init()
 {
 	//u32 len = ArraySize(fdct_trig)/2;
@@ -98,11 +104,13 @@ bool FastDctLee_transform(FDCT_DATA vector[], u16 log2n)
 {
 	if (log2n < 3 || log2n > FDCT_LOG2N) return false;  // Length is not power of 2
 
-	FDCT_DATA temp[FDCT_N];
+#if FDCT_LOG2N <= 8
+	FDCT_DATA fdct_temp[FDCT_N];
+#endif
 
 	u16 len = 1UL<<log2n;
 
-	forwardTransform_v3(vector, temp, len);
+	forwardTransform_v3(vector, fdct_temp, len);
 
 	#ifndef FDCT_FLOAT
 		//for (u16 i = 0; i < len; i++) vector[i] >>= log2n-3;
@@ -331,13 +339,15 @@ bool FastDctLee_inverseTransform(FDCT_DATA vector[], u16 log2n)
 {
 	if (log2n < 3 || log2n > FDCT_LOG2N) return false;  // Length is not power of 2
 
-	FDCT_DATA temp[FDCT_N];
+#if FDCT_LOG2N <= 8
+	FDCT_DATA fdct_temp[FDCT_N];
+#endif
 
 	vector[0] /= 2;
 
 	u16 len = 1UL<<log2n;
 
-	inverseTransform(vector, temp, len);
+	inverseTransform(vector, fdct_temp, len);
 
 	#ifdef FDCT_INTEGER
 		for (u16 i = 0; i < len; i++) vector[i] >>= 2;
