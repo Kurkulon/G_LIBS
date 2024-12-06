@@ -9,6 +9,10 @@
 #include "mdct.h"
 #include "WAVEPACK\fdct_imp.h"
 
+#ifndef FDCT_BAND_DIV
+#define FDCT_BAND_DIV 1
+#endif
+
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static const byte ulaw_0816_expenc[256] = {
@@ -658,7 +662,7 @@ u16 WavePack_FDCT(u16 packType, i16* src, byte* dst, u16 len)
 	u16 OVRLAP = (packType > PACK_DCT0) ? 7 : 3;
 	u16 shift = 4 - (packType - PACK_DCT0);
 
-	WavePack_FDCT12(src, dst, len, shift, OVRLAP, FDCT_N, &len);
+	WavePack_FDCT12(src, dst, len, shift, OVRLAP, FDCT_N/FDCT_BAND_DIV, &len);
 
 	return len;
 }
