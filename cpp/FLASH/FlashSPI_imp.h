@@ -788,6 +788,15 @@ void FlashSPI::Update()
 				{
 					flashState = FLASH_STATE_WRITE_PAGE;
 				};
+
+#ifdef FLASHSPI_EXTWDT_TIMEOUT
+
+			}
+			else if (tm.Check(FLASHSPI_EXTWDT_TIMEOUT))
+			{
+				ReadStatusRegister();
+
+#endif
 			};
 
 			break;

@@ -396,6 +396,7 @@ protected:
 	ERROR_CODE VerifyPage(const byte *data, u32 stAdr, u16 count);
 	ERROR_CODE Wait_For_WEL(void);
 	ERROR_CODE Wait_For_Status( char Statusbit );
+	ERROR_CODE GetSectorStartEnd( unsigned long *ulStartOff, unsigned long *ulEndOff, int nSector );
 
 	byte ReadStatusRegister();
 	byte ReadProgramEraseStatus();
@@ -411,7 +412,6 @@ protected:
 	ERROR_CODE GetCodes(int *pnManCode, int *pnDevCode);
 	ERROR_CODE GetStr(char **manStr, char **devStr);
 	ERROR_CODE GetSectorNumber( unsigned long ulAddr, int *pnSector );
-	ERROR_CODE GetSectorStartEnd( unsigned long *ulStartOff, unsigned long *ulEndOff, int nSector );
 	ERROR_CODE ResetFlash() { return NO_ERR; }
 
 #else
@@ -515,7 +515,11 @@ void FlashSPI::Init()
 	CmdEnterQPI();
 
 #else
+
 	gNumSectors = NUM_SECTORS;
+
+	DetectFlashTypeMode();
+
 #endif
 
 
@@ -1195,6 +1199,15 @@ void FlashSPI::Update()
 				{
 					flashState = FLASH_STATE_WRITE_PAGE;
 				};
+
+#ifdef FLASHSPI_EXTWDT_TIMEOUT
+
+			}
+			else if (tm.Check(FLASHSPI_EXTWDT_TIMEOUT))
+			{
+				ReadStatusRegister();
+
+#endif
 			};
 
 			break;

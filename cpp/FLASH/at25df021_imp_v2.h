@@ -801,6 +801,15 @@ void FlashUpdate()
 			if (request != 0)
 			{
 				flashState = FLASH_STATE_WRITE_START;
+
+#ifdef FLASHSPI_EXTWDT_TIMEOUT
+
+			}
+			else if (tm.Check(FLASHSPI_EXTWDT_TIMEOUT))
+			{
+				ReadStatusRegister();
+
+#endif
 			};
 
 			break;
