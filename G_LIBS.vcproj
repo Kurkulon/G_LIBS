@@ -509,6 +509,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\cpp\FLASH\FlashSPI_imp_v2.h"
+					>
+				</File>
+				<File
 					RelativePath=".\cpp\FLASH\hw_nand_imp.h"
 					>
 				</File>
