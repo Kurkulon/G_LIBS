@@ -888,18 +888,49 @@ static bool HandShake()
 
 static void _MainAppStart(u32 adr)
 {
-	if (!bootFlash.flashChecked) bootFlash.ADSP_CheckFlash();
+	//if (!bootFlash.flashChecked) bootFlash.ADSP_CheckFlash();
 
-		if (bootFlash.flashOK && bootFlash.flashCRCOK)
-		{
-			HW::DisableWDT();
+	//if (bootFlash.flashOK && bootFlash.flashCRCOK)
+	{
+		HW::DisableWDT();
 			
-			#ifdef __ADSPBF59x__
-				bfrom_SpiBoot(FLASH_START_ADR, BFLAG_PERIPHERAL | BFLAG_NOAUTO | BFLAG_FASTREAD | BFLAG_TYPE3 | 7, 0, 0);
-			#elif defined(__ADSPBF70x__)
-				adi_rom_Boot((void*)(0x40000000+FLASH_START_ADR), 0, 0, 0, ENUM_ROM_BCMD_SPIM_DEV_SPIXIP | ENUM_ROM_BCMD_SPIM_DEVENUM_2 | ENUM_ROM_BCMD_SPIM_BCODE_1);
-			#endif
-		};
+		#ifdef __ADSPBF59x__
+			bfrom_SpiBoot(FLASH_START_ADR, BFLAG_PERIPHERAL | BFLAG_NOAUTO | BFLAG_FASTREAD | BFLAG_TYPE3 | 7, 0, 0);
+		#elif defined(__ADSPBF70x__)
+
+			//ssync();
+
+			//HW::L1IM->CTL &= ~(L1IM_ENCPLB|L1IM_CFG);
+
+			//ssync();
+
+			//HW::L1DM->CTL &= ~(L1DM_ENCPLB|L1DM_CFG);
+
+			//ssync();
+
+			//while((HW::CGU->STAT & (CGU_STAT_PLLEN|CGU_STAT_PLOCK|CGU_STAT_CLKSALGN)) != (CGU_STAT_PLLEN|CGU_STAT_PLOCK));
+
+			//HW::CGU->DIV = 0x03084844;//CGU_DIV_OSEL(OCLK_DIV) | CGU_DIV_DSEL(DCLK_DIV) | CGU_DIV_S1SEL(SCLK1_DIV) | CGU_DIV_S0SEL(SCLK0_DIV) | CGU_DIV_SYSSEL(SCLK_DIV) | CGU_DIV_CSEL(CCLK_DIV);
+
+			//HW::CGU->CTL = 0x0C00;
+
+			//while((HW::CGU->STAT & (CGU_STAT_PLOCK|CGU_STAT_PLLBP|CGU_STAT_CLKSALGN)) != CGU_STAT_PLOCK);
+
+			HW::SPI2->CTL		= 0;
+			HW::SPI2->CLK		= 0xF;
+			HW::SPI2->DLY		= 0x31;
+			//HW::SPI2->IMSK_CLR	= ~0;
+			//HW::SPI2->MMRDH		= 0;
+			//HW::SPI2->MMTOP		= 0;
+			//HW::SPI2->RXCTL		= 0;
+			//HW::SPI2->TXCTL		= 0;
+			//HW::SPI2->SLVSEL	= 0xFE00;
+			//HW::SPI2->STAT		= ~0;
+
+			adi_rom_Boot((void*)(FLASH_START_ADR), 0, 0, 0, BITM_ROM_BCMD_SPIM_SPEED | ENUM_ROM_BCMD_SPIM_DEV_SPI | ENUM_ROM_BCMD_SPIM_DEVENUM_2);
+
+		#endif
+	};
 	
 	tm64.Reset(); timeOut = 1000;
 }
@@ -1140,6 +1171,8 @@ static void UpdateCom()
 			
 			com.Read(&rb, BOOT_COM_PRETIMEOUT, BOOT_COM_POSTTIMEOUT);
 
+			//HW::PIOA->SET(PA13);
+
 			i++;
 
 			break;
@@ -1166,6 +1199,8 @@ static void UpdateCom()
 
 					i = 4;
 				};
+
+				//HW::PIOA->CLR(PA13);
 			};
 
 			break;

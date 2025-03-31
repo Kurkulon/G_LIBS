@@ -204,9 +204,9 @@ PROCESSOR p0
          RESERVE_EXPAND(heaps_and_stack_in_SCRATCHPAD, heaps_and_stack_in_SCRATCHPAD_length, 0, 4)
          ldf_stack_space = heaps_and_stack_in_SCRATCHPAD;
          ldf_stack_end = (ldf_stack_space + (STACK_SIZE - 4)) & 0xfffffffc;
-         ldf_heap_space = ldf_stack_end + 4;
-         ldf_heap_end = (ldf_heap_space + (4 - 4)) & 0xfffffffc;
-         ldf_heap_length = ldf_heap_end - ldf_heap_space;
+         //ldf_heap_space = ldf_stack_end + 4;
+         //ldf_heap_end = (ldf_heap_space + (4 - 4)) & 0xfffffffc;
+         //ldf_heap_length = ldf_heap_end - ldf_heap_space;
 
       } > MEM_L1_SCRATCH
       
@@ -278,9 +278,16 @@ PROCESSOR p0
 
       } > MEM_L1_DATA
       
-      L1_data_stack_heap
+      L1_data_stack_heap NO_INIT
       {
-         INPUT_SECTION_ALIGN(4)
+		INPUT_SECTION_ALIGN(4)
+
+		RESERVE(heap_L1_data, heap_L1_data_len, 0, 4)
+		RESERVE_EXPAND(heap_L1_data, heap_L1_data_len, 0, 4)
+
+		ldf_heap_space	= heap_L1_data;
+		ldf_heap_end	= heap_L1_data + heap_L1_data_len - 1;
+		ldf_heap_length = ldf_heap_end - ldf_heap_space;
          
       } > MEM_L1_DATA
       

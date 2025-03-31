@@ -580,7 +580,7 @@ namespace HW
 
 	inline bool RamCheck(const void *ptr)
 	{
-		return ((((u32)ptr) & ~0x7FFF) == 0xFFA00000);
+		return ((((u32)ptr) & ~0x7FFF) == 0xFF800000);
 
 	};
 

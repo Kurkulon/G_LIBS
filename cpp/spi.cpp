@@ -746,29 +746,31 @@ byte S_SPIM::WriteReadByte(byte v)
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #ifdef __ADSPBF70x__
 
-void S_SPIM::WriteByteSync(byte v)
-{
-	//_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&SPIMODE_MASK);	
-	_hw->RXCTL	= 0;
-	//_hw->TWC	= 1;	
-	_hw->TXCTL	= TXCTL_TEN|TXCTL_TTI/*|TXCTL_TWCEN*/;
-	_hw->TFIFO = v;
-
-	while((_hw->STAT & SPI_SPIF) == 0);
-}
+//void S_SPIM::WriteByteSync(byte v)
+//{
+//	//_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&SPIMODE_MASK);	
+//	_hw->RXCTL	= 0;
+//	//_hw->TWC	= 1;	
+//	_hw->TXCTL	= TXCTL_TEN|TXCTL_TTI/*|TXCTL_TWCEN*/;
+//	_hw->TFIFO = v;
+//
+//	//while((_hw->STAT & SPI_SPIF) == 0);
+//	
+//	WaitWriteByte();
+//}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void S_SPIM::WriteByteAsync(byte v)
-{
-	//_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&SPIMODE_MASK);	
-	_hw->RXCTL	= 0;
-	_hw->TXCTL	= TXCTL_TEN|TXCTL_TTI;
-
-	while((_hw->STAT & SPI_TFF) != 0);
-
-	_hw->TFIFO = v;
-}
+//void S_SPIM::WriteByteAsync(byte v)
+//{
+//	//_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&SPIMODE_MASK);	
+//	_hw->RXCTL	= 0;
+//	_hw->TXCTL	= TXCTL_TEN|TXCTL_TTI;
+//
+//	while((_hw->STAT & SPI_TFF) != 0);
+//
+//	_hw->TFIFO = v;
+//}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

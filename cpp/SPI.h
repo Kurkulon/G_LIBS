@@ -239,7 +239,7 @@ public:
 			void DisableTX() { /*_hw->CTL = 0;*/ _hw->TXCTL = 0; _DMATX.Disable(); }
 			void DisableRX() { /*_hw->CTL = 0;*/ _hw->RXCTL = 0; _DMARX.Disable(); }
 
-			void WriteByteSync(byte v);
+			void WriteByteSync(byte v)		{ WriteReadByte(v); }
 			void WriteByteAsync(byte v);
 			void WaitWriteByte()			{ while((_hw->STAT & (SPI_SPIF|SPI_TFS_MASK)) != (SPI_SPIF|SPI_TFS_EMPTY)); }
 

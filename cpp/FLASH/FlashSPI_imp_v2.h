@@ -376,11 +376,14 @@ protected:
 
 	ERROR_CODE GetLastError() {	return lastError; }
 
-	void __SendSingleCommand( const int iCommand );
+	void __SendSingleCommand(byte iCommand);
+	void __Send3bytesCommand(byte iCommand, u32 adr);
 
-	void CmdWriteEnable() {	__SendSingleCommand(CMD_WREN); }
-	void CmdWriteDisable(){	__SendSingleCommand(CMD_WRDI); }
-	void CmdEraseSector(u32 sec);
+	void CmdWriteEnable()				{ __SendSingleCommand(CMD_WREN);		}
+	void CmdWriteDisable()				{ __SendSingleCommand(CMD_WRDI);		}
+	void CmdEraseSector(u32 sec)		{ __Send3bytesCommand(CMD_SE, sec);		}
+	void CmdProtectSector(u32 sec)		{ __Send3bytesCommand(CMD_PRS, sec);	}
+	void CmdUnprotectSector(u32 sec)	{ __Send3bytesCommand(CMD_UPS, sec);	}
 	void CmdWriteStatusReg(byte stat);
 	void CmdEnterQPI()	{ __SendSingleCommand(cmd_EnterQPI);	_QPI_mode = cmd_EnterQPI != 0; }
 	void CmdExitQPI()	{ __SendSingleCommand(cmd_ExitQPI);		_QPI_mode = false; }
@@ -396,7 +399,6 @@ protected:
 	ERROR_CODE VerifyPage(const byte *data, u32 stAdr, u16 count);
 	ERROR_CODE Wait_For_WEL(void);
 	ERROR_CODE Wait_For_Status( char Statusbit );
-	ERROR_CODE GetSectorStartEnd( unsigned long *ulStartOff, unsigned long *ulEndOff, int nSector );
 
 	byte ReadStatusRegister();
 	byte ReadProgramEraseStatus();
@@ -413,9 +415,14 @@ protected:
 	ERROR_CODE GetStr(char **manStr, char **devStr);
 	ERROR_CODE GetSectorNumber( unsigned long ulAddr, int *pnSector );
 	ERROR_CODE ResetFlash() { return NO_ERR; }
+	ERROR_CODE GetSectorStartEnd( unsigned long *ulStartOff, unsigned long *ulEndOff, int nSector );
 
 #else
+
   protected:
+
+	ERROR_CODE GetSectorStartEnd( unsigned long *ulStartOff, unsigned long *ulEndOff, int nSector );
+
 #endif
 
 	ERROR_CODE EraseBlock(int nBlock);
@@ -512,7 +519,9 @@ void FlashSPI::Init()
 
 	DetectFlashTypeMode();
 
-	CmdEnterQPI();
+	ReadStatusRegister(); 
+
+	//CmdEnterQPI();
 
 #else
 
@@ -572,6 +581,11 @@ bool FlashSPI::GetFlashType()
 				mask_ProgramEraseStatus = SR_EPE;
 				cmd_EnterQPI = 0;
 				cmd_ExitQPI = 0;
+
+				GlobalUnProtect();
+
+				//if (FLASH_START_ADR >= 0x10000) CmdWriteEnable(), CmdProtectSector(0);
+
 				res = true; 
 				break; 
 		};
@@ -594,8 +608,16 @@ bool FlashSPI::GetFlashType()
 				mask_ProgramEraseStatus = ERP_PROT_E|ERP_P_ERR|ERP_E_ERR;
 				cmd_EnterQPI = 0x35; 
 				cmd_ExitQPI = 0xF5;
+
+				byte status = ReadStatusRegister();
+
+				byte status_new = status & ~(SR_BP0|SR_BP1|SR_BP2|SR_BP3);
+
+				if (FLASH_START_ADR >= 0x10000) status_new |= SR_BP1|SR_BP2|SR_BP3;
+
+				if (status != status_new) CmdWriteEnable(), CmdWriteStatusReg(status_new), Wait_For_Status(SR_RDY_BSY);
+
 				res = true;
-		
 		};
 
 		//SendSingleCommand(0x66);
@@ -711,7 +733,7 @@ void FlashSPI::Delay(u32 us)
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void FlashSPI::__SendSingleCommand( const int iCommand )
+void FlashSPI::__SendSingleCommand(byte iCommand )
 {
 	ChipEnable();
 
@@ -724,19 +746,69 @@ void FlashSPI::__SendSingleCommand( const int iCommand )
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void FlashSPI::CmdEraseSector(u32 sec)
+void FlashSPI::__Send3bytesCommand(byte iCommand, u32 adr)
 {
 	ChipEnable();
 
 	buf[0] = CMD_SE;
-	buf[1] = sec >> 16;
-	buf[2] = sec >> 8;
-	buf[3] = sec;
+	buf[1] = adr >> 16;
+	buf[2] = adr >> 8;
+	buf[3] = adr;
 
 	spi.WriteSyncDMA(buf, 4);
 
 	ChipDisable();
+
+	Delay(1);
 }
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+//void FlashSPI::CmdEraseSector(u32 sec)
+//{
+//	ChipEnable();
+//
+//	buf[0] = CMD_SE;
+//	buf[1] = sec >> 16;
+//	buf[2] = sec >> 8;
+//	buf[3] = sec;
+//
+//	spi.WriteSyncDMA(buf, 4);
+//
+//	ChipDisable();
+//}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+//void FlashSPI::CmdProtectSector(u32 sec)
+//{
+//	ChipEnable();
+//
+//	buf[0] = CMD_PRS;
+//	buf[1] = sec >> 16;
+//	buf[2] = sec >> 8;
+//	buf[3] = sec;
+//
+//	spi.WriteSyncDMA(buf, 4);
+//
+//	ChipDisable();
+//}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+//void FlashSPI::CmdUnprotectSector(u32 sec)
+//{
+//	ChipEnable();
+//
+//	buf[0] = CMD_UPS;
+//	buf[1] = sec >> 16;
+//	buf[2] = sec >> 8;
+//	buf[3] = sec;
+//
+//	spi.WriteSyncDMA(buf, 4);
+//
+//	ChipDisable();
+//}
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -823,18 +895,15 @@ ERROR_CODE FlashSPI::WritePage(const void *data, u32 stAdr, u16 count )
 
     lastError = NO_ERR;
 
-	if ((stAdr & 0xFF) != 0 || count > 256 || count == 0)
-	{
-		return lastError= INVALID_BLOCK;
-	};
-
 	u16 block = stAdr/FLASH_SECTOR_SIZE;
+
+	if ((stAdr & 0xFF) != 0 || count > 256 || count == 0) { lastError = INVALID_BLOCK; goto exit; };
 
 	if (lastErasedBlock != block)
 	{
 		lastError = EraseBlock(block);
 
-		if (lastError != NO_ERR) return lastError;
+		if (lastError != NO_ERR) goto exit;
 
 		lastErasedBlock = block;
 	};
@@ -843,25 +912,28 @@ ERROR_CODE FlashSPI::WritePage(const void *data, u32 stAdr, u16 count )
 
 	lastError = Wait_For_WEL();
 
-    if(lastError != NO_ERR)
-	{
-		return lastError;
-	}
-    else
-    {
-		ChipEnable();
+    if(lastError != NO_ERR) goto exit;
 
-		buf[0] = CMD_PP;		//spi.WriteReadByte(SPI_PP);
-		buf[1] = stAdr >> 16;	//spi.WriteReadByte(stAdr >> 16);
-		buf[2] = stAdr >> 8;	//spi.WriteReadByte(stAdr >> 8);
-		buf[3] = stAdr;			//spi.WriteReadByte(stAdr);
+	ChipEnable();
 
-		spi.WriteSyncDMA(buf, 4, data, count);
+	buf[0] = CMD_PP;		//spi.WriteReadByte(SPI_PP);
+	buf[1] = stAdr >> 16;	//spi.WriteReadByte(stAdr >> 16);
+	buf[2] = stAdr >> 8;	//spi.WriteReadByte(stAdr >> 8);
+	buf[3] = stAdr;			//spi.WriteReadByte(stAdr);
 
-		ChipDisable();
-    };
+	spi.WriteSyncDMA(buf, 4, data, count);
 
-	return lastError = Wait_For_Status(SR_RDY_BSY);
+	ChipDisable();
+
+	lastError = Wait_For_Status(SR_RDY_BSY);
+
+	if(lastError != NO_ERR) goto exit;
+
+	if (ReadProgramEraseStatus() & mask_ProgramEraseStatus) lastError = ERROR_PROGRAM;
+
+exit:
+
+	return lastError;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -914,14 +986,28 @@ ERROR_CODE FlashSPI::EraseBlock(int nBlock)
 	// we get the end offset too however we do not actually use it for Erase sector
 	GetSectorStartEnd( &ulSectStart, &ulSectEnd, nBlock );
 
-	GlobalUnProtect();
-	GlobalUnProtect();
+	//CmdWriteEnable();
+
+	//CmdUnprotectSector(ulSectStart);
+
+	//GlobalUnProtect();
+	//GlobalUnProtect();
 
 	CmdWriteEnable();
+
+	lastError = Wait_For_WEL();
+
+	if(lastError != NO_ERR) goto exit;
 
 	CmdEraseSector(ulSectStart);
 
 	lastError = Wait_For_Status(SR_RDY_BSY);
+
+	if(lastError != NO_ERR) goto exit;
+
+	if (ReadProgramEraseStatus() & mask_ProgramEraseStatus) lastError = ERROR_ERASE;
+
+exit:
 
 	return lastError;
 }
@@ -932,15 +1018,20 @@ ERROR_CODE FlashSPI::EraseBlock(int nBlock)
 
 ERROR_CODE FlashSPI::EraseFlash()
 {
-
 	GlobalUnProtect();
-	GlobalUnProtect();
+//	GlobalUnProtect();
 
 	CmdWriteEnable();
 
 	__SendSingleCommand(CMD_BE);
 
 	lastError = Wait_For_Status(SR_RDY_BSY);
+
+	if(lastError != NO_ERR) goto exit;
+
+	if (ReadProgramEraseStatus() & mask_ProgramEraseStatus) lastError = ERROR_ERASE;
+
+exit:
 
 	return lastError;
 }
@@ -1183,7 +1274,7 @@ void FlashSPI::Update()
 			{
 				flwb = (FLWB*)curFlwb->GetDataPtr();
 
-				flashWriteAdr = flwb->adr; //FLASH_START_ADR + request->stAdr;
+				flashWriteAdr = flwb->adr + FLASH_START_ADR; 
 				flashWritePtr = flwb->data + flwb->dataOffset;
 				flashWriteLen = flwb->dataLen;
 
@@ -1214,8 +1305,10 @@ void FlashSPI::Update()
 
 		case FLASH_STATE_ERASE_START:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-			GlobalUnProtect();
-			GlobalUnProtect();
+			//GlobalUnProtect();
+			//GlobalUnProtect();
+
+			//HW::PIOC->SET(PC10);
 
 			CmdWriteEnable();
 
@@ -1233,7 +1326,7 @@ void FlashSPI::Update()
 			{
 				lastError = NO_ERR;
 
-				CmdEraseSector(lastErasedBlock);
+				CmdEraseSector(lastErasedBlock*FLASH_SECTOR_SIZE);
 
 				tm.Reset();
 
@@ -1283,12 +1376,16 @@ void FlashSPI::Update()
 				lastError = NO_ERR;
 
 				flashState = (flashWritePtr != 0 && flashWriteLen != 0) ? FLASH_STATE_WRITE_PAGE : FLASH_STATE_ERASE_WAIT;
+
+				//HW::PIOC->CLR(PC10);
 			};
 
 			break;
 		};
 
 		case FLASH_STATE_WRITE_PAGE:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+			//HW::PIOC->SET(PC9);
 
 			CmdWriteEnable();
 
@@ -1421,6 +1518,8 @@ void FlashSPI::Update()
 				flashWriteLen = 0;
 
 				flashState = FLASH_STATE_WAIT;
+
+				//HW::PIOC->CLR(PC9);
 			};
 
 			break;

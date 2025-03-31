@@ -1,4 +1,4 @@
-#ifndef FLASHINT_IMP_H__24_02_2024__16_53
+#if !defined(FLASHINT_IMP_H__24_02_2024__16_53) && !defined(FLASHSPI_IMP_V2) 
 #define FLASHINT_IMP_H__24_02_2024__16_53
 
 #pragma once
