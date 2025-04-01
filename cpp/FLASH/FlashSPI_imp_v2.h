@@ -584,7 +584,7 @@ bool FlashSPI::GetFlashType()
 
 				GlobalUnProtect();
 
-				//if (FLASH_START_ADR >= 0x10000) CmdWriteEnable(), CmdProtectSector(0);
+				if (FLASH_START_ADR >= 0x10000) CmdWriteEnable(), CmdProtectSector(0);
 
 				res = true; 
 				break; 
@@ -750,7 +750,7 @@ void FlashSPI::__Send3bytesCommand(byte iCommand, u32 adr)
 {
 	ChipEnable();
 
-	buf[0] = CMD_SE;
+	buf[0] = iCommand;
 	buf[1] = adr >> 16;
 	buf[2] = adr >> 8;
 	buf[3] = adr;
