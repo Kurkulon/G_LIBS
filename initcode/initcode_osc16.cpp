@@ -177,7 +177,7 @@ void initcode(ADI_ROM_BOOT_CONFIG* pBootStruct)
  	  while((HW::CGU->STAT & (CGU_STAT_PLOCK|CGU_STAT_PLLBP|CGU_STAT_CLKSALGN)) != CGU_STAT_PLOCK);
 	};
 
-	if (HW::RCU->STAT.BMODE == 1) HW::SPI2->CLK = BAUD_RATE_DIVISOR;
+	if (HW::RCU->STAT._BMODE == 1) HW::SPI2->CLK = BAUD_RATE_DIVISOR;
 
 } /* initcode */ 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

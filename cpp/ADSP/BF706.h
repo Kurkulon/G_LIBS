@@ -151,14 +151,67 @@ extern byte core_sys_array[0x100000];
 
 namespace T_HW
 {
-	typedef volatile u16		BF_RW16, BF_WO16;		// Hardware register definition
-	typedef volatile u32		BF_RW32, BF_WO32;		// Hardware register definition
-	typedef volatile u8			BF_RW8, BF_WO8;			// Hardware register definition
+	//typedef volatile u16		BF_RW16, BF_WO16;		// Hardware register definition
+	//typedef volatile u32		/*BF_RW32,*/ BF_WO32;		// Hardware register definition
+	//typedef volatile u8			BF_RW8, BF_WO8;			// Hardware register definition
 
-	typedef volatile const u16	BF_RO16;		// Hardware register definition
-	typedef volatile const u32	BF_RO32;		// Hardware register definition
+	//typedef volatile const u16	BF_RO16;		// Hardware register definition
+	//typedef volatile const u32	BF_RO32;		// Hardware register definition
 	typedef volatile const u8	BF_RO8;			// Hardware register definition
-	typedef volatile void*		BF_PTR;			// Hardware register definition
+	//typedef volatile void*		BF_PTR;			// Hardware register definition
+
+	typedef volatile void*		VVPTR;			// Hardware register definition
+
+	struct BF_RO16
+	{
+		protected:		volatile u16 reg;
+		public:			operator u16() { return __builtin_mmr_read16(&reg); }
+
+	};
+
+	struct BF_RW16
+	{
+		protected:			volatile u16 reg;
+		public:				operator u16()	{ return __builtin_mmr_read16(&reg); }
+					u16		operator=(u16 v){ reg = v; return v; }
+					void	operator|=(u16 v){ reg = __builtin_mmr_read16(&reg)|v; }
+					void	operator&=(u16 v){ reg = __builtin_mmr_read16(&reg)&v; }
+	};
+
+	struct BF_WO16
+	{
+		protected:			volatile u16 reg;
+		public:		u16		operator=(u16 v){ reg = v; return v; }
+	};
+
+	struct BF_RO32
+	{
+		protected:		volatile u32 reg;
+		public:			operator u32() { return __builtin_mmr_read32(&reg); }
+	};
+
+	struct BF_RW32
+	{
+		protected:			volatile u32 reg;
+		public:				operator u32()	{ return __builtin_mmr_read32(&reg); }
+					u32		operator=(u32 v){ reg = v; return v; }
+					void	operator|=(u32 v){ reg = __builtin_mmr_read32(&reg)|v; }
+					void	operator&=(u32 v){ reg = __builtin_mmr_read32(&reg)&v; }
+	};
+
+	struct BF_WO32
+	{
+		protected:			volatile u32 reg;
+		public:		u32		operator=(u32 v){ reg = v; return v; }
+	};
+
+	struct BF_PTR
+	{
+		protected:		volatile VVPTR reg;
+		public:				operator VVPTR()	{ return (VVPTR)__builtin_mmr_read32(&reg); }
+					void	operator=(void* v)	{ reg = v; /*return v;*/ }
+	};
+
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -396,23 +449,23 @@ namespace T_HW
 
 		struct
 		{
-			BF_RW32 HWRST		:1;     /* Hardware Reset */
-			BF_RW32 HBRST		:1;     /* Hibernate Reset */
-			BF_RW32 SSRST		:1;     /* System Source Reset */
-			BF_RW32	SWRST		:1;		/* Software Reset */ 
-			BF_RW32				:1;     
-			BF_RW32 RSTOUT		:1;		/* Reset Out Status */  
-			BF_RW32				:2;     
-			BF_RW32 BMODE		:4;		/* Boot Mode */  
-			BF_RW32				:4;     
-			BF_RW32 ADDRERR		:1;		/* Address Error */   
-			BF_RW32 LWERR		:1;     /* Lock Write Error */
-			BF_RW32 RSTOUTERR	:1;     /* Reset Out Error */
+			volatile u32 _HWRST		:1;     /* Hardware Reset */
+			volatile u32 _HBRST		:1;     /* Hibernate Reset */
+			volatile u32 _SSRST		:1;     /* System Source Reset */
+			volatile u32 _SWRST		:1;		/* Software Reset */ 
+			volatile u32			:1;     
+			volatile u32 _RSTOUT		:1;		/* Reset Out Status */  
+			volatile u32			:2;     
+			volatile u32 _BMODE		:4;		/* Boot Mode */  
+			volatile u32			:4;     
+			volatile u32 _ADDRERR	:1;		/* Address Error */   
+			volatile u32 _LWERR		:1;     /* Lock Write Error */
+			volatile u32 _RSTOUTERR	:1;     /* Reset Out Error */
 
-			operator u32() { return *((u32*)this); }
+			operator u32() { return __builtin_mmr_read32(this); }
 			u32 operator=(u32 v) { return *((u32*)this) = v; }
 
-			u32 Bits() { return *((u32*)this); } 
+			u32 Bits() { return __builtin_mmr_read32(this); } 
 
 		} STAT;	//RW16	STATUS;	/**< \brief Offset: 0x1A (R/W 16) I2CM Status */
 
@@ -998,19 +1051,19 @@ namespace T_HW
 
 		struct
 		{
-			BF_RO32 TXSTAT		:2;				/* Rx FIFO Status */
-			BF_RO32 RXSTAT		:2;				/* Tx FIFO Status */
+			volatile const u32 _TXSTAT		:2;				/* Rx FIFO Status */
+			volatile const u32 _RXSTAT		:2;				/* Tx FIFO Status */
 
-			operator u32() { return *((u32*)this); }
-			u32 Bits() { return *((u32*)this); } 
+			operator u32()	{ return __builtin_mmr_read32(this); }
+			u32 Bits()		{ return __builtin_mmr_read32(this); } 
 
 		} FIFOSTAT; // BF_RO32 FIFOSTAT; /*!< FIFO Status Register */
 		                     
     												BF_RO8                  z__RESERVED0[80];
 		BF_WO32 TXDATA8;                       /*!< Tx Data Single-Byte Register */
 		BF_WO32 TXDATA16;                      /*!< Tx Data Double-Byte Register */
-		BF_WO32 RXDATA8;                       /*!< Rx Data Single-Byte Register */
-		BF_WO32 RXDATA16;                      /*!< Rx Data Double-Byte Register */
+		BF_RO32 RXDATA8;                       /*!< Rx Data Single-Byte Register */
+		BF_RO32 RXDATA16;                      /*!< Rx Data Double-Byte Register */
 	};
 
 	#define TWI_CLKHI(v)		(((v)&0xFF)<<8)		/* SCL Clock High Periods */
@@ -1771,7 +1824,7 @@ namespace T_HW
 		{
 			BF_RW32	D;                      /*!< Receive FIFO Data Register */
 			BF_RW16	W;
-			BF_RW8	B;
+			//BF_RW8	B;
 		}
 		RFIFO;
 							BF_RO32                  z__RESERVED4;

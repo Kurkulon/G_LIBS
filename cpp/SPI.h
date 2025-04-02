@@ -244,7 +244,7 @@ public:
 			void WaitWriteByte()			{ while((_hw->STAT & (SPI_SPIF|SPI_TFS_MASK)) != (SPI_SPIF|SPI_TFS_EMPTY)); }
 
 			void ReadByteStart(u16 count);
-			byte ReadByteAsync() { while(_hw->STAT & SPI_RFE); return _hw->RFIFO.B; }
+			byte ReadByteAsync() { while(_hw->STAT & SPI_RFE); return _hw->RFIFO.W; }
 			byte ReadByteSync(u16 count) { ReadByteStart(count); return ReadByteAsync(); }
 
 #elif defined(CPU_SAME53)

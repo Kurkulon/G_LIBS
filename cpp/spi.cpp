@@ -553,7 +553,9 @@ void S_SPIM::ReadPIO(void *data, u16 count)
 
 	while((_hw->STAT & SPI_RFE) == 0)
 	{
-		asm("%0 = W[%1];" : "=D" (t) : "p" (&(_hw->RFIFO)));
+		__builtin_mmr_read16(&(_hw->RFIFO));
+		//asm("%0 = W[%1];" : "=D" (t) : "p" (&(_hw->RFIFO)));
+		//asm(".align 8\n NOP;\n .align 2\n MNOP;\n %0 = W[%1];\n NOP;\n NOP;\n NOP;\n" : "=D" (t) : "p" (&(_hw->RFIFO))); 
 	};
 
 	_hw->RXCTL = RXCTL_REN|RXCTL_RTI|RXCTL_RWCEN;
@@ -562,7 +564,7 @@ void S_SPIM::ReadPIO(void *data, u16 count)
 	{
 		while ((_hw->STAT & SPI_RFE) != 0);
 
-		*(p++) = _hw->RFIFO.B; count--;
+		*(p++) = _hw->RFIFO.W; count--;
 	};
 
 	_hw->TXCTL	= 0;
@@ -718,7 +720,7 @@ byte S_SPIM::WriteReadByte(byte v)
 	
 	while((_hw->STAT & (SPI_SPIF|SPI_RFE)) != SPI_SPIF);
 
-	return _hw->RFIFO.B; 
+	return _hw->RFIFO.W; 
 
 #elif defined(CPU_SAME53)	
 
@@ -776,9 +778,9 @@ byte S_SPIM::WriteReadByte(byte v)
 
 void S_SPIM::ReadByteStart(u16 count)
 {
-	u32 temp;
+	//u32 temp;
 
-	while((_hw->STAT & SPI_RFE) == 0)	{ asm("%0 = W[%1];" : "=D" (temp) : "p" (&(_hw->RFIFO))); };
+	while((_hw->STAT & SPI_RFE) == 0) __builtin_mmr_read16(&(_hw->RFIFO));
 
 	//_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&SPIMODE_MASK);	
 	_hw->TXCTL	= 0;
