@@ -74,6 +74,14 @@
 #define SPIMODE	(SPI_CPOL|SPI_CPHA)
 #endif
 
+#ifndef Pin_VerifyPageError_Set
+#define Pin_VerifyPageError_Set()		{}
+#endif
+
+#ifndef Pin_VerifyPageError_Clr
+#define Pin_VerifyPageError_Clr()		{}
+#endif
+
 //static char 		*pFlashDesc =		"Atmel AT25DF021";
 //static char 		*pDeviceCompany	=	"Atmel Corporation";
 
@@ -1505,6 +1513,8 @@ void FlashSPI::Update()
 
 				if (c)
 				{
+					Pin_VerifyPageError_Set();
+
 					DEBUG_ASSERT(0);
 
 					lastError = VERIFY_WRITE;
@@ -1518,6 +1528,8 @@ void FlashSPI::Update()
 				flashWriteLen = 0;
 
 				flashState = FLASH_STATE_WAIT;
+
+				Pin_VerifyPageError_Clr();
 
 				//HW::PIOC->CLR(PC9);
 			};

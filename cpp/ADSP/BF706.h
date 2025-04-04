@@ -112,7 +112,7 @@ inline u64 GetCycles64()
 {
 	u64 res;
 
-	__asm volatile ("CLI r0;       \n"  
+	__asm volatile ("CLI r0;      \n"  
                     "r2 = CYCLES;  \n"  
                     "r1 = CYCLES2; \n"  
                     "STI r0;       \n"  
@@ -151,67 +151,91 @@ extern byte core_sys_array[0x100000];
 
 namespace T_HW
 {
-	//typedef volatile u16		BF_RW16, BF_WO16;		// Hardware register definition
-	//typedef volatile u32		/*BF_RW32,*/ BF_WO32;		// Hardware register definition
-	//typedef volatile u8			BF_RW8, BF_WO8;			// Hardware register definition
-
-	//typedef volatile const u16	BF_RO16;		// Hardware register definition
-	//typedef volatile const u32	BF_RO32;		// Hardware register definition
 	typedef volatile const u8	BF_RO8;			// Hardware register definition
-	//typedef volatile void*		BF_PTR;			// Hardware register definition
+	typedef volatile u8		BF_RW8, BF_WO8;			// Hardware register definition
 
-	typedef volatile void*		VVPTR;			// Hardware register definition
+	#ifdef DEF_BFMMR32
 
-	struct BF_RO16
-	{
-		protected:		volatile u16 reg;
-		public:			operator u16() { return __builtin_mmr_read16(&reg); }
+		typedef volatile u16		BF_RW16, BF_WO16;		// Hardware register definition
+		typedef volatile u32		BF_RW32, BF_WO32;		// Hardware register definition
 
-	};
+		typedef volatile const u16	BF_RO16;		// Hardware register definition
+		typedef volatile const u32	BF_RO32;		// Hardware register definition
+		typedef volatile void*		BF_PTR;			// Hardware register definition
 
-	struct BF_RW16
-	{
-		protected:			volatile u16 reg;
-		public:				operator u16()	{ return __builtin_mmr_read16(&reg); }
-					u16		operator=(u16 v){ reg = v; return v; }
-					void	operator|=(u16 v){ reg = __builtin_mmr_read16(&reg)|v; }
-					void	operator&=(u16 v){ reg = __builtin_mmr_read16(&reg)&v; }
-	};
+	#else
 
-	struct BF_WO16
-	{
-		protected:			volatile u16 reg;
-		public:		u16		operator=(u16 v){ reg = v; return v; }
-	};
+		typedef volatile void*		VVPTR;			// Hardware register definition
 
-	struct BF_RO32
-	{
-		protected:		volatile u32 reg;
-		public:			operator u32() { return __builtin_mmr_read32(&reg); }
-	};
+		#define VLTLREG volatile
 
-	struct BF_RW32
-	{
-		protected:			volatile u32 reg;
-		public:				operator u32()	{ return __builtin_mmr_read32(&reg); }
-					u32		operator=(u32 v){ reg = v; return v; }
-					void	operator|=(u32 v){ reg = __builtin_mmr_read32(&reg)|v; }
-					void	operator&=(u32 v){ reg = __builtin_mmr_read32(&reg)&v; }
-	};
+		struct BF_RO16
+		{
+			protected:		VLTLREG u16 reg;
+			public:			
 
-	struct BF_WO32
-	{
-		protected:			volatile u32 reg;
-		public:		u32		operator=(u32 v){ reg = v; return v; }
-	};
+				inline operator u16() { return __builtin_mmr_read16(&reg); }
+		};
 
-	struct BF_PTR
-	{
-		protected:		volatile VVPTR reg;
-		public:				operator VVPTR()	{ return (VVPTR)__builtin_mmr_read32(&reg); }
-					void	operator=(void* v)	{ reg = v; /*return v;*/ }
-	};
+		struct BF_RW16
+		{
+			protected:			
+				VLTLREG u16 reg;
+			public:		
+				inline 			operator u16()		{ return __builtin_mmr_read16(&reg); }
+				inline u16		operator=(u16 v)	{ reg = v; return v; }
+				inline void	operator|=(u16 v)	{ reg = __builtin_mmr_read16(&reg)|v; }
+				inline void	operator&=(u16 v)	{ reg = __builtin_mmr_read16(&reg)&v; }
+		};
 
+		struct BF_WO16
+		{
+			protected:			
+				VLTLREG u16 reg;
+			public:		
+				inline u16		operator=(u16 v)	{ reg = v; return v; }
+		};
+
+		struct BF_RO32
+		{
+			protected:		
+				VLTLREG u32 reg;
+			public:			
+				inline operator u32()	{ return __builtin_mmr_read32(&reg); }
+		};
+
+		struct BF_RW32
+		{
+			protected:			
+
+				VLTLREG u32 reg;
+
+			public:		
+
+				inline			operator u32()		{ return __builtin_mmr_read32(&reg); }
+				inline u32		operator=(u32 v)	{ reg = v; return v; }
+				inline void	operator|=(u32 v)	{ reg = __builtin_mmr_read32(&reg)|v; }
+				inline void	operator&=(u32 v)	{ reg = __builtin_mmr_read32(&reg)&v; }
+		};
+
+		struct BF_WO32
+		{
+			protected:			
+				VLTLREG u32 reg;
+			public:		
+				inline u32		operator=(u32 v)	{ reg = v; return v; }
+		};
+
+		struct BF_PTR
+		{
+			protected:
+				VVPTR VLTLREG reg;
+			public:
+				inline 			operator VVPTR()	{ return (VVPTR)__builtin_mmr_read32(&reg); }
+				inline void	operator=(void* v)	{ reg = v; /*return v;*/ }
+		};
+
+	#endif
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

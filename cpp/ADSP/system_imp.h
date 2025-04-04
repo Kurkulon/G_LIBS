@@ -518,6 +518,12 @@ extern "C" void SystemInit()
 	Init_SEC();
 
 	Init_Heap();
+
+	#if (((CCLK_MHz/SCLK_MHz)*SCLK_MHz) == CCLK_MHz) || (((SCLK_MHz/CCLK_MHz)*CCLK_MHz) == SCLK_MHz)
+
+		sysreg_write(reg_SYSCFG, sysreg_read(reg_SYSCFG)|BITM_SYSCFG_MEMSBYP|BITM_SYSCFG_MMRSBYP);
+
+	#endif
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

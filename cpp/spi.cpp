@@ -778,7 +778,7 @@ byte S_SPIM::WriteReadByte(byte v)
 
 void S_SPIM::ReadByteStart(u16 count)
 {
-	//u32 temp;
+	//u32 temp; while((_hw->STAT & SPI_RFE) == 0)	{ asm("%0 = W[%1];" : "=D" (temp) : "p" (&(_hw->RFIFO))); };
 
 	while((_hw->STAT & SPI_RFE) == 0) __builtin_mmr_read16(&(_hw->RFIFO));
 
