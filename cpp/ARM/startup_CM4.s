@@ -83,7 +83,23 @@ VectorTableExt	SPACE	VecTableExtSize
 				AREA	||.ARM.__AT_0x47000000||, DATA, NOINIT, ALIGN=7
 SeggerRttCB		SPACE	SeggerRttCB_size		
 __segger_rttcb_end	
+
+				ELIF	:DEF:CPU_SAM4SA	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+				
+				AREA	||.ARM.__AT_0x20000000||, DATA, NOINIT, ALIGN=7
+Stack_Mem       SPACE   Stack_Size
+                
+                ALIGN	128
+__initial_sp
+
+VectorTableInt	SPACE	VecTableIntSize				
+VectorTableExt	SPACE	VecTableExtSize	
  
+                ALIGN	128
+
+SeggerRttCB		SPACE	SeggerRttCB_size - (SeggerRttCB-VectorTableInt)	
+__segger_rttcb_end
+
                 ENDIF
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

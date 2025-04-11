@@ -318,6 +318,71 @@ u16 CRC_CCITT_DMA(const void *data, u32 len, u16 init)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#elif defined(CPU_SAM4SA)
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+__align(512) T_HW::S_CRCCU::TRDSCR crccuDsc = {0};
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static void Init_CRC_CCITT_DMA()
+{
+	HW::PMC->ClockEnable(HW::PID::CRCCU_I);
+
+	HW::CRCCU->DMA_DIS	= CRCCU_DMADIS;
+	HW::CRCCU->DSCR		= &crccuDsc;
+	HW::CRCCU->MR		= CRCCU_ENABLE|CRCCU_CCITT16;
+	HW::CRCCU->CR		= CRCCU_RESET;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+bool CRC_CCITT_DMA_Async(const void* data, u32 len, u16 init)
+{
+	if (HW::CRCCU->DMA_SR & CRCCU_DMASR) return false;
+
+	HW::CRCCU->DSCR		= &crccuDsc;
+	HW::CRCCU->MR		= CRCCU_ENABLE|CRCCU_CCITT16;
+	HW::CRCCU->CR		= CRCCU_RESET;
+	
+	crccuDsc.ADDR = data;
+	crccuDsc.CTRL = (u16)len;
+
+	HW::CRCCU->DMA_EN	= CRCCU_DMAEN;
+
+	return true;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+bool CRC_CCITT_DMA_CheckComplete(u16* crc)
+{
+	if ((HW::CRCCU->DMA_SR & CRCCU_DMASR) == 0)
+	{
+		if (crc != 0) *crc = HW::CRCCU->SR;
+
+		return true;
+	}
+	else
+	{
+		return false;
+	};
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+bool CRC_CCITT_PIO(const void *data, u32 len, u16 *crc, u16 init)
+{
+	if (!CRC_CCITT_DMA_Async(data, len, init)) return false;
+
+	while (!CRC_CCITT_DMA_CheckComplete(crc));
+
+	return true;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 #elif defined(WIN32)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

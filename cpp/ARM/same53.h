@@ -871,7 +871,7 @@ namespace T_HW
 		__forceinline void 	BCLR(u16 b) 		{ OUTCLR = 1 << b; }
 		__forceinline void 	BTGL(u16 b) 		{ OUTTGL = 1 << b; }
 
-		__forceinline void	OUT8(byte v)		{ *((byte*)&OUT) = v; }
+		__forceinline void		OUT8(byte v)		{ *((byte*)&OUT) = v; }
 
 		__forceinline bool 	TBSET(u16 b) 		{ return IN & (1<<b); }
 		__forceinline bool 	TBCLR(u16 b) 		{ return (IN & (1<<b)) == 0; }

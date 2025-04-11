@@ -290,6 +290,9 @@
     <ClInclude Include="cpp\FLASH\FlashSPI_imp_v2.h">
       <Filter>CPP\FLASH</Filter>
     </ClInclude>
+    <ClInclude Include="cpp\ARM\sam4sa.h">
+      <Filter>CPP\ARM</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpp\i2c.cpp">
@@ -432,6 +435,12 @@
     </None>
     <None Include="LDF\BF706.ldf">
       <Filter>LDF</Filter>
+    </None>
+    <None Include="Scatter\SAM4SA.sct">
+      <Filter>Scatter</Filter>
+    </None>
+    <None Include="Scatter\SAM4SA_BOOT.sct">
+      <Filter>Scatter</Filter>
     </None>
   </ItemGroup>
 </Project>

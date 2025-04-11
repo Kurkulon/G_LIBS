@@ -33,6 +33,14 @@
       <Configuration>LPC824_Release</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="SAM4SA_Debug|Win32">
+      <Configuration>SAM4SA_Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="SAM4SA_Release|Win32">
+      <Configuration>SAM4SA_Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="SAME53_Debug|Win32">
       <Configuration>SAME53_Debug</Configuration>
       <Platform>Win32</Platform>
@@ -107,7 +115,15 @@
     <ConfigurationType>Makefile</ConfigurationType>
     <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='SAM4SA_Release|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='SAME53_Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='SAM4SA_Debug|Win32'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
@@ -150,7 +166,13 @@
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='SAME53_Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='SAM4SA_Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='SAME53_Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='SAM4SA_Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
@@ -175,6 +197,24 @@
     <SourcePath />
     <ExcludePath />
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='SAM4SA_Debug|Win32'">
+    <OutDir>$(ProjectDir)build\$(Configuration)\</OutDir>
+    <IntDir>$(OutDir)</IntDir>
+    <NMakeBuildCommandLine>wmake -h version=Debug targetcpu=SAM4SA</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>wmake -h -a version=Debug targetcpu=SAM4SA</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
+    <NMakeOutput>$(ProjectDir)\SAM4SA_d.a</NMakeOutput>
+    <NMakePreprocessorDefinitions>_DEBUG;__softfp=;CPU_SAM4SA;</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>.\cpp;$(ARMCC50INC);</NMakeIncludeSearchPath>
+    <ExecutablePath />
+    <IncludePath />
+    <ExternalIncludePath />
+    <ReferencePath />
+    <LibraryPath />
+    <LibraryWPath />
+    <SourcePath />
+    <ExcludePath />
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='SAME53_Release|Win32'">
     <OutDir>$(ProjectDir)build\$(Configuration)\</OutDir>
     <IntDir>$(OutDir)</IntDir>
@@ -183,6 +223,24 @@
     <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
     <NMakeOutput>$(ProjectDir)\SAME53_r.a</NMakeOutput>
     <NMakePreprocessorDefinitions>__softfp=;CPU_SAME53;</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>.\cpp;$(ARMCC50INC);</NMakeIncludeSearchPath>
+    <ExecutablePath />
+    <IncludePath />
+    <ExternalIncludePath />
+    <ReferencePath />
+    <LibraryPath />
+    <LibraryWPath />
+    <SourcePath />
+    <ExcludePath />
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='SAM4SA_Release|Win32'">
+    <OutDir>$(ProjectDir)build\$(Configuration)\</OutDir>
+    <IntDir>$(OutDir)</IntDir>
+    <NMakeBuildCommandLine>wmake -h version=Release targetcpu=SAM4SA</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>wmake -h -a version=Release targetcpu=SAM4SA</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
+    <NMakeOutput>$(ProjectDir)\SAM4SA_r.a</NMakeOutput>
+    <NMakePreprocessorDefinitions>__softfp=;CPU_SAM4SA;</NMakePreprocessorDefinitions>
     <NMakeIncludeSearchPath>.\cpp;$(ARMCC50INC);</NMakeIncludeSearchPath>
     <ExecutablePath />
     <IncludePath />
@@ -403,6 +461,7 @@
     <ClInclude Include="cpp\ARM\cm4.h" />
     <ClInclude Include="cpp\ARM\lpc81x.h" />
     <ClInclude Include="cpp\ARM\lpc82x.h" />
+    <ClInclude Include="cpp\ARM\sam4sa.h" />
     <ClInclude Include="cpp\ARM\same53.h" />
     <ClInclude Include="cpp\ARM\system_imp.h" />
     <ClInclude Include="cpp\ARM\XMC4800.h" />
@@ -522,6 +581,8 @@
     <None Include="Scatter\LPC824.sct" />
     <None Include="Scatter\LPC824_BOOT.sct" />
     <None Include="Scatter\LPC824_NO_BOOTLOADER.sct" />
+    <None Include="Scatter\SAM4SA.sct" />
+    <None Include="Scatter\SAM4SA_BOOT.sct" />
     <None Include="Scatter\SAME53.sct" />
     <None Include="Scatter\SAME53_18.sct" />
     <None Include="Scatter\SAME53_18_BOOT.sct" />

@@ -198,6 +198,53 @@ void ComPort::InitHW()
 
 		while(uhw->SYNCBUSY);
 
+	#elif defined(CPU_SAM4SA)
+
+		HW::PMC->ClockEnable(_upid);
+
+		if(_usic_num == 3) // USART0
+		{
+			HW::PIOA->PDR		=	PA5|PA6;
+			HW::PIOA->ABCDSR1	&=	~(PA5|PA6);
+			HW::PIOA->ABCDSR2	&=	~(PA5|PA6);
+
+			if (_cnType != ASYNC)
+			{
+				HW::PIOA->PDR		=	PA2;
+				HW::PIOA->ABCDSR1	|=	PA2;
+				HW::PIOA->ABCDSR2	&=	~PA2;
+			};
+		}
+		else if(_usic_num == 4)  // USART1
+		{
+			HW::PIOA->PDR		=	PA21|PA22;
+			HW::PIOA->ABCDSR1	&=	~(PA21|PA22);
+			HW::PIOA->ABCDSR2	&=	~(PA21|PA22);
+		
+			if (_cnType != ASYNC)
+			{
+				HW::PIOA->PDR		=	PA23;
+				HW::PIOA->ABCDSR1	&=	~PA23;
+				HW::PIOA->ABCDSR2	&=	~PA23;
+			};
+		}
+		else if(_usic_num == 5)  // UART0
+		{
+			HW::PIOA->PDR		=	PA9|PA10;
+			HW::PIOA->ABCDSR1	&=	~(PA9|PA10);
+			HW::PIOA->ABCDSR2	&=	~(PA9|PA10);
+		}
+		else if(_usic_num == 6)  // UART1
+		{
+			HW::PIOB->PDR		=	PB2|PB3;
+			HW::PIOB->ABCDSR1	&=	~(PB2|PB3);
+			HW::PIOB->ABCDSR2	&=	~(PB2|PB3);
+		};
+
+		_uhw.uart->CR = 3;
+		_uhw.uart->MR = _MR;
+		_uhw.uart->BRGR = _BaudRateRegister;
+
 	#elif defined(CPU_XMC48)
 
 		HW::Peripheral_Enable(_upid);
@@ -354,6 +401,41 @@ bool ComPort::Connect(CONNECT_TYPE ct, dword speed, byte parity, byte stopBits)
 		};
 
 		_CTRLB |= USART_SFDE;
+
+	#elif defined(CPU_SAM4SA)
+
+		_cnType = (_usic_num == 3 || _usic_num == 4) ? ct : ASYNC;
+
+		switch (ct)
+		{
+		case ASYNC:
+
+			_MR = US_CHRL_8_BIT|US_USCLKS_MCK;
+			_BaudRateRegister = BoudToPresc(speed);
+
+			break;
+
+		case SYNC_M:
+
+			_MR = US_SYNC|US_CHRL_8_BIT|US_USCLKS_MCK|US_CLKO;
+			_BaudRateRegister = (MCK+speed/2) / speed;
+
+			break;
+
+		case SYNC_S:
+
+			_MR = US_SYNC|US_CHRL_8_BIT|US_USCLKS_SCK;
+			_BaudRateRegister = ~0;
+
+			break;
+		};
+
+		switch (parity)
+		{
+			case 0:	_MR |= US_PAR_NO;	break;	// нет четности
+			case 1:	_MR |= US_PAR_ODD;	break;
+			case 2:	_MR |= US_PAR_EVEN;	break;
+		};
 
 	#elif defined(CPU_XMC48)
 
@@ -515,6 +597,10 @@ word ComPort::BoudToPresc(dword speed)
 
 		return 65536ULL*(_GEN_CLK - 8*speed)/_GEN_CLK;
 
+	#elif defined(CPU_SAM4SA)	
+
+		return (MCK/16 + speed/2) / speed;
+
 	#elif defined(CPU_XMC48)
 
 		word presc = ((SYSCLK + speed/2) / speed + 8) / 16;
@@ -575,6 +661,18 @@ void ComPort::TransmitByte(byte v)
 
 		_uhw.usart->CTRLB = _CTRLB;	// Disable transmit and receive
 
+	#elif defined(CPU_SAM4SA)
+
+		_uhw.uart->CR = US_TXDIS|US_RXDIS;// 0xA0;	// Disable transmit and receive
+
+		_uhw.uart->CR = US_TXEN;	// 0x40;
+
+		_uhw.uart->THR = v;
+
+		while ((_uhw.uart->SR & US_TXEMPTY) == 0);
+
+		_uhw.uart->CR = US_TXDIS|US_RXDIS;// 0xA0;	// Disable transmit and receive
+
 	#elif defined(CPU_XMC48)
 
 		_uhw->CCR = __CCR|USIC_TBIEN;
@@ -629,6 +727,14 @@ void ComPort::EnableTransmit(void* src, word count)
 		_DMA->WritePeripheral(src, &_uhw.usart->DATA, count, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_TX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE); 
 
 		//while (_uhw.usart->SYNCBUSY & USART_CTRLB);
+
+	#elif defined(CPU_SAM4SA)
+
+		_uhw.uart->CR = US_TXDIS|US_RXDIS;// 0xA0;	// Disable transmit and receive
+
+		_dma.WritePeripheral(src, count, 0, 0);
+
+		_uhw.uart->CR = US_TXEN;
 
 	#elif defined(CPU_XMC48)
 
@@ -741,6 +847,12 @@ void ComPort::DisableTransmit()
 
 		_DMA->Disable(); 
 
+	#elif defined(CPU_SAM4SA)
+
+		_uhw.uart->CR = US_TXDIS;
+
+		_dma.Disable();
+
 	#elif defined(CPU_XMC48)
 
 		_uhw->CCR = __CCR;
@@ -813,6 +925,14 @@ void ComPort::EnableReceive(void* dst, word count)
 
 		_uhw.usart->CTRLB = _CTRLB|USART_RXEN;
 		_uhw.usart->INTFLAG = ~0;
+
+	#elif defined(CPU_SAM4SA)
+
+		_uhw.usart->CR = US_RSTSTA|US_TXDIS|US_RXDIS;// 0x1A0;	// Disable transmit and receive, reset status
+
+		_dma.ReadPeripheral(dst, count, 0, 0);
+
+		_uhw.usart->CR = US_RSTSTA|US_RXEN;
 
 	#elif defined(CPU_XMC48)
 
@@ -917,6 +1037,12 @@ void ComPort::DisableReceive()
 		};
 
 		_DMA->Disable();
+
+	#elif defined(CPU_SAM4SA)
+
+		_uhw.uart->CR = US_RXDIS;
+
+		_dma.Disable();
 
 	#elif defined(CPU_XMC48)
 

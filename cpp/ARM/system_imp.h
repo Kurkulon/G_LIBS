@@ -218,6 +218,91 @@ extern "C" void SystemInit()
 		Pin_MainLoop_Set();
 		Pin_MainLoop_Clr();
 
+	#elif defined(CPU_SAM4SA)
+
+		using namespace HW;
+
+		EFC0->FMR = EFC_FWS((MCK_MHz/20)-1)|EFC_CLOE;	// 0x0500;
+		EFC1->FMR = EFC_FWS((MCK_MHz/20)-1)|EFC_CLOE;	// 0x0500;
+
+		PMC->PCER0 = PID::PIOA_M|PID::PIOB_M;
+		//PMC->PCER1 = PID::ADC_M|PID::PWM_M|PID::DMAC_M;
+
+		HW::PIOA->PER = PIOA_INIT_DIR;
+		HW::PIOA->OER =	PIOA_INIT_DIR;
+		HW::PIOA->CLR(	PIOA_INIT_CLR);
+		HW::PIOA->SET(	PIOA_INIT_SET);
+
+		HW::PIOB->PER =	PIOB_INIT_DIR;
+		HW::PIOB->OER =	PIOB_INIT_DIR;
+		HW::PIOB->CLR(	PIOB_INIT_CLR);
+		HW::PIOB->SET(	PIOB_INIT_SET);
+
+		HW::PIOC->PER =	PIOC_INIT_DIR;
+		HW::PIOC->OER =	PIOC_INIT_DIR;
+		HW::PIOC->CLR(	PIOC_INIT_CLR);
+		HW::PIOC->SET(	PIOC_INIT_SET);
+
+		#ifndef MATRIX_INIT_SYSIO
+		#define MATRIX_INIT_SYSIO (MATRIX_PB4|MATRIX_PB5|MATRIX_PB10|MATRIX_PB11)
+		#endif	
+
+		MATRIX->SYSIO = MATRIX_INIT_SYSIO; // PB4 PB5 PB10 PB11
+													   //	WDT->MR = (((1000 * 32768 / 128 + 500) / 1000) & 0xFFF) | 0x0FFF6000;
+		HW::WDT->Disable();		// Disable Watchdog
+
+		#if (CLKIN_MHz < 3) || (CLKIN_MHz > 50)
+		#error CLKIN_MHz must be 3...50
+		#endif
+
+		#if (MCK_MHz < 80) || (MCK_MHz > 240)
+		#error MCK_MHz must be 80...240
+		#endif
+
+		#if ((CLKIN_MHz/3)*3 == CLKIN_MHz) && ((MCK_MHz/3)*3 == MCK_MHz)
+			#define PLL_DIV (CLKIN_MHz/3)
+		#elif ((CLKIN_MHz/4)*4 == CLKIN_MHz) && ((MCK_MHz/4)*4 == MCK_MHz)
+			#define PLL_DIV (CLKIN_MHz/4)
+		#elif ((CLKIN_MHz/5)*5 == CLKIN_MHz) && ((MCK_MHz/5)*5 == MCK_MHz)
+			#define PLL_DIV (CLKIN_MHz/5)
+		#elif ((CLKIN_MHz/6)*6 == CLKIN_MHz) && ((MCK_MHz/6)*6 == MCK_MHz)
+			#define PLL_DIV (CLKIN_MHz/6)
+		#elif ((CLKIN_MHz/7)*7 == CLKIN_MHz) && ((MCK_MHz/7)*7 == MCK_MHz)
+			#define PLL_DIV (CLKIN_MHz/7)
+		#elif ((CLKIN_MHz/8)*8 == CLKIN_MHz) && ((MCK_MHz/8)*8 == MCK_MHz)
+			#define PLL_DIV (CLKIN_MHz/8)
+		#elif ((CLKIN_MHz/9)*9 == CLKIN_MHz) && ((MCK_MHz/9)*9 == MCK_MHz)
+			#define PLL_DIV (CLKIN_MHz/9)
+		#elif ((CLKIN_MHz/10)*10 == CLKIN_MHz) && ((MCK_MHz/10)*10 == MCK_MHz)
+			#define PLL_DIV (CLKIN_MHz/10)
+		#else 
+			#error MCK_MHz no common divisor with CLKIN_MHz
+		#endif
+
+		PMC->MOR	= PMC_MOSCSEL|PMC_MOSCXTST(1)|PMC_MOSCXTBY|PMC_KEY_PASSWD; /*0x01370102*/; 
+		
+		while ((PMC->SR & PMC_MOSCXTS) == 0);
+
+		PMC->PLLAR	= PMC_MULA(MCK_MHz/(CLKIN_MHz/PLL_DIV)-1)|PMC_PLLACOUNT(1)|PMC_DIVA(PLL_DIV)|PMC_ONE;	//0x20030101; 
+		
+		while ((PMC->SR & PMC_LOCKA) == 0); 
+
+		PMC->MCKR = MCKR_PLLA_CLK; //0x02; 
+		
+		while ((PMC->SR & PMC_MCKRDY) == 0);
+
+		//PMC->PCK[1]	= PMC_PCK_MCK|PMC_PCK_PRES_64;//0x64;
+		//PMC->SCER		= PMC_PCK1;
+
+		__asm { DSB };
+		__asm { ISB };
+
+		CMCC->CTRL		= CMCC_CEN;		// cache enable
+		CMCC->MAINT0	= CMCC_INVALL;	// invalidate all cache entries
+
+		__asm { DSB };
+		__asm { ISB };
+
 	#elif defined(CPU_XMC48)
 
 		using namespace CM4;

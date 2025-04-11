@@ -24,6 +24,25 @@
 
 	#include "ARM\same53.h"
 
+#elif defined(CPU_SAM4SA)
+
+	#define	CORETYPE_SAM4SA
+	#define CORTEX_M4
+
+	#ifndef __TARGET_ARCH_ARM
+	#define __TARGET_ARCH_ARM		0
+	#endif
+
+	#ifndef __TARGET_ARCH_THUMB
+	#define __TARGET_ARCH_THUMB		4
+	#endif
+
+	#ifndef __CC_ARM
+	#define __CC_ARM		
+	#endif
+
+	#include "ARM\sam4sa.h"
+
 #elif defined(CPU_XMC48)
 
 	#define	CORETYPE_XMC4800

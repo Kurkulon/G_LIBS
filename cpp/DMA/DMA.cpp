@@ -290,6 +290,15 @@ void DMA_CH::WritePeripheral(const volatile void *src, volatile void *dst, u16 l
 
 	tm.Reset();
 
+#elif defined(CPU_SAM4SA)
+
+	_dmach.TPR = src;
+	_dmach.TCR = len;
+	_dmach.TNPR = 0;
+	_dmach.TNCR = 0;
+
+	_dmach.PTCR = PDC_TXTEN;
+
 #elif defined(CPU_XMC48)
 
 	HW::DLR->LNEN |= _dlr_lnen_mask;
@@ -343,6 +352,15 @@ void DMA_CH::ReadPeripheral(const volatile void *src, volatile void *dst, u16 le
 		_dmach->CTRLA = ctrl1 | DMCH_ENABLE; //|DMCH_TRIGACT_BURST|_dma_trgsrc_rx;
 
 		tm.Reset();
+
+#elif defined(CPU_SAM4SA)
+
+	_dmach.RPR = dst;
+	_dmach.TCR = len;
+	_dmach.RNPR = 0;
+	_dmach.RNCR = 0;
+
+	_dmach.PTCR = PDC_RXTEN;
 
 #elif defined(CPU_XMC48)
 
@@ -429,6 +447,34 @@ void DMA_CH::WritePeripheral(const volatile void *src, volatile void *dst, u16 l
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	
+#elif defined(CPU_SAM4SA)
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void DMA_CH::WritePeripheral(const volatile void *src, u16 len, const volatile void *src2, u16 len2)
+{
+	_dmach.TPR = src;
+	_dmach.TCR = len;
+	_dmach.TNPR = src2;
+	_dmach.TNCR = len2;
+
+	_dmach.PTCR = PDC_TXTEN;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void DMA_CH::ReadPeripheral(volatile void *dst, u16 len, volatile void *dst2, u16 len2)
+{
+	_dmach.RPR = dst;
+	_dmach.TCR = len;
+	_dmach.RNPR = dst2;
+	_dmach.RNCR = len2;
+
+	_dmach.PTCR = PDC_RXTEN;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 #elif defined(CPU_XMC48)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

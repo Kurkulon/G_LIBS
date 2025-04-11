@@ -258,6 +258,8 @@ bool S_SPIM::Connect(u32 baudrate)
 
 	#ifdef CPU_SAME53	
 	if (!Usic_Connect() || _MASK_CS == 0 || _MASK_CS_LEN == 0)
+	#elif defined(CPU_SAM4SA)
+	if (!Usic_Connect() || _MASK_CS == 0 || _MASK_CS_LEN == 0)
 	#elif defined(CPU_XMC48)
 	if (!Usic_Connect() || _PIN_CS == 0 || _PIN_CS_LEN == 0)
 	#endif
@@ -277,6 +279,24 @@ bool S_SPIM::Connect(u32 baudrate)
 		{
 			_MASK_CS_ALL |= _MASK_CS[i];
 		};
+
+		u32 baud = (_GEN_CLK + baudrate/2) / baudrate;
+
+		baud = (baud + 1) / 2;
+
+		if (baud > 0) baud -= 1;
+
+		if (baud > 0xFF) baud = 0xFF;
+
+		_baud = baud;
+
+		InitHW();
+
+	#elif defined(CPU_SAM4SA)
+
+		_MASK_CS_ALL = 0;
+
+		for (u32 i = 0; i < _MASK_CS_LEN; i++) _MASK_CS_ALL |= _MASK_CS[i];
 
 		u32 baud = (_GEN_CLK + baudrate/2) / baudrate;
 

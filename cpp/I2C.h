@@ -60,6 +60,11 @@ protected:
 
 	DMA_CH *	const _DMA;
 
+#elif defined(CPU_SAM4SA)
+
+	const u32 _GEN_CLK;
+	DMA_CH 		_dma;
+
 #elif defined(CPU_XMC48)
 
 	T_HW::S_PORT* const _PIO_SCL;
@@ -147,6 +152,10 @@ public:
 	S_I2C(byte num, T_HW::S_PORT* pio_scl, u32 mask_scl, u32 pmux_scl, T_HW::S_PORT* pio_sda, u32 mask_sda, u32 pmux_sda, u32 gen_src, u32 gen_clk, DMA_CH *dma)
 		: USIC(num), _PIO_SCL(pio_scl), _PIO_SDA(pio_sda), _MASK_SCL(mask_scl), _MASK_SDA(mask_sda), _PMUX_SCL(pmux_scl), _PMUX_SDA(pmux_sda), 
 			_GEN_SRC(gen_src), _GEN_CLK(gen_clk), _DMA(dma), _dsc(0), _state(I2C_WAIT) {}
+
+#elif defined(CPU_SAM4SA)
+
+	S_I2C(byte num, u32 genclk)	: USIC(num), _GEN_CLK(genclk), _dma(&(_usic_hw[num].i2c->PDC)), _dsc(0), _state(I2C_WAIT) {}
 
 #elif defined(CPU_XMC48)
 

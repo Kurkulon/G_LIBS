@@ -1,6 +1,6 @@
 #include "core.h"
 
-#if !defined(CORETYPE_LPC8XX) && !defined(_ADI_COMPILER)
+#if !defined(CORETYPE_LPC8XX) && !defined(_ADI_COMPILER) && !defined(CPU_SAM4SA)
 
 #include "xtrap.h"
 #include "trap.h"

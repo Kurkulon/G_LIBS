@@ -19,6 +19,12 @@
 
 	typedef T_HW::SERCOM USICHWT;
 
+#elif defined(CPU_SAM4SA)
+
+	#define USIC_NUM 7
+
+	typedef T_HW::USIC USICHWT;
+
 #elif defined(CPU_XMC48)
 
 	#define USIC_NUM 6
@@ -93,7 +99,7 @@ class USIC // Universal Serial Interface Channel
 
 	public:
 
-		USIC(byte num) : _usic_num(num), _usic_mask(1UL<<num), _upid(_usic_pid[num]) {}
+		USIC(byte num) : _usic_num(num), _usic_mask(1UL<<num), _upid(_usic_pid[num]), _uhw(_usic_hw[num]) {}
 
 		bool Usic_Connect();
 		void Usic_Disconnect();

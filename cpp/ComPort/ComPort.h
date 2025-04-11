@@ -142,6 +142,27 @@ class ComPort : public USIC
 		u32	GetDmaCounter() { return _DMA->GetBytesLeft(); }
 		u16	GetRecievedLen() { return _pReadBuffer->maxLen - GetDmaCounter(); }
 
+	#elif defined(CPU_SAM4SA)
+
+		T_HW::S_PORT* const _PIO_RTS;
+
+		const u32	_MASK_RTS;
+
+		DMA_CH 		_dma;
+
+		CONNECT_TYPE _cnType;
+
+		u32 _MR;
+		u16	_BaudRateRegister;
+		u16 _prevDmaCounter;
+
+		u32 _status;
+
+		bool IsTransmited()	{ return (_uhw.usart->CSR & (US_TXEMPTY|US_ENDTX)) == (US_TXEMPTY|US_ENDTX); }
+		bool IsRecieved()	{ u16 t = _dma.GetReadBytesLeft(); if (_prevDmaCounter != t) { _prevDmaCounter = t; return true; } else return false; }
+		//u32	GetDmaCounter() { return _DMA->GetBytesLeft(); }
+		u16	GetRecievedLen() { return _pReadBuffer->maxLen - _dma.GetReadBytesLeft(); }
+
 	#elif defined(CPU_XMC48)
 
 		T_HW::S_PORT* const _PIO_SCK;
@@ -287,7 +308,7 @@ class ComPort : public USIC
 
 	CTM32			_rtm;
 
-#if defined(CPU_SAME53) || defined(CPU_XMC48) || defined(__ADSPBF70x__)
+#if defined(CPU_SAME53) || defined(CPU_SAM4SA) || defined(CPU_XMC48) || defined(__ADSPBF70x__)
 
 	void		Set_RTS() { if (_PIO_RTS != 0) _PIO_RTS->SET(_MASK_RTS); }
 	void		Clr_RTS() { if (_PIO_RTS != 0) _PIO_RTS->CLR(_MASK_RTS); }
@@ -314,6 +335,10 @@ class ComPort : public USIC
 	ComPort(byte num, T_HW::S_PORT* psck, T_HW::S_PORT* ptx, T_HW::S_PORT* prx, T_HW::S_PORT* prts, byte pinsck, byte pintx, byte pinrx, byte pinrts, u32 muxsck, u32 muxtx, u32 muxrx, u32 txpo, u32 rxpo, u32 gen_src, u32 gen_clk, DMA_CH *dma)
 		: USIC(num), _PIO_SCK(psck), _PIO_TX(ptx), _PIO_RX(prx), _PIO_RTS(prts), _PIN_SCK(pinsck), _PIN_TX(pintx), _PIN_RX(pinrx), _MASK_RTS(1UL<<pinrts),
 		_PMUX_SCK(muxsck), _PMUX_TX(muxtx), _PMUX_RX(muxrx), _GEN_SRC(gen_src), _GEN_CLK(gen_clk), _TXPO(txpo), _RXPO(rxpo), _DMA(dma), _status485(READ_END) {}
+
+#elif defined(CPU_SAM4SA)
+
+	  ComPort(byte num, T_HW::S_PORT* prts, byte pinrts) : USIC(num), _PIO_RTS(prts), _MASK_RTS(1UL<<pinrts), _status485(READ_END), _dma(&(_usic_hw[num].uart->PDC)) {}
 
 #elif defined(CPU_XMC48)
 

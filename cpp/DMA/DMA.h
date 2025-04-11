@@ -47,6 +47,10 @@ protected:
 
 	u16 _prevBTCNT;
 	
+#elif defined(CPU_SAM4SA)
+
+	T_HW::S_PDC*				const _dmach;
+
 #elif defined(CPU_XMC48)
 
 	struct LLI
@@ -83,8 +87,12 @@ protected:
 
 #endif
 
+#ifndef CPU_SAM4SA
+
 	const byte		_chnum;
 
+#endif
+		
 	void _MemCopy(const volatile void *src, volatile void *dst, u16 len, u32 ctrl);
 
 public:
@@ -226,6 +234,42 @@ public:
 	//	WritePeripheral(data, (void*)init, len, DMCH_TRIGACT_TRANSACTION, DMDSC_BEATSIZE_BYTE);
 	//	SoftwareTrigger(); //HW::DMAC->SWTRIGCTRL = 1UL << CRC_DMACH;
 	//}
+
+#elif defined(CPU_SAM4SA) //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	DMA_CH(T_HW::S_PDC* ch) : _dmach(ch) { }
+
+	void Disable() { _dmach->PTCR = 0x202; }
+	//void Reset() { _dmach->PTCR = 0x202; }
+	//void Suspend() { _dmach->CTRLB = DMCH_CMD_SUSPEND; }
+
+	bool CheckWriteComplete()	{ return _dmach->TCR == 0 && _dmach->TNCR == 0; }
+	bool CheckReadComplete()	{ return _dmach->RCR == 0 && _dmach->RNCR == 0; }
+	bool CheckComplete()		{ return CheckWriteComplete() && CheckReadComplete(); }
+
+	void Update() {  }
+
+	//void MemCopy(volatile void *src, volatile void *dst, u16 len)		{ _MemCopy((byte*)src+len, (byte*)dst+len, len, DMDSC_VALID|DMDSC_BEATSIZE_BYTE|DMDSC_DSTINC|DMDSC_SRCINC); }
+	//void MemCopySrcInc(volatile void *src, volatile void *dst, u16 len) { _MemCopy((byte*)src+len, dst, len, DMDSC_VALID|DMDSC_BEATSIZE_BYTE|DMDSC_SRCINC); }
+	//void MemCopyDstInc(volatile void *src, volatile void *dst, u16 len) { _MemCopy(src, (byte*)dst+len, len, DMDSC_VALID|DMDSC_BEATSIZE_BYTE|DMDSC_DSTINC); }
+	//bool CheckMemCopyComplete() { return CheckComplete(); }
+
+	//u32 GetSrcBytesReady()	{ return 0; }
+	//u32 GetDstBytesReady()	{ return 0; }
+	//u32 GetSrcBytesLeft()	{ return 0; }
+	//u32 GetDstBytesLeft()	{ return 0; }
+
+	u16 GetWriteBytesLeft()	{ return _dmach->TCR; }
+	u16 GetReadBytesLeft()	{ return _dmach->RCR; }
+	//u32 GetBytesReady()	{ return _dmach->TCR; }
+
+	//void SoftwareTrigger() { HW::DMAC->SWTRIGCTRL = 1UL<<_chnum; }
+	//void SetEvCtrl(byte v) { _dmach->EVCTRL = v; }
+	//void SetPriLvl(byte v) { _dmach->PRILVL = v; }
+
+	void WritePeripheral(const volatile void *src, u16 len, const volatile void *src2, u16 len2);
+	void ReadPeripheral(volatile void *dst, u16 len, volatile void *dst2, u16 len2);
+
 
 #elif defined(CPU_XMC48)	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

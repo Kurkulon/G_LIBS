@@ -85,6 +85,16 @@ protected:
 	DMA_CH *	const 	_DMATX;
 	DMA_CH *	const 	_DMARX;
 
+#elif defined(CPU_SAM4SA)
+
+	T_HW::S_PORT* const _PIO_CS;
+
+	const u32 * const	_MASK_CS;
+	const u32			_MASK_CS_LEN;
+	const u32 			_GEN_CLK;
+
+	DMA_CH				_dma;
+
 #elif defined(CPU_XMC48)
 
 	T_HW::S_PORT* const _PIO_SPCK;
@@ -273,6 +283,25 @@ public:
 			void ReadByteStart(u16 count) {}
 			byte ReadByteAsync() { return WriteReadByte(0); }
 			byte ReadByteSync(u16 count) { return WriteReadByte(0); }
+
+#elif defined(CPU_SAM4SA)
+
+	S_SPIM(byte num, T_HW::S_PORT* pcs, u32* mcs, u32 mcslen, u32 genclk) : USIC(num), _PIO_CS(pcs), _MASK_CS(mcs), _MASK_CS_LEN(mcslen), _GEN_CLK(genclk), _dma(&(_usic_hw[num].spi->PDC)), _dsc(0), _state(WAIT) {}
+
+	bool CheckWriteComplete() { return _dma.CheckWriteComplete() && ((_uhw.spi->SR & 0x2A2) == 0x2A2); }
+	bool CheckReadComplete() { return _dma.CheckReadComplete(); }
+	//void ChipSelect(byte num)	{ _PIO_CS->CLR(_MASK_CS[num]); }
+	//void ChipDisable()			{ _PIO_CS->SET(_MASK_CS_ALL); }
+	void DisableTX() { _dma.Disable(); }
+	void DisableRX() { _dma.Disable(); }
+
+	//void WriteByteSync(byte v)		{ WriteReadByte(v); }
+	//void WriteByteAsync(byte v);
+	//void WaitWriteByte()			{ while((_uhw.spi->INTFLAG & (SPI_TXC|SPI_DRE)) != (SPI_TXC|SPI_DRE)); }
+
+	//void ReadByteStart(u16 count) {}
+	//byte ReadByteAsync() { return WriteReadByte(0); }
+	//byte ReadByteSync(u16 count) { return WriteReadByte(0); }
 
 #elif defined(CPU_XMC48)
 
