@@ -90,6 +90,38 @@
 	
 	#endif // #if defined(MAN_TRANSMIT_V1) || defined(MAN_TRANSMIT_V2)
 
+#elif defined(CPU_SAM4SA) //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	#if defined(MANT_TC) && defined(MAN_TRANSMIT_V1)
+
+		#define MNTTC						CONCAT2(HW::TC0->C,MANT_TC)
+		//#define MANT_GEN					CONCAT2(GEN_,MANT_TC)
+		#define MANT_GEN_CLK				MCK
+		#define MANT_IRQ					CONCAT3(TC,MANT_TC,_IRQ)
+		//#define GCLK_MANT					CONCAT2(GCLK_,MANT_TC)
+		#define PID_MANT					CONCAT3(TC,MANT_TC,_I)
+
+		#if (MANT_GEN_CLK > 50000000)
+		#define MANT_PRESC_NUM		8
+		#else
+		#define MANT_PRESC_NUM		2
+		#endif
+
+		#define MANT_TCCLKS					CONCAT2(TC_TCCLKS_MCK,MANT_PRESC_NUM)
+		#define MANT_PRESC_DIV				CONCAT2(TC_PRESCALER_DIV,MANT_PRESC_NUM)
+
+//		#define ManResetTransmit()			{ MNTTC.CTRLA = TC_SWRST; while(MNTTC->SYNCBUSY); }
+		#define ManDisableTransmit()		{ MNTTC.IDR = TC_CPCS; MNTTC.CCR = TC_CLKDIS; }
+		#define ManEndIRQ()					{ HW::ReadMem32(&(MNTTC.SR)); }
+
+	#else
+		#error  Must defined MANT_TC or MANT_TCC
+	#endif
+
+	#define BAUD2CLK(x)						((u32)(MANT_GEN_CLK/MANT_PRESC_NUM/(x)+0.5))
+
+	inline void MANTT_ClockEnable()		{ HW::PMC->ClockEnable(HW::PID::PID_MANT); }
+
 #elif defined(CPU_XMC48) //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 	#if (SYSCLK_MHz > 100)
@@ -614,7 +646,7 @@ static __irq void ManTrmIRQ()
 			ManDisable();
 			stateManTrans = 0;
 
-			#ifdef CPU_SAME53	
+			#if defined(CPU_SAME53) || defined(CPU_SAM4SA)
 				ManDisableTransmit();
 			#elif defined(CPU_XMC48)
 				MANTCC->TCCLR = CC4_TRBC;
@@ -1183,8 +1215,15 @@ void InitManTransmit()
 	inline void MANRT_ClockEnable()  { HW::GCLK->PCHCTRL[CONCAT2(GCLK_,MANR_TCC)]	= MANR_GEN|GCLK_CHEN; HW::MCLK->ClockEnable(CONCAT2(PID_,MANR_TCC)); }
 	inline void MANIT_ClockEnable()  { HW::GCLK->PCHCTRL[CONCAT2(GCLK_,MANI_TC)]	= MANI_GEN|GCLK_CHEN; HW::MCLK->ClockEnable(CONCAT2(PID_,MANI_TC)); }
 
-#elif defined(CPU_XMC48)	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#elif defined(CPU_SAM4SA)	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+	#define MANR_IRQ			CONCAT2(PIO_RXD,_IRQ)
+
+	#define US2MR(v)			(US2CLK(v))
+
+	#define ManR_EndIRQ()		{ HW::ReadMem32(&HW::PIOB->ISR); }
+
+#elif defined(CPU_XMC48)	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 	//#define MANR_EXTINT			(PIN_RXD&15)
 
@@ -1224,6 +1263,8 @@ static void ManRcvEnd(bool ok)
 {
 #ifdef CPU_SAME53	
 	MNRTCC->INTENCLR = ~0;
+#elif defined(CPU_SAM4SA)
+	HW::PIO_RXD->IDR	= RXD;
 #elif defined(CPU_XMC48)
 	MANRCC->INTE = 0;
 #endif
@@ -1276,6 +1317,16 @@ static __irq void ManRcvIRQ2()
 		u32 len = MNRTCC->CC[0];
 
 		MNRTCC->CTRLBSET = TCC_CMD_RETRIGGER;
+
+	#elif defined(CPU_SAM4SA)
+		
+		static u32 prevT = 0;
+
+		u32 t = GetCYCCNT();
+
+		u32 len = t - prevT;
+
+		prevT = t;
 
 	#elif defined(CPU_XMC48)
 
@@ -1388,6 +1439,8 @@ static __irq void ManRcvIRQ2()
 
 	#ifdef CPU_SAME53	
 		MNRTCC->INTFLAG = ~0;
+	#elif defined(CPU_SAM4SA)
+		ManR_EndIRQ();
 	#elif defined(CPU_XMC48)
 	#endif
 
@@ -1498,6 +1551,17 @@ void InitManRecieve()
 
 	MNITC->CTRLBSET = TC_ONESHOT;
 
+#elif defined(CPU_SAM4SA)
+
+	using namespace HW;
+
+	HW::PIO_RXD->PER = RXD;
+	HW::PIO_RXD->ODR = RXD;
+
+	HW::PIO_RXD->IDR	= RXD;
+	HW::PIO_RXD->IFER	= RXD;
+	HW::PIO_RXD->AIMDR	= RXD;
+
 #elif defined(CPU_XMC48)
 
 	HW::CCU_Enable(MANCCU_PID);
@@ -1568,6 +1632,12 @@ bool RcvManData(MRB *mrb)
 
 		MNRTCC->INTFLAG = ~0;
 		MNRTCC->INTENSET = TCC_MC0;
+
+	#elif defined(CPU_SAM4SA)
+
+		HW::PIO_RXD->IER	= RXD;
+		HW::PIO_RXD->IFER	= RXD;
+		HW::PIO_RXD->AIMDR	= RXD;
 
 	#elif defined(CPU_XMC48)
 

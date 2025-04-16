@@ -239,7 +239,7 @@ public:
 
 	DMA_CH(T_HW::S_PDC* ch) : _dmach(ch) { }
 
-	void Disable() { _dmach->PTCR = 0x202; }
+	void Disable() { _dmach->PTCR = PDC_RXTDIS|PDC_TXTDIS; }
 	//void Reset() { _dmach->PTCR = 0x202; }
 	//void Suspend() { _dmach->CTRLB = DMCH_CMD_SUSPEND; }
 

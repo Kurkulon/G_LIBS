@@ -241,9 +241,11 @@ void ComPort::InitHW()
 			HW::PIOB->ABCDSR2	&=	~(PB2|PB3);
 		};
 
-		_uhw.uart->CR = 3;
-		_uhw.uart->MR = _MR;
-		_uhw.uart->BRGR = _BaudRateRegister;
+		T_HW::S_UART &uart = _uhw->uart;
+
+		uart.CR = 3;
+		uart.MR = _MR;
+		uart.BRGR = _BaudRateRegister;
 
 	#elif defined(CPU_XMC48)
 
@@ -663,15 +665,17 @@ void ComPort::TransmitByte(byte v)
 
 	#elif defined(CPU_SAM4SA)
 
-		_uhw.uart->CR = US_TXDIS|US_RXDIS;// 0xA0;	// Disable transmit and receive
+		T_HW::S_UART &uart = _uhw->uart;
 
-		_uhw.uart->CR = US_TXEN;	// 0x40;
+		uart.CR = US_TXDIS|US_RXDIS;// 0xA0;	// Disable transmit and receive
 
-		_uhw.uart->THR = v;
+		uart.CR = US_TXEN;	// 0x40;
 
-		while ((_uhw.uart->SR & US_TXEMPTY) == 0);
+		uart.THR = v;
 
-		_uhw.uart->CR = US_TXDIS|US_RXDIS;// 0xA0;	// Disable transmit and receive
+		while ((uart.SR & US_TXEMPTY) == 0);
+
+		uart.CR = US_TXDIS|US_RXDIS;// 0xA0;	// Disable transmit and receive
 
 	#elif defined(CPU_XMC48)
 
@@ -730,11 +734,13 @@ void ComPort::EnableTransmit(void* src, word count)
 
 	#elif defined(CPU_SAM4SA)
 
-		_uhw.uart->CR = US_TXDIS|US_RXDIS;// 0xA0;	// Disable transmit and receive
+		T_HW::S_UART &uart = _uhw->uart;
+		
+		uart.CR = US_TXDIS|US_RXDIS;// 0xA0;	// Disable transmit and receive
 
 		_dma.WritePeripheral(src, count, 0, 0);
 
-		_uhw.uart->CR = US_TXEN;
+		uart.CR = US_TXEN;
 
 	#elif defined(CPU_XMC48)
 
@@ -849,7 +855,7 @@ void ComPort::DisableTransmit()
 
 	#elif defined(CPU_SAM4SA)
 
-		_uhw.uart->CR = US_TXDIS;
+		_uhw->uart.CR = US_TXDIS;
 
 		_dma.Disable();
 
@@ -928,11 +934,13 @@ void ComPort::EnableReceive(void* dst, word count)
 
 	#elif defined(CPU_SAM4SA)
 
-		_uhw.usart->CR = US_RSTSTA|US_TXDIS|US_RXDIS;// 0x1A0;	// Disable transmit and receive, reset status
+		T_HW::S_USART &usart = _uhw->usart;
+
+		usart.CR = US_RSTSTA|US_TXDIS|US_RXDIS;// 0x1A0;	// Disable transmit and receive, reset status
 
 		_dma.ReadPeripheral(dst, count, 0, 0);
 
-		_uhw.usart->CR = US_RSTSTA|US_RXEN;
+		usart.CR = US_RSTSTA|US_RXEN;
 
 	#elif defined(CPU_XMC48)
 
@@ -1040,7 +1048,7 @@ void ComPort::DisableReceive()
 
 	#elif defined(CPU_SAM4SA)
 
-		_uhw.uart->CR = US_RXDIS;
+		_uhw->uart.CR = US_RXDIS;
 
 		_dma.Disable();
 

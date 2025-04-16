@@ -62,7 +62,7 @@ protected:
 
 #elif defined(CPU_SAM4SA)
 
-	const u32 _GEN_CLK;
+	const u32	_GEN_CLK;
 	DMA_CH 		_dma;
 
 #elif defined(CPU_XMC48)
@@ -155,7 +155,7 @@ public:
 
 #elif defined(CPU_SAM4SA)
 
-	S_I2C(byte num, u32 genclk)	: USIC(num), _GEN_CLK(genclk), _dma(&(_usic_hw[num].i2c->PDC)), _dsc(0), _state(I2C_WAIT) {}
+	S_I2C(byte num, u32 genclk)	: USIC(num), _GEN_CLK(genclk), _dma(&(_usic_hw[num]->i2c.PDC)), _dsc(0), _state(I2C_WAIT) {}
 
 #elif defined(CPU_XMC48)
 

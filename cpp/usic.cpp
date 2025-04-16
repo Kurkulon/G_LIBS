@@ -17,7 +17,7 @@ const byte	USIC::_usic_gclk[USIC_NUM]		= {	GCLK_SERCOM0_CORE,	GCLK_SERCOM1_CORE,
 #elif defined(CPU_SAM4SA)
 
 const byte	USIC::_usic_pid[USIC_NUM]		= {	HW::PID::SPI_I,		HW::PID::TWI0_I,	HW::PID::TWI1_I,	HW::PID::USART0_I,	HW::PID::USART1_I,	HW::PID::UART0_I,	HW::PID::UART1_I	};
-USICHWT		const USIC::_usic_hw[USIC_NUM]	= {	HW::SPI,			HW::TWI0,			HW::TWI1,			HW::USART0,			HW::USART1,			HW::UART0,			HW::UART1		};
+const USICHWT USIC::_usic_hw[USIC_NUM]		= {	HW::USIC0,			HW::USIC1,			HW::USIC2,			HW::USIC3,			HW::USIC4,			HW::USIC5,			HW::USIC6		};
 
 #elif defined(CPU_XMC48)
 
@@ -77,7 +77,7 @@ void USIC::Usic_Disconnect()
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#ifdef CPU_SAME53
+#if defined(CPU_SAME53) || defined(CPU_SAM4SA)
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

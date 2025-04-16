@@ -286,9 +286,9 @@ public:
 
 #elif defined(CPU_SAM4SA)
 
-	S_SPIM(byte num, T_HW::S_PORT* pcs, u32* mcs, u32 mcslen, u32 genclk) : USIC(num), _PIO_CS(pcs), _MASK_CS(mcs), _MASK_CS_LEN(mcslen), _GEN_CLK(genclk), _dma(&(_usic_hw[num].spi->PDC)), _dsc(0), _state(WAIT) {}
+	S_SPIM(byte num, T_HW::S_PORT* pcs, u32* mcs, u32 mcslen, u32 genclk) : USIC(num), _PIO_CS(pcs), _MASK_CS(mcs), _MASK_CS_LEN(mcslen), _GEN_CLK(genclk), _dma(&(_usic_hw[num]->spi.PDC)), _dsc(0), _state(WAIT) {}
 
-	bool CheckWriteComplete() { return _dma.CheckWriteComplete() && ((_uhw.spi->SR & 0x2A2) == 0x2A2); }
+	bool CheckWriteComplete() { return _dma.CheckWriteComplete() && ((_uhw->spi.SR & 0x2A2) == 0x2A2); }
 	bool CheckReadComplete() { return _dma.CheckReadComplete(); }
 	//void ChipSelect(byte num)	{ _PIO_CS->CLR(_MASK_CS[num]); }
 	//void ChipDisable()			{ _PIO_CS->SET(_MASK_CS_ALL); }

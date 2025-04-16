@@ -158,7 +158,7 @@ class ComPort : public USIC
 
 		u32 _status;
 
-		bool IsTransmited()	{ return (_uhw.usart->CSR & (US_TXEMPTY|US_ENDTX)) == (US_TXEMPTY|US_ENDTX); }
+		bool IsTransmited()	{ return (_uhw->usart.CSR & (US_TXEMPTY|US_ENDTX)) == (US_TXEMPTY|US_ENDTX); }
 		bool IsRecieved()	{ u16 t = _dma.GetReadBytesLeft(); if (_prevDmaCounter != t) { _prevDmaCounter = t; return true; } else return false; }
 		//u32	GetDmaCounter() { return _DMA->GetBytesLeft(); }
 		u16	GetRecievedLen() { return _pReadBuffer->maxLen - _dma.GetReadBytesLeft(); }
@@ -338,7 +338,7 @@ class ComPort : public USIC
 
 #elif defined(CPU_SAM4SA)
 
-	  ComPort(byte num, T_HW::S_PORT* prts, byte pinrts) : USIC(num), _PIO_RTS(prts), _MASK_RTS(1UL<<pinrts), _status485(READ_END), _dma(&(_usic_hw[num].uart->PDC)) {}
+	  ComPort(byte num, T_HW::S_PORT* prts, byte pinrts) : USIC(num), _PIO_RTS(prts), _MASK_RTS(1UL<<pinrts), _status485(READ_END), _dma(&(_usic_hw[num]->uart.PDC)) {}
 
 #elif defined(CPU_XMC48)
 

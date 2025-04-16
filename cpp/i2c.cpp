@@ -607,6 +607,25 @@ void S_I2C::InitHW()
 	i2c->STATUS = 0;
 	i2c->STATUS.BUSSTATE = BUSSTATE_IDLE;
 	
+#elif defined(CPU_SAM4SA)
+
+	HW::PMC->ClockEnable(_upid);
+
+	if(_usic_num == 1) // TWI0
+	{
+		HW::PIOA->PDR		=	PA3|PA4;
+		HW::PIOA->ABCDSR1	&=	~(PA3|PA4);
+		HW::PIOA->ABCDSR2	&=	~(PA3|PA4);
+	}
+	else if(_usic_num == 2)  // TWI1
+	{
+		HW::PIOB->PDR		=	PB4|PB5;
+		HW::PIOB->ABCDSR1	&=	~(PB4|PB5);
+		HW::PIOB->ABCDSR2	&=	~(PB4|PB5);
+	};
+
+	_uhw->i2c.CWGR = _baud;
+
 #elif defined(CPU_XMC48)
 
 		HW::Peripheral_Enable(_upid);
@@ -747,6 +766,13 @@ bool S_I2C::Connect(u32 baudrate)
 		if (baud > 0xFF) baud = 0xFF;
 
 		_baud = baud;
+
+
+	#elif defined(CPU_SAM4SA)
+		
+		u32 t = (_GEN_CLK + baudrate/2) / baudrate / 2;
+
+		_baud = TWI_CWGR_CLDIV(t)|TWI_CWGR_CHDIV(t);
 
 		InitHW();
 
@@ -1035,6 +1061,200 @@ bool S_I2C::Update()
 
 			break;
 	};
+
+#elif defined(CPU_SAM4SA)
+
+	T_HW::S_TWI* i2c = &_uhw->i2c;
+
+	u32 i2cSR = i2c->SR;
+
+	switch (_state)
+	{
+		case I2C_WAIT:
+
+			if (CheckReset())
+			{
+				Usic_Update();
+			}
+			else
+			{
+				_dsc = _reqList.Get();
+
+				if (_dsc != 0)
+				{
+					Usic_Lock();
+
+					DSCI2C &dsc = *_dsc;
+
+					dsc.ready = false;
+					dsc.ack = false;
+					dsc.readedLen = 0;
+
+					i2c->CR = TWI_MSEN|TWI_SVDIS;					// 0x24;
+					i2c->CWGR = _baud;
+					i2c->IDR = ~0;
+
+					HW::ReadMem32(&i2c->RHR);
+
+					if (dsc.wlen == 0 || dsc.rlen != 0)
+					{
+						u16 len = dsc.wlen;
+						if (len > 3) len = 3;
+
+						u32 iadr = 0;
+						byte *p = (byte*)dsc.wdata;
+
+						for (u16 i = 0; i < len; i++) iadr = (iadr << 8)|*(p++);
+
+						i2c->MMR = TWI_DADR(_dsc->adr)|TWI_IADRSZ(len)|TWI_MREAD;	
+						i2c->IADR = iadr;
+
+						_dma.ReadPeripheral(dsc.rdata, dsc.rlen, 0, 0);
+
+						i2c->CR = TWI_START;
+
+						_state = I2C_READ; 
+					}
+					else
+					{
+						i2c->MMR = TWI_DADR(_dsc->adr)|TWI_IADRSZ_NONE;	// dsc->MMR & ~0x1000;
+
+						_dma.WritePeripheral(_dsc->wdata, _dsc->wlen, _dsc->wdata2, _dsc->wlen2);
+	
+						_state = I2C_WRITE; 
+					};
+
+					_prevCount = 0;
+					_tm.Reset();
+				};
+			};
+
+			break;
+
+		case I2C_WRITE:
+
+			if(i2cSR & TWI_NACK)
+			{
+				i2c->CR = TWI_STOP;
+				
+				_state = I2C_STOP; 
+			}
+			else if (_tm.Timeout(100))
+			{
+				i2c->CR = TWI_STOP;
+
+				_state = I2C_RESET; 
+			}
+			else
+			{
+				DSCI2C &dsc = *_dsc;
+
+				if (i2cSR & TWI_TXBUFE)
+				{
+					_dma.Disable();
+
+					dsc.ack = true;
+
+					i2c->CR = TWI_STOP;
+						
+					_state = I2C_STOP; 
+
+					_prevCount = 0;
+					_tm.Reset();
+				}
+				else
+				{
+					u32 t = _dma.GetWriteBytesLeft();
+
+					if (t != _prevCount) _prevCount = t, _tm.Reset();
+				};
+			};
+
+			break;
+
+		case I2C_READ:
+
+			if(i2cSR & TWI_NACK)
+			{
+				i2c->CR = TWI_STOP;
+
+				_state = I2C_STOP; 
+			}
+			else if (_tm.Timeout(100))
+			{
+				i2c->CR = TWI_STOP;
+
+				_state = I2C_RESET; 
+			}
+			else
+			{
+				if (i2cSR & TWI_RXBUFF)
+				{
+					_dma.Disable();
+
+					_dsc->readedLen = _dsc->rlen - _dma.GetReadBytesLeft();
+
+					HW::ReadMem32(&i2c->RHR);
+
+					_dsc->ack = true;
+
+					i2c->CR = TWI_STOP;
+
+					_state = I2C_STOP; 
+				}
+				else
+				{
+					u32 t = _dma.GetReadBytesLeft();
+
+					if (t != _prevCount) _prevCount = t, _tm.Reset();
+				};
+			};
+
+			//_dsc->readedLen = _dsc->rlen - 1 - _dma.GetReadBytesLeft(); //_dsc->rlen - DmaWRB[I2C_DMACH].BTCNT;
+
+			break;
+
+		case I2C_STOP:
+
+			if (i2cSR & TWI_TXCOMP)
+			{
+				HW::ReadMem32(&i2c->RHR);
+
+				_dsc->ready = true;
+
+				_dsc = 0;
+				
+				i2c->CR = TWI_MSDIS;
+
+				_state = I2C_WAIT; 
+
+				Usic_Unlock();
+			};
+
+			break;
+
+		case I2C_RESET:
+
+			if (i2cSR & TWI_TXCOMP)
+			{
+				_dma.Disable();
+
+				i2c->CR = TWI_MSDIS;
+
+				_dsc->ready = false;
+
+				_reqList.Add(_dsc);
+					
+				_dsc = 0;
+					
+				_state = I2C_WAIT;
+
+				Usic_Unlock();
+			};
+
+			break;
+	};
+
 
 #elif defined(CPU_XMC48)
 
