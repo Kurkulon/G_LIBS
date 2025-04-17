@@ -1,3 +1,8 @@
+#ifndef SEGGER_RTT_CONF_H__17_04_2025__16_39
+#define SEGGER_RTT_CONF_H__17_04_2025__16_39
+
+#pragma once
+
 /*********************************************************************
 *              SEGGER MICROCONTROLLER SYSTEME GmbH                   *
 *        Solutions for real time microcontroller applications        *
@@ -65,3 +70,5 @@ Purpose : Implementation of SEGGER real-time terminal which allows
 #define SEGGER_RTT_IN_RAM                         (1)
 
 /*************************** End of file ****************************/
+
+#endif // #ifndef SEGGER_RTT_CONF_H__17_04_2025__16_39

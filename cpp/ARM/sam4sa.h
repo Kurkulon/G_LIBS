@@ -48,12 +48,17 @@ extern byte core_sys_array[0x100000];
 #define ACC_IRQ			33	/**< 33 SAM4SA16B Analog Comparator (ACC) */
 #define UDP_IRQ			34	/**< 34 SAM4SA16B USB Device Port (UDP) */
 
+#pragma push
 #pragma anon_unions
+#pragma diag_suppress 368,381,826
+
 
 namespace T_HW
 {
-	typedef volatile unsigned int AT91_REG;// Hardware register definition
-	typedef volatile void * AT91_PTR;// Hardware register definition
+	typedef volatile u32				AT91_REG;	// Hardware register definition
+	typedef volatile __writeonly u32	AT91_WO;	// Hardware register definition
+	typedef volatile const u32		AT91_RO;	// Hardware register definition
+	typedef volatile void *			AT91_PTR;	// Hardware register definition
 
 	typedef void(*AT91_IHP)() __irq;	// Interrupt handler pointer
 
@@ -233,80 +238,102 @@ namespace T_HW
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	//struct S_EBI
-	//{
-	//	AT91_REG	CSA;
-	//	AT91_REG	z__reserved1[3];
-	//	S_SMC		SMC;
-	//};
+	struct S_PDC
+	{
+		AT91_PTR	RPR;	// Receive Pointer Register	
+		AT91_REG	RCR;	// Receive Counter Register
+		AT91_PTR	TPR;	// Transmit Pointer Register
+		AT91_REG	TCR;	// Transmit Counter Register
+		AT91_PTR	RNPR;	// Receive Next Pointer Register	
+		AT91_REG	RNCR;	// Receive Next Pointer Register
+		AT91_PTR	TNPR;	// Transmit Next Pointer Register
+		AT91_REG	TNCR;	// Transmit Next Counter Register
+		AT91_WO		PTCR;	// PDC Transfer Control Register	
+		AT91_REG	PTSR;	// PDC Transfer Status Register
+	};
 
-	//S_EBI * const EBI = MK_PTR(S_EBI,0xFFFFFF80);
+	/* -------- PERIPH_PTCR : (PDC Offset: 0x20) Transfer Control Register -------- */
+
+	#define PDC_RXTEN	(0x1u << 0) /**< \brief (PERIPH_PTCR) Receiver Transfer Enable */
+	#define PDC_RXTDIS	(0x1u << 1) /**< \brief (PERIPH_PTCR) Receiver Transfer Disable */
+	#define PDC_TXTEN	(0x1u << 8) /**< \brief (PERIPH_PTCR) Transmitter Transfer Enable */
+	#define PDC_TXTDIS	(0x1u << 9) /**< \brief (PERIPH_PTCR) Transmitter Transfer Disable */
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 	struct S_PIO
 	{
-		AT91_REG PER;						//	PIO_PER 								
-		AT91_REG PDR;						//	PIO_PDR 
-		AT91_REG PSR;						//	PIO_PSR 
-		AT91_REG z__reserved1;				//	–
-		AT91_REG OER;						//	PIO_OER 
-		AT91_REG ODR;						//	PIO_ODR 
-		AT91_REG OSR;						//	PIO_OSR 
-		AT91_REG z__reserved2;				//	–
-		AT91_REG IFER;						//	PIO_IFER 
-		AT91_REG IFDR;						//	PIO_IFDR 
-		AT91_REG IFSR;						//	PIO_IFSR 
-		AT91_REG z__reserved3;				//	–
-		AT91_REG SODR;						//	PIO_SODR 
-		AT91_REG CODR;						//	PIO_CODR 
-		AT91_REG ODSR;						//	PIO_ODSR
-		AT91_REG PDSR;						//	PIO_PDSR 
-		AT91_REG IER;						//	PIO_IER
-		AT91_REG IDR;						//	PIO_IDR
-		AT91_REG IMR;						//	PIO_IMR 
-		AT91_REG ISR;						//	PIO_ISR
-		AT91_REG MDER;						//	PIO_MDER 
-		AT91_REG MDDR;						//	PIO_MDDR 
-		AT91_REG MDSR;						//	PIO_MDSR 
-		AT91_REG z__reserved4;				//	–
-		AT91_REG PUDR;						//	PIO_PUDR 
-		AT91_REG PUER;						//	PIO_PUER
-		AT91_REG PUSR;						//	PIO_PUSR
-		AT91_REG z__reserved5;				//	–
-		AT91_REG ABCDSR1;					//	PIO_ABCDSR1
-		AT91_REG ABCDSR2;					//	PIO_ABCDSR2
-		AT91_REG z__reserved6[2];			//	–									
-		AT91_REG SCIFSR;					//	PIO_IFSCDR 
-		AT91_REG DIFSR;						//	PIO_IFSCER 
-		AT91_REG IFDGSR;					//	PIO_IFSCSR 
-		AT91_REG SCDR;						//	PIO_SCDR 
-		AT91_REG PPDDR;						//	PIO_PPDDR 
-		AT91_REG PPDER;						//	PIO_PPDER 
-		AT91_REG PPDSR;						//	PIO_PPDSR 
-		AT91_REG z__reserved7;				//	–
-		AT91_REG OWER;						//	PIO_OWER 
-		AT91_REG OWDR;						//	PIO_OWDR 
-		AT91_REG OWSR;						//	PIO_OWSR 
-		AT91_REG z__reserved8;				//	–
-		AT91_REG AIMER;						//	PIO_AIMER 
-		AT91_REG AIMDR;						//	PIO_AIMDR 
-		AT91_REG AIMMR;						//	PIO_AIMMR 
-		AT91_REG z__reserved9;				//	–
-		AT91_REG ESR;						//	PIO_ESR 
-		AT91_REG LSR;						//	PIO_LSR 
-		AT91_REG ELSR;						//	PIO_ELSR 
-		AT91_REG z__reserved10;				//	–
-		AT91_REG FELLSR;					//	PIO_FELLSR 
-		AT91_REG REHLSR;					//	PIO_REHLSR 
-		AT91_REG FRLHSTR;					//	PIO_FRLHSR 
-		AT91_REG z__reserved11;				//	–
-		AT91_REG LOCKSR;					//	PIO_LOCKSR 
-		AT91_REG WPMR;						//	PIO_WPMR 
-		AT91_REG WPSR;						//	PIO_WPSR 
-		AT91_REG z__reserved12[5];			//	–
-		AT91_REG SCHMITT;					//	PIO_SCHMITT
-			
+		AT91_WO	 PER;						/**< \brief (Pio Offset: 0x0000) PIO Enable Register */						
+		AT91_WO	 PDR;						/**< \brief (Pio Offset: 0x0004) PIO Disable Register */
+		AT91_RO	 PSR;						/**< \brief (Pio Offset: 0x0008) PIO Status Register */
+		AT91_RO	 z__reserved1;				
+		AT91_WO	 OER;						/**< \brief (Pio Offset: 0x0010) Output Enable Register */
+		AT91_WO	 ODR;						/**< \brief (Pio Offset: 0x0014) Output Disable Register */
+		AT91_RO	 OSR;						/**< \brief (Pio Offset: 0x0018) Output Status Register */
+		AT91_RO	 z__reserved2;				
+		AT91_WO	 IFER;						/**< \brief (Pio Offset: 0x0020) Glitch Input Filter Enable Register */
+		AT91_WO	 IFDR;						/**< \brief (Pio Offset: 0x0024) Glitch Input Filter Disable Register */
+		AT91_RO	 IFSR;						/**< \brief (Pio Offset: 0x0028) Glitch Input Filter Status Register */
+		AT91_RO	 z__reserved3;				
+		AT91_WO	 SODR;						/**< \brief (Pio Offset: 0x0030) Set Output Data Register */
+		AT91_WO	 CODR;						/**< \brief (Pio Offset: 0x0034) Clear Output Data Register */
+		AT91_REG ODSR;						/**< \brief (Pio Offset: 0x0038) Output Data Status Register */
+		AT91_RO	 PDSR;						/**< \brief (Pio Offset: 0x003C) Pin Data Status Register */
+		AT91_WO	 IER;						/**< \brief (Pio Offset: 0x0040) Interrupt Enable Register */
+		AT91_WO	 IDR;						/**< \brief (Pio Offset: 0x0044) Interrupt Disable Register */
+		AT91_RO	 IMR;						/**< \brief (Pio Offset: 0x0048) Interrupt Mask Register */
+		AT91_RO	 ISR;						/**< \brief (Pio Offset: 0x004C) Interrupt Status Register */
+		AT91_WO	 MDER;						/**< \brief (Pio Offset: 0x0050) Multi-driver Enable Register */
+		AT91_WO	 MDDR;						/**< \brief (Pio Offset: 0x0054) Multi-driver Disable Register */
+		AT91_RO	 MDSR;						/**< \brief (Pio Offset: 0x0058) Multi-driver Status Register */
+		AT91_RO	 z__reserved4;				
+		AT91_WO	 PUDR;						/**< \brief (Pio Offset: 0x0060) Pull-up Disable Register */
+		AT91_WO	 PUER;						/**< \brief (Pio Offset: 0x0064) Pull-up Enable Register */
+		AT91_RO	 PUSR;						/**< \brief (Pio Offset: 0x0068) Pad Pull-up Status Register */
+		AT91_RO	 z__reserved5;				
+		AT91_REG ABCDSR1;					/**< \brief (Pio Offset: 0x0070) Peripheral Select Register */
+		AT91_REG ABCDSR2;					
+		AT91_RO	 z__reserved6[2];						
+		AT91_WO	 IFSCDR;					/**< \brief (Pio Offset: 0x0080) Input Filter Slow Clock Disable Register */		
+		AT91_WO	 IFSCER;					/**< \brief (Pio Offset: 0x0084) Input Filter Slow Clock Enable Register */
+		AT91_RO	 IFSCSR;					/**< \brief (Pio Offset: 0x0088) Input Filter Slow Clock Status Register */
+		AT91_REG SCDR;						/**< \brief (Pio Offset: 0x008C) Slow Clock Divider Debouncing Register */
+		AT91_WO	 PPDDR;						/**< \brief (Pio Offset: 0x0090) Pad Pull-down Disable Register */
+		AT91_WO	 PPDER;						/**< \brief (Pio Offset: 0x0094) Pad Pull-down Enable Register */
+		AT91_RO	 PPDSR;						/**< \brief (Pio Offset: 0x0098) Pad Pull-down Status Register */
+		AT91_RO	 z__reserved7;				
+		AT91_WO	 OWER;						/**< \brief (Pio Offset: 0x00A0) Output Write Enable */
+		AT91_WO	 OWDR;						/**< \brief (Pio Offset: 0x00A4) Output Write Disable */
+		AT91_RO	 OWSR;						/**< \brief (Pio Offset: 0x00A8) Output Write Status Register */
+		AT91_RO	 z__reserved8;				
+		AT91_WO	 AIMER;						/**< \brief (Pio Offset: 0x00B0) Additional Interrupt Modes Enable Register */
+		AT91_WO	 AIMDR;						/**< \brief (Pio Offset: 0x00B4) Additional Interrupt Modes Disable Register */
+		AT91_RO	 AIMMR;						/**< \brief (Pio Offset: 0x00B8) Additional Interrupt Modes Mask Register */
+		AT91_RO	 z__reserved9;				
+		AT91_WO	 ESR;						/**< \brief (Pio Offset: 0x00C0) Edge Select Register */
+		AT91_WO	 LSR;						/**< \brief (Pio Offset: 0x00C4) Level Select Register */
+		AT91_RO	 ELSR;						/**< \brief (Pio Offset: 0x00C8) Edge/Level Status Register */
+		AT91_RO	 z__reserved10;				
+		AT91_WO	 FELLSR;					/**< \brief (Pio Offset: 0x00D0) Falling Edge/Low-Level Select Register */
+		AT91_WO	 REHLSR;					/**< \brief (Pio Offset: 0x00D4) Rising Edge/ High-Level Select Register */
+		AT91_RO	 FRLHSR;					/**< \brief (Pio Offset: 0x00D8) Fall/Rise - Low/High Status Register */
+		AT91_RO	 z__reserved11;				
+		AT91_REG LOCKSR;					/**< \brief (Pio Offset: 0x00E0) Lock Status */
+		AT91_REG WPMR;						/**< \brief (Pio Offset: 0x00E4) Write Protection Mode Register */
+		AT91_RO	 WPSR;						/**< \brief (Pio Offset: 0x00E8) Write Protection Status Register */
+		AT91_RO	 z__reserved12[5];			
+		AT91_REG SCHMITT;					/**< \brief (Pio Offset: 0x0100) Schmitt Trigger Register */
+
+		AT91_REG z__Reserved13[19];
+		AT91_REG PCMR;						/**< \brief (Pio Offset: 0x150) Parallel Capture Mode Register */
+		AT91_WO	 PCIER;						/**< \brief (Pio Offset: 0x154) Parallel Capture Interrupt Enable Register */
+		AT91_WO	 PCIDR;						/**< \brief (Pio Offset: 0x158) Parallel Capture Interrupt Disable Register */
+		AT91_RO	 PCIMR;						/**< \brief (Pio Offset: 0x15C) Parallel Capture Interrupt Mask Register */
+		AT91_RO	 PCISR;						/**< \brief (Pio Offset: 0x160) Parallel Capture Interrupt Status Register */
+		AT91_RO	 PCRHR;						/**< \brief (Pio Offset: 0x164) Parallel Capture Reception Holding Register */
+		
+		S_PDC PDC;
+
 		__forceinline void 	SET(u32 m) 			{ SODR = m; }
 		__forceinline void 	CLR(u32 m) 			{ CODR = m; }
 		__forceinline void 	NOT(u32 m) 			{ /*OUTTGL = m;*/ }
@@ -487,28 +514,28 @@ namespace T_HW
 	{
 		struct 
 		{
-			AT91_REG CCR;
+			AT91_WO	 CCR;
 			AT91_REG CMR;
 			AT91_REG SMMR;
-			AT91_REG z__reserved1;
-			AT91_REG CV;
+			AT91_RO	 z__reserved1;
+			AT91_RO	 CV;
 			AT91_REG RA;
 			AT91_REG RB;
 			AT91_REG RC;
-			AT91_REG SR;
+			AT91_RO	 SR;
 			AT91_REG IER;
 			AT91_REG IDR;
-			AT91_REG IMR;
+			AT91_RO	 IMR;
 			AT91_REG z__reserved2[4];
 		} C0, C1, C2;
 
-		AT91_REG BCR;
+		AT91_WO	 BCR;
 		AT91_REG BMR;
 
-		AT91_REG QIER;
-		AT91_REG QIDR;
-		AT91_REG QIMR;
-		AT91_REG QISR;
+		AT91_WO	 QIER;
+		AT91_WO	 QIDR;
+		AT91_RO	 QIMR;
+		AT91_RO	 QISR;
 		AT91_REG FMR;
 		AT91_REG WPMR;
 	};
@@ -664,29 +691,6 @@ namespace T_HW
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	struct S_PDC
-	{
-		AT91_PTR RPR;	// Receive Pointer Register	
-		AT91_REG RCR;	// Receive Counter Register
-		AT91_PTR TPR;	// Transmit Pointer Register
-		AT91_REG TCR;	// Transmit Counter Register
-		AT91_PTR RNPR;	// Receive Next Pointer Register	
-		AT91_REG RNCR;	// Receive Next Pointer Register
-		AT91_PTR TNPR;	// Transmit Next Pointer Register
-		AT91_REG TNCR;	// Transmit Next Counter Register
-		AT91_REG PTCR;	// PDC Transfer Control Register	
-		AT91_REG PTSR;	// PDC Transfer Status Register
-	};
-
-	/* -------- PERIPH_PTCR : (PDC Offset: 0x20) Transfer Control Register -------- */
-
-	#define PDC_RXTEN	(0x1u << 0) /**< \brief (PERIPH_PTCR) Receiver Transfer Enable */
-	#define PDC_RXTDIS	(0x1u << 1) /**< \brief (PERIPH_PTCR) Receiver Transfer Disable */
-	#define PDC_TXTEN	(0x1u << 8) /**< \brief (PERIPH_PTCR) Transmitter Transfer Enable */
-	#define PDC_TXTDIS	(0x1u << 9) /**< \brief (PERIPH_PTCR) Transmitter Transfer Disable */
-
-	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
 	struct S_UDP	// 0xFFFB0000
 	{
 		AT91_REG FRM_NUM;
@@ -712,14 +716,14 @@ namespace T_HW
 
 	struct S_USART
 	{
-		AT91_REG CR;				// Control Register 	
+		AT91_WO	 CR;				// Control Register 	
 		AT91_REG MR;				// Mode Register
-		AT91_REG IER;				// Interrupt Enable Register
-		AT91_REG IDR;				// Interrupt Disable Register
+		AT91_WO	 IER;				// Interrupt Enable Register
+		AT91_WO	 IDR;				// Interrupt Disable Register
 		AT91_REG IMR;				// Interrupt Mask Register
 		AT91_REG CSR;				// Channel Status Register
 		AT91_REG RHR;				// Receiver Holding Register
-		AT91_REG THR;				// Transmitter Holding Register	
+		AT91_WO	 THR;				// Transmitter Holding Register	
 		AT91_REG BRGR;				// Baud Rate Generator Register
 		AT91_REG RTOR;				// Receiver Time-out Register
 		AT91_REG TTGR;				// Transmitter Timeguard Register
@@ -841,14 +845,14 @@ namespace T_HW
 
 	struct S_UART
 	{
-		AT91_REG CR;	
+		AT91_WO	 CR;	
 		AT91_REG MR;	
-		AT91_REG IER;	
-		AT91_REG IDR;	
+		AT91_WO	 IER;	
+		AT91_WO	 IDR;	
 		AT91_REG IMR;	
 		AT91_REG SR;	
 		AT91_REG RHR;	
-		AT91_REG THR;	
+		AT91_WO	 THR;	
 		AT91_REG BRGR;	
 		AT91_REG z__reserved[55];	
 
@@ -894,82 +898,140 @@ namespace T_HW
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	struct S_PIT
-	{
-		AT91_REG		MR;
-		const AT91_REG	SR;
-		const AT91_REG	PIVR;
-		const AT91_REG	PIIR;
-	};
-
+	//struct S_PIT
+	//{
+	//	AT91_REG		MR;
+	//	const AT91_REG	SR;
+	//	const AT91_REG	PIVR;
+	//	const AT91_REG	PIIR;
+	//};
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 	struct S_RTT
 	{
-		AT91_REG		MR;
-		AT91_REG		AR;
-		const AT91_REG	VR;
-		const AT91_REG	SR;
+		AT91_REG	MR;
+		AT91_REG	AR;
+		AT91_RO		VR;
+		AT91_RO		SR;
 	};
-
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 	struct S_SPI
 	{
-		AT91_REG		CR;
-		AT91_REG		MR;
-		AT91_REG		RDR;
-		AT91_REG		TDR;
-		AT91_REG		SR;
-		AT91_REG		IER;
-		AT91_REG		IDR;
-		AT91_REG		IMR;
-		AT91_REG		z__rsrvd1[4];
-		AT91_REG		CSR[4];
-		AT91_REG		z__rsrvd2[41];
-		AT91_REG		WPMR;
-		AT91_REG		WPSR;
+		AT91_WO		CR;
+		AT91_REG	MR;
+		AT91_REG 	RDR;
+		AT91_WO		TDR;
+		AT91_REG	SR;
+		AT91_WO		IER;
+		AT91_WO		IDR;
+		AT91_REG	IMR;
+		AT91_REG	z__rsrvd1[4];
+		AT91_REG	CSR[4];
+		AT91_REG	z__rsrvd2[41];
+		AT91_REG	WPMR;
+		AT91_REG	WPSR;
 
-		AT91_REG		z__rsrvd3[5];	
+		AT91_REG	z__rsrvd3[5];	
 
 		S_PDC PDC;
 
 	};
+
+	/* -------- SPI_CR : (SPI Offset: 0x00) Control Register -------- */
+	#define SPI_SPIEN				(0x1u << 0)				/**< \brief (SPI_CR) SPI Enable */
+	#define SPI_SPIDIS				(0x1u << 1)				/**< \brief (SPI_CR) SPI Disable */
+	#define SPI_SWRST				(0x1u << 7)				/**< \brief (SPI_CR) SPI Software Reset */
+	#define SPI_LASTXFER			(0x1u << 24)			/**< \brief (SPI_CR) Last Transfer */
+
+	/* -------- SPI_MR : (SPI Offset: 0x04) Mode Register -------- */
+	#define SPI_MSTR				(0x1u << 0)				/**< \brief (SPI_MR) Master/Slave Mode */
+	#define SPI_PS					(0x1u << 1)				/**< \brief (SPI_MR) Peripheral Select */
+	#define SPI_PCSDEC				(0x1u << 2)				/**< \brief (SPI_MR) Chip Select Decode */
+	#define SPI_MODFDIS				(0x1u << 4)				/**< \brief (SPI_MR) Mode Fault Detection */
+	#define SPI_WDRBT				(0x1u << 5)				/**< \brief (SPI_MR) Wait Data Read Before Transfer */
+	#define SPI_LLB					(0x1u << 7)				/**< \brief (SPI_MR) Local Loopback Enable */
+	#define SPI_PCS(value)			(((value)&15) << 16)	/**< \brief (SPI_MR) Peripheral Chip Select */
+	#define SPI_DLYBCS(value)		(((value)&0xFF) << 24)	/**< \brief (SPI_MR) Delay Between Chip Selects */
+
+	/* -------- SPI_RDR : (SPI Offset: 0x08) Receive Data Register -------- */
+	#define SPI_RDR_RD_Pos			0
+	#define SPI_RDR_RD_Msk			(0xffffu << 0)			/**< \brief (SPI_RDR) Receive Data */
+	#define SPI_RDR_PCS_Pos			16
+	#define SPI_RDR_PCS_Msk			(0xfu << 16)			/**< \brief (SPI_RDR) Peripheral Chip Select */
+
+	/* -------- SPI_TDR : (SPI Offset: 0x0C) Transmit Data Register -------- */
+	#define SPI_TD(value)			(((value)&0xFFFF) << 0)	/**< \brief (SPI_TDR) Transmit Data */
+	#define SPI_TDR_PCS(value)		(((value)&15) << 16)	/**< \brief (SPI_TDR) Peripheral Chip Select */
+	#define SPI_LASTXFER			(0x1u << 24)			/**< \brief (SPI_TDR) Last Transfer */
+
+	/* -------- SPI_SR : (SPI Offset: 0x10) Status Register -------- */
+	#define SPI_RDRF				(0x1u << 0)				/**< \brief (SPI_SR) Receive Data Register Full */
+	#define SPI_TDRE				(0x1u << 1)				/**< \brief (SPI_SR) Transmit Data Register Empty */
+	#define SPI_MODF				(0x1u << 2)				/**< \brief (SPI_SR) Mode Fault Error */
+	#define SPI_OVRES				(0x1u << 3)				/**< \brief (SPI_SR) Overrun Error Status */
+	#define SPI_ENDRX				(0x1u << 4)				/**< \brief (SPI_SR) End of RX buffer */
+	#define SPI_ENDTX				(0x1u << 5)				/**< \brief (SPI_SR) End of TX buffer */
+	#define SPI_RXBUFF				(0x1u << 6)				/**< \brief (SPI_SR) RX Buffer Full */
+	#define SPI_TXBUFE				(0x1u << 7)				/**< \brief (SPI_SR) TX Buffer Empty */
+	#define SPI_NSSR				(0x1u << 8)				/**< \brief (SPI_SR) NSS Rising */
+	#define SPI_TXEMPTY				(0x1u << 9)				/**< \brief (SPI_SR) Transmission Registers Empty */
+	#define SPI_UNDES				(0x1u << 10)			/**< \brief (SPI_SR) Underrun Error Status (Slave mode Only) */
+	#define SPI_SPIENS				(0x1u << 16)			/**< \brief (SPI_SR) SPI Enable Status */
+
+	/* -------- SPI_CSR[4] : (SPI Offset: 0x30) Chip Select Register -------- */
+	#define SPI_CPOL				(0x1u << 0)				/**< \brief (SPI_CSR[4]) Clock Polarity */
+	#define SPI_NCPHA				(0x1u << 1)				/**< \brief (SPI_CSR[4]) Clock Phase */
+	#define SPI_CSNAAT				(0x1u << 2)				/**< \brief (SPI_CSR[4]) Chip Select Not Active After Transfer (Ignored if CSAAT = 1) */
+	#define SPI_CSAAT				(0x1u << 3)				/**< \brief (SPI_CSR[4]) Chip Select Active After Transfer */
+	#define SPI_BITS(v)				((((v)-8)&0xfu) << 4)	/**< \brief (SPI_CSR[4]) Bits Per Transfer */
+	#define	SPI_8BIT				(0x0u << 4)				/**< \brief (SPI_CSR[4]) 8 bits for transfer */
+	#define	SPI_9BIT				(0x1u << 4)				/**< \brief (SPI_CSR[4]) 9 bits for transfer */
+	#define	SPI_10BIT				(0x2u << 4)				/**< \brief (SPI_CSR[4]) 10 bits for transfer */
+	#define	SPI_11BIT				(0x3u << 4)				/**< \brief (SPI_CSR[4]) 11 bits for transfer */
+	#define	SPI_12BIT				(0x4u << 4)				/**< \brief (SPI_CSR[4]) 12 bits for transfer */
+	#define	SPI_13BIT				(0x5u << 4)				/**< \brief (SPI_CSR[4]) 13 bits for transfer */
+	#define	SPI_14BIT				(0x6u << 4)				/**< \brief (SPI_CSR[4]) 14 bits for transfer */
+	#define	SPI_15BIT				(0x7u << 4)				/**< \brief (SPI_CSR[4]) 15 bits for transfer */
+	#define	SPI_16BIT				(0x8u << 4)				/**< \brief (SPI_CSR[4]) 16 bits for transfer */
+	#define SPI_SCBR(value)			(((value)&0xFF) << 8)	/**< \brief (SPI_CSR[4]) Serial Clock Baud Rate */
+	#define SPI_DLYBS(value)		(((value)&0xFF) << 16)	/**< \brief (SPI_CSR[4]) Delay Before SPCK */
+	#define SPI_DLYBCT(value)		(((value)&0xFF) << 24)	/**< \brief (SPI_CSR[4]) Delay Between Consecutive Transfers */
 	 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 	struct S_PWM
 	{
 		AT91_REG		CLK;
-		AT91_REG		ENA;
-		AT91_REG		DIS;
-		AT91_REG		SR;
-		AT91_REG		IER1;
-		AT91_REG		IDR1;
-		AT91_REG		IMR1;
-		AT91_REG		ISR1;
+		AT91_WO			ENA;
+		AT91_WO			DIS;
+		AT91_RO			SR;
+		AT91_WO			IER1;
+		AT91_WO			IDR1;
+		AT91_RO			IMR1;
+		AT91_RO			ISR1;
 		AT91_REG		SCM;
 
 		AT91_REG		zrsrv1;
 
 		AT91_REG		SCUC;
 		AT91_REG		SCUP;
-		AT91_REG		SCUPUPD;
-		AT91_REG		IER2;
-		AT91_REG		IDR2;
-		AT91_REG		IMR2;
-		AT91_REG		ISR2;
+		AT91_WO			SCUPUPD;
+		AT91_WO			IER2;
+		AT91_WO			IDR2;
+		AT91_RO			IMR2;
+		AT91_RO			ISR2;
 		AT91_REG		OOV;
 		AT91_REG		OS;
-		AT91_REG		OSS;
-		AT91_REG		OSC;
-		AT91_REG		OSSUPD;
-		AT91_REG		OSCUPD;
+		AT91_WO			OSS;
+		AT91_WO			OSC;
+		AT91_WO			OSSUPD;
+		AT91_WO			OSCUPD;
 		AT91_REG		FMR;
-		AT91_REG		FSR;
-		AT91_REG		FCR;
+		AT91_RO			FSR;
+		AT91_WO			FCR;
 		AT91_REG		FPV;
 		AT91_REG		FPE;
 
@@ -984,8 +1046,8 @@ namespace T_HW
 
 		AT91_REG		zrsrv4[12];
 
-		AT91_REG		WPCR;
-		AT91_REG		WPSR;
+		AT91_WO			WPCR;
+		AT91_RO			WPSR;
 
 		AT91_REG		zrsrv5[5];
 
@@ -1025,9 +1087,9 @@ namespace T_HW
 
 	struct S_WDT
 	{
-		AT91_REG		CR;
+		AT91_WO			CR;
 		AT91_REG		MR;
-		AT91_REG		SR;
+		AT91_RO			SR;
 
 		void Update()	{ CR = WDT_KEY_PASSWD|WDT_WDRSTT;	}
 		void Reset()	{ CR = WDT_KEY_PASSWD|WDT_WDRSTT;	}
@@ -1038,8 +1100,8 @@ namespace T_HW
 
 	struct S_RSTC
 	{
-		AT91_REG		CR;
-		AT91_REG		SR;
+		AT91_WO			CR;
+		AT91_RO			SR;
 		AT91_REG		MR;
 	};
 
@@ -1047,44 +1109,44 @@ namespace T_HW
 
 	struct S_ADC
 	{
-		AT91_REG		CR;
+		AT91_WO			CR;
 		AT91_REG		MR;
 
 		AT91_REG		SEQR1;
 		AT91_REG		SEQR2;
 
-		AT91_REG		CHER;
-		AT91_REG		CHDR;
-		AT91_REG		CHSR;
+		AT91_WO			CHER;
+		AT91_WO			CHDR;
+		AT91_RO			CHSR;
 
-		AT91_REG		zrsrv;
+		AT91_RO			zrsrv;
 
-		AT91_REG		LCDR;
+		AT91_RO			LCDR;
 
-		AT91_REG		IER;
-		AT91_REG		IDR;
-		AT91_REG		IMR;
-		AT91_REG		ISR;
+		AT91_WO			IER;
+		AT91_WO			IDR;
+		AT91_RO			IMR;
+		AT91_RO			ISR;
 
-		AT91_REG		zrsrv2[2];
+		AT91_RO			zrsrv2[2];
 
-		AT91_REG		OVER;
+		AT91_RO			OVER;
 		AT91_REG		EMR;
 		AT91_REG		CWR;
 		AT91_REG		CGR;
 		AT91_REG		COR;
-		AT91_REG		CDR[16];
+		AT91_RO			CDR[16];
 
-		AT91_REG		zrsrv3;
+		AT91_RO			zrsrv3;
 
 		AT91_REG		ACR;
 
-		AT91_REG		zrsrv4[19];
+		AT91_RO			zrsrv4[19];
 
 		AT91_REG		WPMR;
-		AT91_REG		WPSR;
+		AT91_RO			WPSR;
 
-		AT91_REG		zrsrv5[5];
+		AT91_RO			zrsrv5[5];
 
 		S_PDC			PDC;
 	};
@@ -1216,12 +1278,12 @@ namespace T_HW
 		AT91_REG		CALR;
 		AT91_REG		TIMALR;
 		AT91_REG		CALALR;
-		AT91_REG		SR;
-		AT91_REG		SCCR;
-		AT91_REG		IER;
-		AT91_REG		IDR;
-		AT91_REG		IMR;
-		AT91_REG		VER;
+		AT91_RO			SR;
+		AT91_WO			SCCR;
+		AT91_WO			IER;
+		AT91_WO			IDR;
+		AT91_RO			IMR;
+		AT91_RO			VER;
 	};
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1231,9 +1293,9 @@ namespace T_HW
 		AT91_REG		MCFG[16];
 		AT91_REG		SCFG[16];
 		struct { AT91_REG A; AT91_REG B; } PRAS[18];
-		AT91_REG		zreserve;
+		AT91_RO			zreserve;
 		AT91_REG		SYSIO;
-		AT91_REG		zreserve1;
+		AT91_RO			zreserve1;
 		AT91_REG		SMCNFCS;
 	};
 
@@ -1251,9 +1313,9 @@ namespace T_HW
 	struct S_EFC
 	{
 		AT91_REG		FMR;
-		AT91_REG		FCR;
-		AT91_REG		FSR;
-		AT91_REG		FRR;
+		AT91_WO			FCR;
+		AT91_RO			FSR;
+		AT91_RO			FRR;
 	};
 
 	typedef S_EFC S_EFC0, S_EFC1;
@@ -1270,12 +1332,12 @@ namespace T_HW
 
 	struct S_SUPC
 	{
-		AT91_REG		CR;
+		AT91_WO			CR;
 		AT91_REG		SMMR;
 		AT91_REG		MR;
 		AT91_REG		WUMR;
 		AT91_REG		WUIR;
-		AT91_REG		SR;
+		AT91_RO			SR;
 	};
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1309,17 +1371,17 @@ namespace T_HW
 
 	struct S_CMCC
 	{
-		AT91_REG		TYPE;
+		AT91_RO			TYPE;
 		AT91_REG		CFG;
-		AT91_REG		CTRL;
-		AT91_REG		SR;
-		AT91_REG		z__rsrvd[4];
-		AT91_REG		MAINT0;
-		AT91_REG		MAINT1;
+		AT91_WO			CTRL;
+		AT91_RO			SR;
+		AT91_RO			z__rsrvd[4];
+		AT91_WO			MAINT0;
+		AT91_WO			MAINT1;
 		AT91_REG		MCFG;
 		AT91_REG		MEN;
-		AT91_REG		MCTRL;
-		AT91_REG		MSR;
+		AT91_WO			MCTRL;
+		AT91_RO			MSR;
 	};
 
 	/* -------- CMCC_CFG : (CMCC Offset: 0x04) Cache Configuration Register -------- */
@@ -1364,19 +1426,19 @@ namespace T_HW
 
 	struct S_TWI
 	{
-		AT91_REG		CR;
+		AT91_WO			CR;
 		AT91_REG		MMR;
 		AT91_REG		SMR;
 		AT91_REG		IADR;
 		AT91_REG		CWGR;
-		AT91_REG		zreserve[3];
+		AT91_REG		z__reserved1[3];
 		AT91_REG		SR;
-		AT91_REG		IER;
-		AT91_REG		IDR;
+		AT91_WO			IER;
+		AT91_WO			IDR;
 		AT91_REG		IMR;
 		AT91_REG		RHR;
-		AT91_REG		THR;
-		AT91_REG		zreserve1[50];
+		AT91_WO			THR;
+		AT91_REG		z__reserved2[50];
 		S_PDC			PDC;
 	};
 
@@ -1447,22 +1509,22 @@ namespace T_HW
 	struct S_CRCCU
 	{
 		AT91_PTR DSCR;		/**< \brief (Crccu Offset: 0x000) CRCCU Descriptor Base Register */
-		AT91_REG			z__Reserved1[1];
-		AT91_REG DMA_EN;	/**< \brief (Crccu Offset: 0x008) CRCCU DMA Enable Register */
-		AT91_REG DMA_DIS;	/**< \brief (Crccu Offset: 0x00C) CRCCU DMA Disable Register */
-		AT91_REG DMA_SR;	/**< \brief (Crccu Offset: 0x010) CRCCU DMA Status Register */
-		AT91_REG DMA_IER;	/**< \brief (Crccu Offset: 0x014) CRCCU DMA Interrupt Enable Register */
-		AT91_REG DMA_IDR;	/**< \brief (Crccu Offset: 0x018) CRCCU DMA Interrupt Disable Register */
-		AT91_REG DMA_IMR;	/**< \brief (Crccu Offset: 0x001C) CRCCU DMA Interrupt Mask Register */
-		AT91_REG DMA_ISR;	/**< \brief (Crccu Offset: 0x020) CRCCU DMA Interrupt Status Register */
-		AT91_REG			z__Reserved2[4];
-		AT91_REG CR;		/**< \brief (Crccu Offset: 0x034) CRCCU Control Register */
+		AT91_RO				z__Reserved1[1];
+		AT91_WO	 DMA_EN;	/**< \brief (Crccu Offset: 0x008) CRCCU DMA Enable Register */
+		AT91_WO	 DMA_DIS;	/**< \brief (Crccu Offset: 0x00C) CRCCU DMA Disable Register */
+		AT91_RO	 DMA_SR;	/**< \brief (Crccu Offset: 0x010) CRCCU DMA Status Register */
+		AT91_WO	 DMA_IER;	/**< \brief (Crccu Offset: 0x014) CRCCU DMA Interrupt Enable Register */
+		AT91_WO	 DMA_IDR;	/**< \brief (Crccu Offset: 0x018) CRCCU DMA Interrupt Disable Register */
+		AT91_RO	 DMA_IMR;	/**< \brief (Crccu Offset: 0x001C) CRCCU DMA Interrupt Mask Register */
+		AT91_RO	 DMA_ISR;	/**< \brief (Crccu Offset: 0x020) CRCCU DMA Interrupt Status Register */
+		AT91_RO				z__Reserved2[4];
+		AT91_WO	 CR;		/**< \brief (Crccu Offset: 0x034) CRCCU Control Register */
 		AT91_REG MR;		/**< \brief (Crccu Offset: 0x038) CRCCU Mode Register */
-		AT91_REG SR;		/**< \brief (Crccu Offset: 0x03C) CRCCU Status Register */
-		AT91_REG IER;		/**< \brief (Crccu Offset: 0x040) CRCCU Interrupt Enable Register */
-		AT91_REG IDR;		/**< \brief (Crccu Offset: 0x044) CRCCU Interrupt Disable Register */
-		AT91_REG IMR;		/**< \brief (Crccu Offset: 0x048) CRCCU Interrupt Mask Register */
-		AT91_REG ISR;		/**< \brief (Crccu Offset: 0x004C) CRCCU Interrupt Status Register */
+		AT91_RO	 SR;		/**< \brief (Crccu Offset: 0x03C) CRCCU Status Register */
+		AT91_WO	 IER;		/**< \brief (Crccu Offset: 0x040) CRCCU Interrupt Enable Register */
+		AT91_WO	 IDR;		/**< \brief (Crccu Offset: 0x044) CRCCU Interrupt Disable Register */
+		AT91_RO	 IMR;		/**< \brief (Crccu Offset: 0x048) CRCCU Interrupt Mask Register */
+		AT91_RO	 ISR;		/**< \brief (Crccu Offset: 0x004C) CRCCU Interrupt Status Register */
 
 		struct TRDSCR
 		{
@@ -1498,7 +1560,7 @@ namespace T_HW
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-};
+}
 
 
 namespace HW
@@ -1509,7 +1571,7 @@ namespace HW
 				MKPID(UART0, 8),	MKPID(UART1, 9),	MKPID(SMC, 10),		MKPID(PIOA, 11),	MKPID(PIOB, 12),	MKPID(PIOC, 13),	MKPID(USART0, 14),	MKPID(USART1, 15),
 				MKPID(HSMCI, 18),	MKPID(TWI0, 19),	MKPID(TWI1, 20),	MKPID(SPI, 21),		MKPID(SSC, 22),		MKPID(TC0, 23),		MKPID(TC1, 24),		MKPID(TC2, 25),		MKPID(TC3, 26),		MKPID(TC4, 27), 
 				MKPID(TC5, 28),		MKPID(ADC, 29),		MKPID(DACC, 30),	MKPID(PWM, 31),		MKPID(CRCCU, 32),	MKPID(ACC, 33),		MKPID(UDP, 34) };
-	};
+	}
 
 //	MK_PTR(SMC, 	0x400E0000);
 
@@ -1587,7 +1649,7 @@ namespace HW
 
 		return (v >= 0x20000000 && v < 0x20028000);
 
-	};
+	}
 
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1598,11 +1660,11 @@ namespace HW
 
 		return (v >= 0x400000 && v < 0x500000);
 
-	};
+	}
 
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-}; // namespace HW
+} // namespace HW
 
 extern T_HW::AT91_IHP VectorTableInt[16];
 extern T_HW::AT91_IHP VectorTableExt[35];
@@ -1610,129 +1672,6 @@ extern T_HW::AT91_IHP VectorTableExt[35];
 #undef MK_PTR
 #undef MKPID
 
-
-//#define CLKEN	(0x1u << 0)	/**< \brief (TC_CCR) Counter Clock Enable Command */
-//#define CLKDIS	(0x1u << 1)	/**< \brief (TC_CCR) Counter Clock Disable Command */
-//#define SWTRG	(0x1u << 2)	/**< \brief (TC_CCR) Software Trigger Command */
-//
-//#define TIMER_CLOCK1 (0x0u << 0) /**< \brief (TC_CMR) Clock selected: TCLK1 */
-//#define TIMER_CLOCK2 (0x1u << 0) /**< \brief (TC_CMR) Clock selected: TCLK2 */
-//#define TIMER_CLOCK3 (0x2u << 0) /**< \brief (TC_CMR) Clock selected: TCLK3 */
-//#define TIMER_CLOCK4 (0x3u << 0) /**< \brief (TC_CMR) Clock selected: TCLK4 */
-//#define TIMER_CLOCK5 (0x4u << 0) /**< \brief (TC_CMR) Clock selected: TCLK5 */
-//#define XC0 (0x5u << 0) /**< \brief (TC_CMR) Clock selected: XC0 */
-//#define XC1 (0x6u << 0) /**< \brief (TC_CMR) Clock selected: XC1 */
-//#define XC2 (0x7u << 0) /**< \brief (TC_CMR) Clock selected: XC2 */
-//#define	CLKI (0x1u << 3) /**< \brief (TC_CMR) Clock Invert */
-//#define BURST_NONE (0x0u << 4) /**< \brief (TC_CMR) The clock is not gated by an external signal. */
-//#define BURST_XC0 (0x1u << 4) /**< \brief (TC_CMR) XC0 is ANDed with the selected clock. */
-//#define BURST_XC1 (0x2u << 4) /**< \brief (TC_CMR) XC1 is ANDed with the selected clock. */
-//#define BURST_XC2 (0x3u << 4) /**< \brief (TC_CMR) XC2 is ANDed with the selected clock. */
-//#define LDBSTOP (0x1u << 6) /**< \brief (TC_CMR) Counter Clock Stopped with RB Loading */
-//#define LDBDIS (0x1u << 7) /**< \brief (TC_CMR) Counter Clock Disable with RB Loading */
-//#define ETRGEDG_NONE (0x0u << 8) /**< \brief (TC_CMR) The clock is not gated by an external signal. */
-//#define ETRGEDG_RISING (0x1u << 8) /**< \brief (TC_CMR) Rising edge */
-//#define ETRGEDG_FALLING (0x2u << 8) /**< \brief (TC_CMR) Falling edge */
-//#define ETRGEDG_EDGE (0x3u << 8) /**< \brief (TC_CMR) Each edge */
-//#define ABETRG (0x1u << 10) /**< \brief (TC_CMR) TIOA or TIOB External Trigger Selection */
-//
-//#define CPCTRG (0x1u << 14) /**< \brief (TC_CMR) RC Compare Trigger Enable */
-//
-//#define WAVE (0x1u << 15) /**< \brief (TC_CMR) Waveform Mode */
-//#define LDRA_NONE (0x0u << 16) /**< \brief (TC_CMR) None */
-//#define LDRA_RISING (0x1u << 16) /**< \brief (TC_CMR) Rising edge of TIOA */
-//#define LDRA_FALLING (0x2u << 16) /**< \brief (TC_CMR) Falling edge of TIOA */
-//#define LDRA_EDGE (0x3u << 16) /**< \brief (TC_CMR) Each edge of TIOA */
-//#define LDRB_NONE (0x0u << 18) /**< \brief (TC_CMR) None */
-//#define LDRB_RISING (0x1u << 18) /**< \brief (TC_CMR) Rising edge of TIOA */
-//#define LDRB_FALLING (0x2u << 18) /**< \brief (TC_CMR) Falling edge of TIOA */
-//#define LDRB_EDGE (0x3u << 18) /**< \brief (TC_CMR) Each edge of TIOA */
-//#define SBSMPLR_ONE (0x0u << 20) /**< \brief (TC_CMR) Load a Capture Register each selected edge */
-//#define SBSMPLR_HALF (0x1u << 20) /**< \brief (TC_CMR) Load a Capture Register every 2 selected edges */
-//#define SBSMPLR_FOURTH (0x2u << 20) /**< \brief (TC_CMR) Load a Capture Register every 4 selected edges */
-//#define SBSMPLR_EIGHTH (0x3u << 20) /**< \brief (TC_CMR) Load a Capture Register every 8 selected edges */
-//#define SBSMPLR_SIXTEENTH (0x4u << 20) /**< \brief (TC_CMR) Load a Capture Register every 16 selected edges */
-//#define CPCSTOP (0x1u << 6) /**< \brief (TC_CMR) Counter Clock Stopped with RC Compare */
-//#define CPCDIS (0x1u << 7) /**< \brief (TC_CMR) Counter Clock Disable with RC Compare */
-//#define EEVTEDG_NONE (0x0u << 8) /**< \brief (TC_CMR) None */
-//#define EEVTEDG_RISING (0x1u << 8) /**< \brief (TC_CMR) Rising edge */
-//#define EEVTEDG_FALLING (0x2u << 8) /**< \brief (TC_CMR) Falling edge */
-//#define EEVTEDG_EDGE (0x3u << 8) /**< \brief (TC_CMR) Each edge */
-//#define EEVT_TIOB (0x0u << 10) /**< \brief (TC_CMR) TIOB */
-//#define EEVT_XC0 (0x1u << 10) /**< \brief (TC_CMR) XC0 */
-//#define EEVT_XC1 (0x2u << 10) /**< \brief (TC_CMR) XC1 */
-//#define EEVT_XC2 (0x3u << 10) /**< \brief (TC_CMR) XC2 */
-//#define ENETRG (0x1u << 12) /**< \brief (TC_CMR) External Event Trigger Enable */
-//#define WAVSEL_UP (0x0u << 13) /**< \brief (TC_CMR) UP mode without automatic trigger on RC Compare */
-//#define WAVSEL_UPDOWN (0x1u << 13) /**< \brief (TC_CMR) UPDOWN mode without automatic trigger on RC Compare */
-//#define WAVSEL_UP_RC (0x2u << 13) /**< \brief (TC_CMR) UP mode with automatic trigger on RC Compare */
-//#define WAVSEL_UPDOWN_RC (0x3u << 13) /**< \brief (TC_CMR) UPDOWN mode with automatic trigger on RC Compare */
-//#define ACPA_NONE (0x0u << 16) /**< \brief (TC_CMR) None */
-//#define ACPA_SET (0x1u << 16) /**< \brief (TC_CMR) Set */
-//#define ACPA_CLEAR (0x2u << 16) /**< \brief (TC_CMR) Clear */
-//#define ACPA_TOGGLE (0x3u << 16) /**< \brief (TC_CMR) Toggle */
-//#define   ACPC_NONE (0x0u << 18) /**< \brief (TC_CMR) None */
-//#define   ACPC_SET (0x1u << 18) /**< \brief (TC_CMR) Set */
-//#define   ACPC_CLEAR (0x2u << 18) /**< \brief (TC_CMR) Clear */
-//#define   ACPC_TOGGLE (0x3u << 18) /**< \brief (TC_CMR) Toggle */
-//#define   AEEVT_NONE (0x0u << 20) /**< \brief (TC_CMR) None */
-//#define   AEEVT_SET (0x1u << 20) /**< \brief (TC_CMR) Set */
-//#define   AEEVT_CLEAR (0x2u << 20) /**< \brief (TC_CMR) Clear */
-//#define   AEEVT_TOGGLE (0x3u << 20) /**< \brief (TC_CMR) Toggle */
-//#define   ASWTRG_NONE (0x0u << 22) /**< \brief (TC_CMR) None */
-//#define   ASWTRG_SET (0x1u << 22) /**< \brief (TC_CMR) Set */
-//#define   ASWTRG_CLEAR (0x2u << 22) /**< \brief (TC_CMR) Clear */
-//#define   ASWTRG_TOGGLE (0x3u << 22) /**< \brief (TC_CMR) Toggle */
-//#define   BCPB_NONE (0x0u << 24) /**< \brief (TC_CMR) None */
-//#define   BCPB_SET (0x1u << 24) /**< \brief (TC_CMR) Set */
-//#define   BCPB_CLEAR (0x2u << 24) /**< \brief (TC_CMR) Clear */
-//#define   BCPB_TOGGLE (0x3u << 24) /**< \brief (TC_CMR) Toggle */
-//#define   BCPC_NONE (0x0u << 26) /**< \brief (TC_CMR) None */
-//#define   BCPC_SET (0x1u << 26) /**< \brief (TC_CMR) Set */
-//#define   BCPC_CLEAR (0x2u << 26) /**< \brief (TC_CMR) Clear */
-//#define   BCPC_TOGGLE (0x3u << 26) /**< \brief (TC_CMR) Toggle */
-//#define   BEEVT_NONE (0x0u << 28) /**< \brief (TC_CMR) None */
-//#define   BEEVT_SET (0x1u << 28) /**< \brief (TC_CMR) Set */
-//#define   BEEVT_CLEAR (0x2u << 28) /**< \brief (TC_CMR) Clear */
-//#define   BEEVT_TOGGLE (0x3u << 28) /**< \brief (TC_CMR) Toggle */
-//#define   BSWTRG_NONE (0x0u << 30) /**< \brief (TC_CMR) None */
-//#define   BSWTRG_SET (0x1u << 30) /**< \brief (TC_CMR) Set */
-//#define   BSWTRG_CLEAR (0x2u << 30) /**< \brief (TC_CMR) Clear */
-//#define   BSWTRG_TOGGLE (0x3u << 30) /**< \brief (TC_CMR) Toggle */
-///* -------- TC_SMMR : (TC Offset: N/A) Stepper Motor Mode Register -------- */
-//#define TC_SMMR_GCEN (0x1u << 0) /**< \brief (TC_SMMR) Gray Count Enable */
-//#define TC_SMMR_DOWN (0x1u << 1) /**< \brief (TC_SMMR) DOWN Count */
-///* -------- TC_RAB : (TC Offset: N/A) Register AB -------- */
-//#define TC_RAB_RAB_Pos 0
-//#define TC_RAB_RAB_Msk (0xffffffffu << TC_RAB_RAB_Pos) /**< \brief (TC_RAB) Register A or Register B */
-///* -------- TC_CV : (TC Offset: N/A) Counter Value -------- */
-//#define TC_CV_CV_Pos 0
-//#define TC_CV_CV_Msk (0xffffffffu << TC_CV_CV_Pos) /**< \brief (TC_CV) Counter Value */
-///* -------- TC_RA : (TC Offset: N/A) Register A -------- */
-//#define TC_RA_RA_Pos 0
-//#define TC_RA_RA_Msk (0xffffffffu << TC_RA_RA_Pos) /**< \brief (TC_RA) Register A */
-//#define TC_RA_RA(value) ((TC_RA_RA_Msk & ((value) << TC_RA_RA_Pos)))
-///* -------- TC_RB : (TC Offset: N/A) Register B -------- */
-//#define TC_RB_RB_Pos 0
-//#define TC_RB_RB_Msk (0xffffffffu << TC_RB_RB_Pos) /**< \brief (TC_RB) Register B */
-//#define TC_RB_RB(value) ((TC_RB_RB_Msk & ((value) << TC_RB_RB_Pos)))
-///* -------- TC_RC : (TC Offset: N/A) Register C -------- */
-//#define TC_RC_RC_Pos 0
-//#define TC_RC_RC_Msk (0xffffffffu << TC_RC_RC_Pos) /**< \brief (TC_RC) Register C */
-//#define TC_RC_RC(value) ((TC_RC_RC_Msk & ((value) << TC_RC_RC_Pos)))
-///* -------- TC_SR : (TC Offset: N/A) Status Register -------- */
-//#define COVFS	(0x1u << 0)		/**< \brief (TC_SR) Counter Overflow Status */
-//#define LOVRS	(0x1u << 1)		/**< \brief (TC_SR) Load Overrun Status */
-//#define CPAS 	(0x1u << 2)		/**< \brief (TC_SR) RA Compare Status */
-//#define CPBS 	(0x1u << 3)		/**< \brief (TC_SR) RB Compare Status */
-//#define CPCS 	(0x1u << 4)		/**< \brief (TC_SR) RC Compare Status */
-//#define LDRAS 	(0x1u << 5)		/**< \brief (TC_SR) RA Loading Status */
-//#define LDRBS 	(0x1u << 6)		/**< \brief (TC_SR) RB Loading Status */
-//#define ETRGS 	(0x1u << 7)		/**< \brief (TC_SR) External Trigger Status */
-//#define ENDRX 	(0x1u << 8)		/**< \brief (TC_SR) End of Receiver Transfer */
-//#define RXBUFF 	(0x1u << 9)		/**< \brief (TC_SR) Reception Buffer Full */
-//#define CLKSTA 	(0x1u << 16) 	/**< \brief (TC_SR) Clock Enabling Status */
-//#define MTIOA 	(0x1u << 17) 	/**< \brief (TC_SR) TIOA Mirror */
-//#define MTIOB 	(0x1u << 18) 	/**< \brief (TC_SR) TIOB Mirror */
+#pragma pop
 
 #endif // SAM4SA_H__27_08_2014__11_07

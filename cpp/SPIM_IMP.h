@@ -1,6 +1,7 @@
-#include "SPIM_IMP.H"
+#if !defined(SPI_IMP_H__17_04_2025__15_53) && !defined(CPU_LPC812)
+#define SPI_IMP_H__17_04_2025__15_53
 
-#ifdef CPU_LPC812_122212
+#pragma once
 
 #include "spi.h"
 #include "core.h"
@@ -586,7 +587,7 @@ void S_SPIM::WriteSyncDMA(const void *data1, u16 count1, const void *data2, u16 
 
 void S_SPIM::ReadPIO(void *data, u16 count)
 {
-	volatile register byte t;
+	register volatile byte t;
 	byte *p = (byte*)data;
 
 #ifdef __ADSPBF59x__
@@ -678,7 +679,7 @@ void S_SPIM::ReadPIO(void *data, u16 count)
 
 void S_SPIM::ReadAsyncDMA(void *data, u16 count)
 {
-	volatile register byte t;
+	register volatile byte t;
 
 #ifdef __ADSPBF59x__
 
@@ -792,7 +793,7 @@ void S_SPIM::ReadSyncDMA(void *data, u16 count)
 
 byte S_SPIM::WriteReadByte(byte v)
 {
-	volatile register byte t;
+	register volatile byte t;
 
 #ifdef __ADSPBF59x__
 
@@ -1372,4 +1373,4 @@ bool S_SPIM::Update()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#endif // #ifndef CPU_LPC812
+#endif // #if !defined(SPI_IMP_H__17_04_2025__15_53) && !defined(CPU_LPC812)

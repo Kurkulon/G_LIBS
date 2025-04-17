@@ -1,6 +1,7 @@
-#include "I2C_IMP.H"
+#ifndef I2C_IMP_H__17_04_2025__16_10
+#define I2C_IMP_H__17_04_2025__16_10
 
-#ifdef I2C_ASDADFWIOUEHJ
+#pragma once
 
 #include "i2c.h"
 #include "core.h"
@@ -1450,4 +1451,4 @@ bool S_I2C::Update()
 
 #endif // #else // #ifdef ADSP_BLACKFIN //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#endif // #ifdef I2C_ASDADFWIOUEHJ
+#endif // I2C_IMP_H__17_04_2025__16_10

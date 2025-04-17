@@ -39,6 +39,7 @@
 
 	#include <intrin.h>
 
+	#define __writeonly /**/
 	#define __packed __declspec(align(1))
 	#define __softfp /**/
 	#define __irq __declspec(naked)

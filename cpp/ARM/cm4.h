@@ -3,6 +3,11 @@
 
 #include "types.h"
 
+#pragma push
+#pragma anon_unions
+#pragma diag_suppress 368,381,826
+
+
 namespace CM4_TYPES
 {
 	typedef volatile const u32	I32;	/*!< Defines 'read only' permissions                 */
@@ -785,5 +790,6 @@ namespace CM4
 #endif
 
 
+#pragma pop
 
 #endif // CM3_H__14_11_2012__12_19

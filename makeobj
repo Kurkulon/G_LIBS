@@ -141,7 +141,7 @@ libname = $(curdir)\$(targetcpu)_$(libsuffix).a
 bindir = $(%ARMCC50BIN)
 
 !ifeq version Debug
-debug_compiler_options = -O0 --debug -D_DEBUG
+debug_compiler_options = -O0 --debug -D_DEBUG --remarks --diag_suppress=96,1301,2530,2815
 debug_linker_options = DEBUG ALL
 !else
 debug_compiler_options = -O3 -Otime --debug

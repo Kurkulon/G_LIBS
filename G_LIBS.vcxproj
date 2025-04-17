@@ -509,6 +509,7 @@
     <ClInclude Include="cpp\FLASH\NandFlash_imp.h" />
     <ClInclude Include="cpp\FLASH\nand_ecc.h" />
     <ClInclude Include="cpp\I2C.h" />
+    <ClInclude Include="cpp\I2C_IMP.h" />
     <ClInclude Include="cpp\list.h" />
     <ClInclude Include="cpp\MANCH\manch.h" />
     <ClInclude Include="cpp\MANCH\manch_imp.h" />
@@ -520,6 +521,7 @@
     <ClInclude Include="cpp\SEGGER_RTT\SEGGER_RTT.h" />
     <ClInclude Include="cpp\SEGGER_RTT\SEGGER_RTT_Conf.h" />
     <ClInclude Include="cpp\SPI.h" />
+    <ClInclude Include="cpp\SPIM_IMP.h" />
     <ClInclude Include="cpp\SPIS.h" />
     <ClInclude Include="cpp\SPIS_imp.h" />
     <ClInclude Include="cpp\TaskList.h" />

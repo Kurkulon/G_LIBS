@@ -9,6 +9,11 @@
 #include "DMA\DMA.h"
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#ifdef DEF_SPIM_IMP_V2
+#define S_SPIM	S_SPIM2
+#endif
+
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #ifdef __ADSPBF59x__
@@ -94,6 +99,9 @@ protected:
 	const u32 			_GEN_CLK;
 
 	DMA_CH				_dma;
+
+	u32					_MR;
+	u32					_CSR;
 
 #elif defined(CPU_XMC48)
 
@@ -288,12 +296,12 @@ public:
 
 	S_SPIM(byte num, T_HW::S_PORT* pcs, u32* mcs, u32 mcslen, u32 genclk) : USIC(num), _PIO_CS(pcs), _MASK_CS(mcs), _MASK_CS_LEN(mcslen), _GEN_CLK(genclk), _dma(&(_usic_hw[num]->spi.PDC)), _dsc(0), _state(WAIT) {}
 
-	bool CheckWriteComplete() { return _dma.CheckWriteComplete() && ((_uhw->spi.SR & 0x2A2) == 0x2A2); }
-	bool CheckReadComplete() { return _dma.CheckReadComplete(); }
-	//void ChipSelect(byte num)	{ _PIO_CS->CLR(_MASK_CS[num]); }
-	//void ChipDisable()			{ _PIO_CS->SET(_MASK_CS_ALL); }
-	void DisableTX() { _dma.Disable(); }
-	void DisableRX() { _dma.Disable(); }
+	bool CheckWriteComplete()	{ return _dma.CheckWriteComplete() && ((_uhw->spi.SR & (SPI_TDRE|SPI_TXEMPTY|SPI_TXBUFE|SPI_ENDTX)) == (SPI_TDRE|SPI_TXEMPTY|SPI_TXBUFE|SPI_ENDTX)); }
+	bool CheckReadComplete()	{ return _dma.CheckReadComplete(); }
+	void ChipSelect(byte num)	{ _PIO_CS->CLR(_MASK_CS[num]); }
+	void ChipDisable()			{ _PIO_CS->SET(_MASK_CS_ALL); }
+	void DisableTX()			{ _dma.Disable(); _uhw->spi.CR = SPI_SPIDIS; }
+	void DisableRX()			{ _dma.Disable(); _uhw->spi.CR = SPI_SPIDIS; }
 
 	//void WriteByteSync(byte v)		{ WriteReadByte(v); }
 	//void WriteByteAsync(byte v);

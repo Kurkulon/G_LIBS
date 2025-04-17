@@ -244,7 +244,9 @@ extern byte core_sys_array[0x100000];
 	#define PID_I2S       			(128+10)       	/**< \brief (MCLK_APBDMASK) I2S APB Clock Enable */
 	#define PID_PCC       			(128+11)       	/**< \brief (MCLK_APBDMASK) PCC APB Clock Enable */
 
+#pragma push
 #pragma anon_unions
+#pragma diag_suppress 368,381,826
 
 namespace T_HW
 {
@@ -3142,5 +3144,6 @@ extern T_HW::DMADESC DmaWRB[32];
 #undef MKPID
 
 
+#pragma pop
 
 #endif // SAMD21_H__09_04_2019__08_14

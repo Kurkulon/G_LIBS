@@ -2,6 +2,8 @@
 
 #include "DMA.h"
 
+#pragma diag_suppress 826
+
 #ifdef CPU_SAME53
 
 	__align(16) T_HW::DMADESC DmaTable[32];

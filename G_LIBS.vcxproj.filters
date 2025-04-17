@@ -293,6 +293,12 @@
     <ClInclude Include="cpp\ARM\sam4sa.h">
       <Filter>CPP\ARM</Filter>
     </ClInclude>
+    <ClInclude Include="cpp\SPIM_IMP.h">
+      <Filter>CPP</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\I2C_IMP.h">
+      <Filter>CPP</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpp\i2c.cpp">

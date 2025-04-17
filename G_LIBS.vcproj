@@ -306,6 +306,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\cpp\I2C_IMP.h"
+				>
+			</File>
+			<File
 				RelativePath=".\cpp\list.h"
 				>
 			</File>
@@ -331,6 +335,10 @@
 			</File>
 			<File
 				RelativePath=".\cpp\SPI.h"
+				>
+			</File>
+			<File
+				RelativePath=".\cpp\SPIM_IMP.h"
 				>
 			</File>
 			<File
