@@ -53,6 +53,23 @@ struct DSCSPI
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#ifdef CPU_SAM4SA
+
+	struct SPI_DSC_CS
+	{
+		T_HW::S_PORT*	_PIO;
+		u32				_MASK;
+		u16				_BAUD; 
+		byte			_MODE; // SPIM Mode [0...3]: bit0 - CPOL, bit1 - CPHA
+	};
+
+	#define US2SPI(v) ((v)*MCK_MHz)
+	#define NS2SPI(v) (((v)*MCK_MHz+MCK_MHz/2)/1000)
+
+#endif
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 #ifdef ADSP_BLACKFIN
 class S_SPIM
 #else
@@ -92,16 +109,15 @@ protected:
 
 #elif defined(CPU_SAM4SA)
 
-	T_HW::S_PORT* const _PIO_CS;
-
-	const u32 * const	_MASK_CS;
-	const u32			_MASK_CS_LEN;
+	const SPI_DSC_CS * const _DSC_CS;
+	const u32			_DSC_CS_LEN;
 	const u32 			_GEN_CLK;
 
 	DMA_CH				_dma;
 
 	u32					_MR;
 	u32					_CSR;
+	u32					_csnum;
 
 #elif defined(CPU_XMC48)
 
@@ -294,12 +310,20 @@ public:
 
 #elif defined(CPU_SAM4SA)
 
-	S_SPIM(byte num, T_HW::S_PORT* pcs, u32* mcs, u32 mcslen, u32 genclk) : USIC(num), _PIO_CS(pcs), _MASK_CS(mcs), _MASK_CS_LEN(mcslen), _GEN_CLK(genclk), _dma(&(_usic_hw[num]->spi.PDC)), _dsc(0), _state(WAIT) {}
+	S_SPIM(byte num, const SPI_DSC_CS* dcs, u32 dcslen, u32 genclk) : USIC(num), _DSC_CS(dcs), _DSC_CS_LEN(dcslen), _GEN_CLK(genclk), _dma(&(_usic_hw[num]->spi.PDC)), _dsc(0), _state(WAIT) {}
 
 	bool CheckWriteComplete()	{ return _dma.CheckWriteComplete() && ((_uhw->spi.SR & (SPI_TDRE|SPI_TXEMPTY|SPI_TXBUFE|SPI_ENDTX)) == (SPI_TDRE|SPI_TXEMPTY|SPI_TXBUFE|SPI_ENDTX)); }
 	bool CheckReadComplete()	{ return _dma.CheckReadComplete(); }
-	void ChipSelect(byte num)	{ _PIO_CS->CLR(_MASK_CS[num]); }
-	void ChipDisable()			{ _PIO_CS->SET(_MASK_CS_ALL); }
+	
+	void ChipSelect(byte num)
+	{ 
+		const SPI_DSC_CS &dsc = _DSC_CS[_csnum = num];	
+		if (dsc._PIO != 0) dsc._PIO->CLR(dsc._MASK); 
+		_CSR = ((dsc._MODE&3)^SPI_NCPHA)|SPI_8BIT|SPI_SCBR(dsc._BAUD)|SPI_DLYBS(0)|SPI_DLYBCT(0); 
+		_uhw->spi.CSR[0] = _CSR;
+	}
+
+	void ChipDisable()			{ const SPI_DSC_CS &dsc = _DSC_CS[_csnum];			if (dsc._PIO != 0) dsc._PIO->SET(dsc._MASK); }
 	void DisableTX()			{ _dma.Disable(); _uhw->spi.CR = SPI_SPIDIS; }
 	void DisableRX()			{ _dma.Disable(); _uhw->spi.CR = SPI_SPIDIS; }
 

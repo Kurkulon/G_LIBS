@@ -153,9 +153,17 @@ void S_SPIM::InitHW()
 	HW::PIOA->ABCDSR1	&=	~(PA12|PA13|PA14);
 	HW::PIOA->ABCDSR2	&=	~(PA12|PA13|PA14);
 
-	_PIO_CS->PER = _MASK_CS_ALL; 
-	_PIO_CS->OER = _MASK_CS_ALL; 
-	_PIO_CS->SET(_MASK_CS_ALL); 
+	for (u32 i = 0; i < _DSC_CS_LEN; i++)
+	{
+		const SPI_DSC_CS &dsc = _DSC_CS[i]; 
+		
+		if (dsc._PIO != 0)
+		{
+			dsc._PIO->PER = dsc._MASK; 
+			dsc._PIO->OER = dsc._MASK; 
+			dsc._PIO->SET(dsc._MASK); 
+		};
+	};
 
 	spi.CR = SPI_SWRST;
 	spi.CR = SPI_SPIEN;
@@ -276,8 +284,10 @@ bool S_SPIM::Connect(u32 baudrate)
 
 	SEGGER_RTT_printf(0, RTT_CTRL_TEXT_BRIGHT_GREEN "SPI%u Init ... ", _usic_num);
 
-	#if defined(CPU_SAME53) || defined(CPU_SAM4SA)
+	#if defined(CPU_SAME53)
 	if (!Usic_Connect() || _MASK_CS == 0 || _MASK_CS_LEN == 0)
+	#elif defined(CPU_SAM4SA)
+	if (!Usic_Connect() || _DSC_CS == 0 || _DSC_CS_LEN == 0)
 	#elif defined(CPU_XMC48)
 	if (!Usic_Connect() || _PIN_CS == 0 || _PIN_CS_LEN == 0)
 	#endif
@@ -312,9 +322,9 @@ bool S_SPIM::Connect(u32 baudrate)
 
 	#elif defined(CPU_SAM4SA)
 
-		_MASK_CS_ALL = 0;
+		//_MASK_CS_ALL = 0;
 
-		for (u32 i = 0; i < _MASK_CS_LEN; i++) _MASK_CS_ALL |= _MASK_CS[i];
+		//for (u32 i = 0; i < _MASK_CS_LEN; i++) _MASK_CS_ALL |= _MASK_CS[i];
 
 		u32 baud = (_GEN_CLK + baudrate/2) / baudrate;
 
@@ -325,7 +335,7 @@ bool S_SPIM::Connect(u32 baudrate)
 		_baud = baud;
 
 		_MR		= SPI_MSTR;
-		_CSR	= SPI_8BIT|SPI_SCBR(_baud)|SPI_DLYBS(_baud)|SPI_DLYBCT(1);
+		_CSR	= SPI_NCPHA|SPI_8BIT|SPI_SCBR(_baud)|SPI_DLYBS(_baud)|SPI_DLYBCT(1);
 
 		InitHW();
 
@@ -406,8 +416,9 @@ void S_SPIM::WritePIO(const void *data, u16 count)
 
 #elif defined(CPU_SAM4SA)
 
-	_uhw->spi.CR = SPI_SPIEN;
-	_uhw->spi.MR = _MR & ~SPI_WDRBT;
+	_uhw->spi.CR		= SPI_SPIEN;
+	_uhw->spi.MR		= _MR & ~SPI_WDRBT;
+	_uhw->spi.CSR[0]	= _CSR;
 
 	while (count != 0)
 	{
@@ -458,8 +469,9 @@ void S_SPIM::WriteAsyncDMA(const void *data, u16 count)
 
 #elif defined(CPU_SAM4SA)	
 
-	_uhw->spi.CR = SPI_SPIEN;
-	_uhw->spi.MR = _MR & ~SPI_WDRBT;
+	_uhw->spi.CR		= SPI_SPIEN;
+	_uhw->spi.MR		= _MR & ~SPI_WDRBT;
+	_uhw->spi.CSR[0]	= _CSR;
 
 	_dma.WritePeripheral(data, count, 0, 0);
 
@@ -553,8 +565,9 @@ void S_SPIM::WriteAsyncDMA(const void *data1, u16 count1, const void *data2, u16
 
 #elif defined(CPU_SAM4SA)	
 
-	_uhw->spi.CR = SPI_SPIEN;
-	_uhw->spi.MR = _MR & ~SPI_WDRBT;
+	_uhw->spi.CR		= SPI_SPIEN;
+	_uhw->spi.MR		= _MR & ~SPI_WDRBT;
+	_uhw->spi.CSR[0]	= _CSR;
 
 	_dma.WritePeripheral(data1, count1, data2, count2);
 
@@ -654,8 +667,9 @@ void S_SPIM::ReadPIO(void *data, u16 count)
 
 #elif defined(CPU_SAM4SA)
 
-	_uhw->spi.CR = SPI_SPIEN;
-	_uhw->spi.MR = _MR | SPI_WDRBT;
+	_uhw->spi.CR		= SPI_SPIEN;
+	_uhw->spi.MR		= _MR | SPI_WDRBT;
+	_uhw->spi.CSR[0]	= _CSR;
 
 	while(_uhw->spi.SR & SPI_RDRF) HW::ReadMem32(&_uhw->spi.RDR);
 
@@ -715,8 +729,9 @@ void S_SPIM::ReadAsyncDMA(void *data, u16 count)
 
 #elif defined(CPU_SAM4SA)	
 
-	_uhw->spi.CR = SPI_SPIEN;
-	_uhw->spi.MR = _MR | SPI_WDRBT;
+	_uhw->spi.CR		= SPI_SPIEN;
+	_uhw->spi.MR		= _MR | SPI_WDRBT;
+	_uhw->spi.CSR[0]	= _CSR;
 
 	while(_uhw->spi.SR & SPI_RDRF) HW::ReadMem32(&_uhw->spi.RDR);
 
@@ -831,8 +846,9 @@ byte S_SPIM::WriteReadByte(byte v)
 
 #elif defined(CPU_SAM4SA)	
 
-	_uhw->spi.CR = SPI_SPIEN;
-	_uhw->spi.MR = _MR | SPI_WDRBT;
+	_uhw->spi.CR		= SPI_SPIEN;
+	_uhw->spi.MR		= _MR | SPI_WDRBT;
+	_uhw->spi.CSR[0]	= _CSR;
 
 	while(_uhw->spi.SR & SPI_RDRF) HW::ReadMem32(&_uhw->spi.RDR);
 
