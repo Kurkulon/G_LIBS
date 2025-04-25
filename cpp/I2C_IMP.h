@@ -771,6 +771,7 @@ bool S_I2C::Connect(u32 baudrate)
 
 		_baud = baud;
 
+		InitHW();
 
 	#elif defined(CPU_SAM4SA)
 		
