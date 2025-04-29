@@ -130,6 +130,8 @@ void DMA_CH::Trans(volatile void *stadr1, u16 len1, u16 mdfy1, u16 ctrl1, volati
 	ctrl1 = (ctrl1&(DMA_PSIZE(~0)|DMA_MSIZE(~0)|DMA_WNR))|DMA_SYNC|DMA_EN;
 	ctrl2 = (ctrl2&(DMA_PSIZE(~0)|DMA_MSIZE(~0)|DMA_WNR))|DMA_SYNC|DMA_EN;
 
+	if (stadr1 == 0 || len1 == 0) stadr1 = stadr2, len1 = len2, ctrl1 = ctrl2, mdfy1 = mdfy2, stadr2 = 0, len2 = 0;
+
 	_dsc1.ADDRSTART	= (void*)stadr1;
 	_dsc1.XCNT		= len1;
 	_dsc1.XMOD		= mdfy1;
