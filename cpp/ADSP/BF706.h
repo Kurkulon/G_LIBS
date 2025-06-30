@@ -2051,6 +2051,8 @@ namespace T_HW
 
 	typedef S_PORT S_PORTA, S_PORTB, S_PORTC, S_PIO, S_PIOA, S_PIOB, S_PIOC;
 
+	#define PORT_MUX(pin, v) (((v)&3)<<pin)
+
 	#define PA0 	(1UL<<0)
 	#define PA1 	(1UL<<1)
 	#define PA2 	(1UL<<2)

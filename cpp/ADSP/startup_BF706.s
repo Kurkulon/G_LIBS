@@ -431,7 +431,7 @@ __sec_int_dispatcher:
 		P0 = [CEC_SID];					// read CEC_SID (32-bit MMR)
 		//R0 = P0;						// copy SID to 1st handler arg
 		[CEC_SID] = P0;					// interrupt acknowledgement
-		[--SP] = RETI;
+		//[--SP] = RETI;
 		[--SP] = P0;
 
 		P1 = _SEC_VecTable;
@@ -449,7 +449,7 @@ __sec_int_dispatcher:
 		R0 = [SP++];
 		[REG_SEC0_END] = R0;			// R0 still contains the SID after the handler call
 
-		RETI = [SP++];
+		//RETI = [SP++];
 
 #if WA_19000054
 
