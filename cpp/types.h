@@ -174,6 +174,7 @@ __forceinline i32 _InterlockedDecrement(volatile i32 *v) { u32 t = __builtin_cli
 
 #elif  defined(__CC_ARM)
 
+__forceinline u32 ReadMem32(u32 ptr) { return ptr; }
 __forceinline void Read32(u32 v) { u32 t; __asm { add t, v }; }
 __forceinline u16 ReverseWord(u16 v) { __asm	{ rev16 v, v };	return v; }
 __forceinline u32 ReverseDword(u32 v) { return __rev(v); }

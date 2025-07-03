@@ -102,17 +102,17 @@
 		#define PID_MANT					CONCAT3(TC,MANT_TC,_I)
 
 		#if (MANT_GEN_CLK > 50000000)
-		#define MANT_PRESC_NUM		8
+			#define MANT_PRESC_NUM		8
 		#else
-		#define MANT_PRESC_NUM		2
+			#define MANT_PRESC_NUM		2
 		#endif
 
 		#define MANT_TCCLKS					CONCAT2(TC_TCCLKS_MCK,MANT_PRESC_NUM)
-		#define MANT_PRESC_DIV				CONCAT2(TC_PRESCALER_DIV,MANT_PRESC_NUM)
+		//#define MANT_PRESC_DIV				CONCAT2(TC_PRESCALER_DIV,MANT_PRESC_NUM)
 
 //		#define ManResetTransmit()			{ MNTTC.CTRLA = TC_SWRST; while(MNTTC->SYNCBUSY); }
 		#define ManDisableTransmit()		{ MNTTC.IDR = TC_CPCS; MNTTC.CCR = TC_CLKDIS; }
-		#define ManEndIRQ()					{ HW::ReadMem32(&(MNTTC.SR)); }
+		#define ManEndIRQ()					{ ReadMem32(MNTTC.SR); }
 
 	#else
 		#error  Must defined MANT_TC or MANT_TCC
@@ -717,6 +717,22 @@ bool SendManData(MTB *mtb)
 		MNTTCC->CTRLA |= TCC_ENABLE;
 #endif
 
+	#elif defined(CPU_SAM4SA)
+	
+		MANTT_ClockEnable();
+
+		MNTTC.IER = TC_CPCS;
+
+		ReadMem32(MNTTC.SR);
+
+		//u32 tmp = MNTTC.SR;
+
+		MNTTC.RC = GetTrmBaudRate(mtb->baud);
+
+		MNTTC.CMR = TC_CPCTRG|MANT_TCCLKS;
+
+		MNTTC.CCR = TC_CLKEN|TC_SWTRG; 
+
 	#elif defined(CPU_XMC48)
 
 		MANTCC->PRS = GetTrmBaudRate(mtb->baud)-1; //trmHalfPeriod - 1;
@@ -750,6 +766,8 @@ void InitManTransmit()
 {
 	using namespace HW;
 
+	SEGGER_RTT_WriteString(0, RTT_CTRL_TEXT_BRIGHT_WHITE "Manchester Transmiter Init ... ");
+
 	VectorTableExt[MANT_IRQ] = ManTrmIRQ;
 	CM4::NVIC->CLR_PR(MANT_IRQ);
 	CM4::NVIC->SET_ER(MANT_IRQ);
@@ -761,6 +779,18 @@ void InitManTransmit()
 	PIO_MANCH->DIRSET = L1|H1|L2|H2;
 
 	ManResetTransmit();
+
+#elif defined(CPU_SAM4SA)
+
+	MANTT_ClockEnable();
+
+	PIO_MANCH->CLR(L1|L2);
+	PIO_MANCH->SET(H1|H2);
+	PIO_MANCH->PER = L1|L2|H1|H2;
+	PIO_MANCH->OER = L1|L2|H1|H2;
+	PIO_MANCH->IDR = L1|L2|H1|H2;
+
+	MNTTC.CCR = TC_CLKDIS;
 
 #elif defined(CPU_XMC48)
 
@@ -783,6 +813,8 @@ void InitManTransmit()
 #endif
 
 	ManDisable();
+
+	SEGGER_RTT_WriteString(0, "OK\n");
 }
 
 #endif
@@ -1221,7 +1253,7 @@ void InitManTransmit()
 
 	#define US2MR(v)			(US2CLK(v))
 
-	#define ManR_EndIRQ()		{ HW::ReadMem32(&HW::PIOB->ISR); }
+	#define ManR_EndIRQ()		{ ReadMem32(HW::PIO_RXD->ISR); }
 
 #elif defined(CPU_XMC48)	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -1558,7 +1590,7 @@ void InitManRecieve()
 	HW::PIO_RXD->PER = RXD;
 	HW::PIO_RXD->ODR = RXD;
 
-	HW::PIO_RXD->IDR	= RXD;
+	HW::PIO_RXD->IER	= RXD;
 	HW::PIO_RXD->IFER	= RXD;
 	HW::PIO_RXD->AIMDR	= RXD;
 
