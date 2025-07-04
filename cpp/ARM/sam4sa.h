@@ -1198,7 +1198,7 @@ namespace T_HW
 	#define ADC_TRACKTIM_MSK	(0xfu << 24) /**< \brief (ADC_MR) Tracking Time */
 	#define ADC_TRACKTIM(value)	(((value)&15) << 24)
 	#define ADC_TRANSFER_MSK	(0x3u << 28) /**< \brief (ADC_MR) Transfer Period */
-	#define ADC_TRANSFER(value)	((value)&3 << 28)
+	#define ADC_TRANSFER(value)	(((value)&3) << 28)
 	#define	ADC_USEQ			(0x1u << 31) /**< \brief (ADC_MR) Use Sequence Enable */
 	#define	ADC_USEQ_NUM_ORDER	(0x0u << 31) /**< \brief (ADC_MR) Normal Mode: The controller converts channels in a simple numeric order depending only on the channel index. */
 	#define	ADC_USEQ_REG_ORDER	(0x1u << 31) /**< \brief (ADC_MR) User Sequence Mode: The sequence respects what is defined in ADC_SEQR1 and ADC_SEQR2 registers and can be used to convert several times the same channel. */

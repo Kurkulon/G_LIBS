@@ -165,8 +165,10 @@ __forceinline void Pop_IRQ(u32 t)
 #ifdef _ADI_COMPILER
 
 __forceinline void Read32(u32 v) {  }
-__forceinline word ReverseWord(word v) { return ((v&0x00FF)<<8 | (v&0xFF00)>>8); }
-__forceinline dword ReverseDword(dword v) { v = (v&0x00FF00FF)<<8 | (v&0xFF00FF00)>>8;	return (v&0x0000FFFF)<<16 | (v&0xFFFF0000)>>16; }
+//__forceinline word ReverseWord(word v) { return ((v&0x00FF)<<8 | (v&0xFF00)>>8); }
+//__forceinline dword ReverseDword(dword v) { v = (v&0x00FF00FF)<<8 | (v&0xFF00FF00)>>8;	return (v&0x0000FFFF)<<16 | (v&0xFFFF0000)>>16; }
+__forceinline word ReverseWord(word v) { return __builtin_byteswap2(v); }
+__forceinline dword ReverseDword(dword v) { return __builtin_byteswap4(v); }
 __forceinline dword SwapDword(dword v) { return (v&0x00FF00FF)<<8 | (v&0xFF00FF00)>>8; }
 
 __forceinline i32 _InterlockedIncrement(volatile i32 *v) { u32 t = __builtin_cli(); i32 r = *v += 1; __builtin_sti(t); return r; }
