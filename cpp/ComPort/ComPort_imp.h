@@ -939,7 +939,9 @@ void ComPort::EnableReceive(void* dst, word count)
 		usart.CR = US_RSTSTA|US_TXDIS|US_RXDIS;// 0x1A0;	// Disable transmit and receive, reset status
 
 		_dma.ReadPeripheral(dst, count, 0, 0);
-
+		
+		_prevDmaCounter = _dma.GetReadBytesLeft();
+		
 		usart.CR = US_RSTSTA|US_RXEN;
 
 	#elif defined(CPU_XMC48)

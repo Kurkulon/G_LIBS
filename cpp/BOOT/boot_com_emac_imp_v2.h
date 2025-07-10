@@ -1108,8 +1108,9 @@ static bool RequestHandler(Ptr<MB> &mb, RspMes &rsp)
 			tm64.Reset();
 			if (timeOut < BOOT_MAIN_TIMEOUT) timeOut = BOOT_MAIN_TIMEOUT;
 		#endif
-	}
-	else
+	};
+
+	if (!cm || !ca)
 	{
 		return true;
 	};
