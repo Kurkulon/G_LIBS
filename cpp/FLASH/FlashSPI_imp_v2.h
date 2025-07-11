@@ -592,7 +592,7 @@ bool FlashSPI::GetFlashType()
 
 				GlobalUnProtect();
 
-				if (FLASH_START_ADR >= 0x10000) CmdWriteEnable(), CmdProtectSector(0);
+				if (flashStartAdr >= 0x10000) CmdWriteEnable(), CmdProtectSector(0);
 
 				res = true; 
 				break; 
@@ -621,7 +621,7 @@ bool FlashSPI::GetFlashType()
 
 				byte status_new = status & ~(SR_BP0|SR_BP1|SR_BP2|SR_BP3);
 
-				if (FLASH_START_ADR >= 0x10000) status_new |= SR_BP1|SR_BP2|SR_BP3;
+				if (flashStartAdr >= 0x10000) status_new |= SR_BP1|SR_BP2|SR_BP3;
 
 				if (status != status_new) CmdWriteEnable(), CmdWriteStatusReg(status_new), Wait_For_Status(SR_RDY_BSY);
 
@@ -676,7 +676,7 @@ u16 FlashSPI::CRC16(u32 len, u32 *rlen)
 	}
 	else
 	{
-		crc = this->GetCRC16(FLASH_START_ADR, len);
+		crc = this->GetCRC16(0, len);
 	};
 
 	if (rlen != 0) *rlen = len;
@@ -836,6 +836,8 @@ void FlashSPI::CmdWriteStatusReg(byte stat)
 
 ERROR_CODE FlashSPI::Read(u32 addr, void *data, u32 size)
 {
+	addr += flashStartAdr;
+
     buf[0] = CMD_FAST_READ;
     buf[1] = addr >> 16;
     buf[2] = addr >> 8;
@@ -864,6 +866,8 @@ u16 FlashSPI::GetCRC16(u32 stAdr, u16 count)
 	crc.w = 0xFFFF;
 
 	u16 t = 0;
+
+	stAdr += flashStartAdr;
 
     buf[0] = CMD_FAST_READ;
     buf[1] = stAdr >> 16;
@@ -1282,7 +1286,7 @@ void FlashSPI::Update()
 			{
 				flwb = (FLWB*)curFlwb->GetDataPtr();
 
-				flashWriteAdr = flwb->adr + FLASH_START_ADR; 
+				flashWriteAdr = flwb->adr + flashStartAdr; 
 				flashWritePtr = flwb->data + flwb->dataOffset;
 				flashWriteLen = flwb->dataLen;
 
@@ -1562,7 +1566,7 @@ void FlashSPI::ADSP_CheckFlash()
 
 	while (1)
 	{
-		Read(FLASH_START_ADR + adr, (byte*)&bh, sizeof(bh));
+		Read(adr, (byte*)&bh, sizeof(bh));
 
 		u32 x = p[0] ^ p[1] ^ p[2] ^ p[3];
 		x ^= x >> 16; 
@@ -1594,13 +1598,13 @@ void FlashSPI::ADSP_CheckFlash()
 
 	#ifdef ADSP_CRC_PROTECTION
 
-		Read(FLASH_START_ADR + adr, &adsp_crc, sizeof(adsp_crc));
+		Read(adr, &adsp_crc, sizeof(adsp_crc));
 
 	#endif
 
 	if (flashLen > 0)
 	{
-		flashCRC = this->GetCRC16(FLASH_START_ADR, flashLen);
+		flashCRC = this->GetCRC16(0, flashLen);
 		
 		#ifdef ADSP_CRC_PROTECTION
 			flashCRCOK = (flashCRC == adsp_crc);
