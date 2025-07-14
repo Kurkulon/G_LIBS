@@ -531,7 +531,9 @@ static __irq void ManTrmIRQ()
 	static u16 count = 0;
 	static byte i = 0;
 	static const u16 *data = 0;
+	static const u16 *data2 = 0;
 	static u16 len = 0;
+	static u16 len2 = 0;
 	//const bool cmd = false;
 
 	Pin_ManTrmIRQ_Set();
@@ -544,6 +546,9 @@ static __irq void ManTrmIRQ()
 		
 			data = manTB->data1;
 			len = manTB->len1;
+			data2 = manTB->data2;
+			len2 = manTB->len2;
+
 			stateManTrans = 1;
 
 			break;
@@ -603,13 +608,13 @@ static __irq void ManTrmIRQ()
 				{
 					stateManTrans = 1;
 				}
-				else if (manTB->len2 != 0 && manTB->data2 != 0)
+				else if (len2 != 0 && data2 != 0)
 				{
-					len = manTB->len2;
-					data = manTB->data2;
+					len = len2;
+					data = data2;
 
-					manTB->len2 = 0;
-					manTB->data2 = 0;
+					len2 = 0;
+					data2 = 0;
 
 					stateManTrans = 1;
 				}
