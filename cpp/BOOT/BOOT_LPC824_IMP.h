@@ -5,15 +5,46 @@
   
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#include <time.h>
-#include <CRC\crc16.h>
-#include <SEGGER_RTT\SEGGER_RTT.h>
+#include "time.h"
+#include "CRC\crc16.h"
+#include "SEGGER_RTT\SEGGER_RTT.h"
+#include "BOOT\boot_req.h"
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#ifndef BOOTLOADER_VERSION
+#define BOOTLOADER_VERSION			0x0101
+#endif
 
 #ifndef BOOT_COM_MODE
 #define BOOT_COM_MODE	ComPort::ASYNC
 #endif
+
+#ifndef BOOT_HANDSHAKE_TIMEOUT		
+#define BOOT_HANDSHAKE_TIMEOUT		(200)
+#endif
+#ifndef BOOT_COM_STOPBITS
+#define BOOT_COM_STOPBITS	1
+#endif
+
+#ifdef BOOT_HANDSHAKE
+const u64 masterGUID = BOOT_MGUID;
+const u64 slaveGUID = BOOT_SGUID;
+#endif
+
+#ifndef BOOT_COM_PRETIMEOUT
+#define BOOT_COM_PRETIMEOUT		MS2COM(200)
+#endif
+
+#ifndef BOOT_COM_POSTTIMEOUT
+#define BOOT_COM_POSTTIMEOUT	MS2COM(2)
+#endif
+
+#ifndef BOOT_COM_WRITEDELAY			
+#define BOOT_COM_WRITEDELAY			(US2CTM(10))
+#endif
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #define FRDY 1
 #define FCMDE 2
@@ -73,6 +104,12 @@ struct FL
 
 static bool run = true;
 
+static TM32 tm64;
+static u32 timeOut;
+
+static u16 manReqWord = BOOT_MAN_REQ_WORD;
+static u16 manReqMask = BOOT_MAN_REQ_MASK;
+
 //static u32 crcErrors = 0;
 //static u32 lenErrors = 0;
 //static u32 reqErrors = 0;
@@ -84,21 +121,14 @@ static bool run = true;
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+
 struct ReqMes
 {
 	u32 len;
-	//u32 func;
 
-	union
-	{
-		struct { u32 func; u32 len;										u16 align; u16 crc; }	F1; // Get CRC
-		struct { u32 func;												u16 align; u16 crc; }	F2; // Exit boot loader
-		struct { u32 func; u32 padr; u32 plen; u32 pdata[PAGEDWORDS];	u16 align; u16 crc; }	F3; // Programm page
+	BootReqV1 mes;
 
-		//struct { u32 flashLen;  u16 align; u16 crc; } F01; // Get Flash CRC
-		//struct { u32 padr; u32 page[PAGEDWORDS]; u16 align; u16 crc; } F02; // Write page
-		//struct { u16 align; u16 crc; } F03; // Exit boot loader
-	};
+	u32 exdata[PAGEDWORDS];
 };
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -106,21 +136,11 @@ struct ReqMes
 struct RspMes
 {
 	u32 len;
-	//u32 func;
 
-	union
-	{
-		struct { u32 func; u32 pageLen;	u32 len;	u16 sCRC;	u16 crc; }	F1; // Get CRC
-		struct { u32 func;							u16 align;	u16 crc; } 	F2; // Exit boot loader
-		struct { u32 func; u32 padr;	u32 status; u16 align;	u16 crc; } 	F3; // Programm page
-
-		//struct { u32 flashLen; u16 flashCRC; u16 crc; } F01;
-		//struct { u32 padr; u32 status; u16 align; u16 crc; } F02;
-		//struct { u16 align; u16 crc; } F03;							// Exit boot loader
-	};
+	BootRspV1 mes;
 };
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static void InitPlaneSize()
 {
@@ -379,16 +399,13 @@ static bool WritePage(u32 pagenum, u32 *pbuf)
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #ifdef BOOT_HANDSHAKE
 
-const unsigned __int64 masterGUID	= BOOT_MGUID;
-const unsigned __int64 slaveGUID	= BOOT_SGUID;
-
-__packed struct ReqHS { unsigned __int64 guid; u16 crc; };
-__packed struct RspHS { unsigned __int64 guid; u16 crc; };
+//__packed struct ReqHS { unsigned __int64 guid; u16 crc; };
+//__packed struct RspHS { unsigned __int64 guid; u16 crc; };
 
 bool HandShake()
 {
-	static ReqHS req;
-	static RspHS rsp;
+	static BootReqHS req;
+	static BootRspHS rsp;
 
 	static ComPort::WriteBuffer wb = { false, sizeof(req), &req };
 
@@ -399,7 +416,10 @@ bool HandShake()
 
 	bool c = false;
 
-	for (byte i = 0; i < 2; i++)
+	static TM32 tm;
+	tm.Reset();
+
+	while (!tm.Check(BOOT_HANDSHAKE_TIMEOUT) && !c)
 	{
 		com.Read(&rb, BOOT_HANDSHAKE_PRETIMEOUT, BOOT_HANDSHAKE_POSTTIMEOUT);
 
@@ -412,15 +432,13 @@ bool HandShake()
 
 		Pin_MainLoop_Clr();
 
-		c = (rb.recieved && rb.len == sizeof(RspHS) && GetCRC16(rb.data, rb.len) == 0 && rsp.guid == masterGUID);
+		c = (rb.recieved && rb.len == sizeof(rsp) && GetCRC16(rb.data, rb.len) == 0 && rsp.guid == masterGUID);
 
 		if (c)
 		{
 			com.Write(&wb);
 
 			while(com.Update()) { HW::ResetWDT() ; };
-
-			break;
 		};
 	};
 
@@ -430,54 +448,155 @@ bool HandShake()
 #endif
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static bool Request_01_GetFlashCRC(ReqMes &req, RspMes &rsp)
+static bool Request_00_GetInfo(ReqMes &req, RspMes &rsp)
 {
+	rsp.len = 0;
 
-	//if (req.F01.flashLen > FLASH_SIZE) { req.F01.flashLen = FLASH_SIZE; };
+	BootReqV1::SF0 &rq = req.mes.F0;
+	BootRspV1::SF0 &rp = rsp.mes.F0;
 
-	u32 len = MIN(req.F1.len, FLASH_SIZE);
+	if (rq.adr == 0 || req.len < sizeof(rq)) return true;
 
-	rsp.F1.func		= req.F1.func;
-	rsp.F1.pageLen	= PAGESIZE;
-	rsp.F1.len		= len;
-	rsp.F1.sCRC		= GetCRC16((void*)FLASH_START, len);
-	rsp.F1.crc		= GetCRC16(&rsp.F1, sizeof(rsp.F1) - 2);
-	rsp.len			= sizeof(rsp.F1);
+	rp.adr		= rq.adr;
+	rp.rw		= rq.rw;
+	rp.ver		= req.mes.VERSION;
+	rp.maxFunc	= req.mes.FUNC_MAX;
+	rp.guid		= BOOT_SGUID;
+	rp.startAdr = FLASH_START;
+	rp.pageLen	= PAGESIZE;
+	rp.crc		= GetCRC16(&rp, sizeof(rp)-sizeof(rp.crc));
+
+	rsp.len = sizeof(rp);
 
 	return true;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static bool Request_03_WritePage(ReqMes &req, RspMes &rsp)
+static bool Request_01_GetCRC(ReqMes &req, RspMes &rsp)
 {
-	bool c = false;
+	rsp.len = 0;
 
-	if (req.len == sizeof(req.F3))
+	BootReqV1::SF1 &rq = req.mes.F1;
+	BootRspV1::SF1 &rp = rsp.mes.F1;
+
+	if (rq.adr == 0) return true;
+
+	if (req.len == sizeof(rq))
 	{
-		c = WritePage(req.F3.padr/PAGESIZE, req.F3.pdata);
+		if (rq.len != 0)
+		{
+			rp.flashCRC = GetCRC16((void*)(FLASH_START), rq.len);
+			rp.flashLen = rq.len;
+		};
+	}
+	else
+	{
+		rp.flashCRC = 0;
+		rp.flashLen = 0;
 	};
 
-	rsp.F3.func		= req.F3.func;
-	rsp.F3.padr		= req.F3.padr;
-	rsp.F3.status	= (c) ? 1 : 0;
-	rsp.F3.align	= ~req.F3.padr;
-	rsp.F3.crc		= GetCRC16(&rsp.F3, sizeof(rsp.F3) - 2);
-	rsp.len			= sizeof(rsp.F3);
+	rp.adr		= rq.adr;
+	rp.rw		= rq.rw;
+	rp.crc		= GetCRC16(&rp, sizeof(rp)-sizeof(rp.crc));
+
+	rsp.len = sizeof(rp);
 
 	return true;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static bool Request_02_ExitBootLoader(ReqMes &req, RspMes &rsp)
+static bool Request_02_WritePage(ReqMes &req, RspMes &rsp)
 {
-	rsp.F2.func		= req.F2.func;
-	rsp.F2.align	= 0x5555;
-	rsp.F2.crc		= GetCRC16(&rsp.F2, sizeof(rsp.F2) - sizeof(rsp.F2.crc));
-	rsp.len			= sizeof(rsp.F2);
+	//FLWB &flwb = *((FLWB*)mb->GetDataPtr());
+	//ReqMes &req = *((ReqMes*)flwb.data);
+
+	BootReqV1::SF2 &rq = req.mes.F2;
+	BootRspV1::SF2 &rp = rsp.mes.F2;
+
+	rsp.len = 0;
+
+	u16 xl = rq.plen + sizeof(rq) - sizeof(rq.pdata);
+
+	bool c = false;
+
+	if (req.len >= xl /*&& flash_write_error == 0*/)
+	{
+		c = WritePage(rq.padr/PAGESIZE, rq.pdata);
+	};
+
+	if (rq.adr == 0) return true;
+
+	rp.adr		= rq.adr;
+	rp.rw		= rq.rw;
+	rp.res		= c;
+	rp.crc		= GetCRC16(&rp, sizeof(rp)-sizeof(rp.crc));
+	rsp.len		= sizeof(rp);
+
+	return true;
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+//static bool Request_03_WritePage(ReqMes &req, RspMes &rsp)
+//{
+//	bool c = false;
+//
+//	if (req.len == sizeof(req.F3))
+//	{
+//		c = WritePage(req.F3.padr/PAGESIZE, req.F3.pdata);
+//	};
+//
+//	rsp.F3.func		= req.F3.func;
+//	rsp.F3.padr		= req.F3.padr;
+//	rsp.F3.status	= (c) ? 1 : 0;
+//	rsp.F3.align	= ~req.F3.padr;
+//	rsp.F3.crc		= GetCRC16(&rsp.F3, sizeof(rsp.F3) - 2);
+//	rsp.len			= sizeof(rsp.F3);
+//
+//	return true;
+//}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static bool Request_03_ExitBootLoader(ReqMes &req, RspMes &rsp)
+{
+	BootReqV1::SF3 &rq = req.mes.F3;
+	BootRspV1::SF3 &rp = rsp.mes.F3;
+
+	rsp.len = 0;
+
+	if (rq.adr == 0) return false;
+
+	rp.adr		= rq.adr;
+	rp.rw		= rq.rw;
+	rp.crc		= GetCRC16(&rp, sizeof(rp)-sizeof(rp.crc));
+	rsp.len		= sizeof(rp);
 
 	return false;
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static bool Request_04_SetTimeOut(ReqMes &req, RspMes &rsp)
+{
+	BootReqV1::SF4 &rq = req.mes.F4;
+	BootRspV1::SF4 &rp = rsp.mes.F4;
+
+	timeOut = rq.timeOutMS;
+	tm64.Reset();
+
+	rsp.len = 0;
+
+	if (rq.adr == 0) return true;
+
+	rp.adr		= rq.adr;
+	rp.rw		= rq.rw;
+	rp.crc		= GetCRC16(&rp, sizeof(rp)-sizeof(rp.crc));
+	rsp.len		= sizeof(rp);
+
+	return true;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -494,16 +613,62 @@ static bool Request_02_ExitBootLoader(ReqMes &req, RspMes &rsp)
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static bool Request_Handler(ReqMes &req, RspMes &rsp)
+//static bool Request_Handler(ReqMes &req, RspMes &rsp)
+//{
+//	bool c = false;
+//
+//	switch (req.F1.func)
+//	{
+//		case 1:		c = Request_01_GetFlashCRC(req, rsp);		break;
+//		case 2:  	c = Request_02_ExitBootLoader(req, rsp);	break;
+//		case 3:  	c = Request_03_WritePage(req, rsp);			break;
+//		//default: 	c = Request_Default(req, rsp);				break;
+//	};
+//
+//	return c;
+//}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static bool RequestHandler(ReqMes &req, RspMes &rsp)
 {
+	//FLWB &flwb = *((FLWB*)(mb->GetDataPtr()));
+	//ReqMes &req = *((ReqMes*)flwb.data);
+
+	BootReqV1::SF0 &rq = req.mes.F0;
+
+	if (req.len < (sizeof(rq.adr)+sizeof(rq.rw))) return true;
+
+	u16 t = rq.rw;
+	u16 adr = GetNetAdr();
+
+	bool cm = (t & manReqMask) == manReqWord;
+	bool ca = rq.adr == adr || rq.adr == 0;
+
+	if (cm && adr <= BOOT_MAX_NETADR)
+	{
+#if defined(BOOT_TIMEOUT) && defined(BOOT_MAIN_TIMEOUT)
+		tm64.Reset();
+		if (timeOut < BOOT_MAIN_TIMEOUT) timeOut = BOOT_MAIN_TIMEOUT;
+#endif
+	};
+
+	if (!cm || !ca)
+	{
+		return true;
+	};
+
 	bool c = false;
 
-	switch (req.F1.func)
+	t &= 0xFF;
+
+	switch (t)
 	{
-		case 1:		c = Request_01_GetFlashCRC(req, rsp);		break;
-		case 2:  	c = Request_02_ExitBootLoader(req, rsp);	break;
-		case 3:  	c = Request_03_WritePage(req, rsp);			break;
-		//default: 	c = Request_Default(req, rsp);				break;
+		case 0: c = Request_00_GetInfo(req, rsp);			break;
+		case 1: c = Request_01_GetCRC(req, rsp);			break;
+		case 2: c = Request_02_WritePage(req, rsp);			break;
+		case 3: c = Request_03_ExitBootLoader(req, rsp);	break;
+		case 4: c = Request_04_SetTimeOut(req, rsp);		break;
 	};
 
 	return c;
@@ -530,7 +695,7 @@ static void UpdateCom()
 	{
 		case 0:
 
-			rb.data = &req.F1.func;
+			rb.data = &req.mes;
 			rb.maxLen = sizeof(req)-sizeof(req.len);
 			
 			com.Read(&rb, BOOT_COM_PRETIMEOUT, BOOT_COM_POSTTIMEOUT);
@@ -554,7 +719,7 @@ static void UpdateCom()
 			{
 				req.len = rb.len;
 
-				c = Request_Handler(req, rsp);
+				c = RequestHandler(req, rsp);
 
 				i++;
 			}
@@ -569,7 +734,7 @@ static void UpdateCom()
 
 			//while(!tm.Check(2)) ;
 
-			wb.data = &rsp.F1.func;
+			wb.data = &rsp.mes;
 			wb.len = rsp.len;
 
 			com.Write(&wb);
@@ -595,6 +760,23 @@ static void UpdateCom()
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+static void WDT_Init()
+{
+	HW::SYSCON->SYSAHBCLKCTRL |= HW::CLK::WWDT_M;
+	HW::SYSCON->PDRUNCFG &= ~(1<<6); // WDTOSC_PD = 0
+	HW::SYSCON->WDTOSCCTRL = (1<<5)|59; // 600kHz/60 = 10kHz = 0.1ms
+
+	#ifndef _DEBUG
+
+		HW::WDT->TC = 2500; // * 0.4ms
+		HW::WDT->MOD = 0x3;
+		HW::ResetWDT();
+
+	#endif
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 extern "C" void _MainAppStart(u32 adr);
 
 int main()
@@ -611,7 +793,12 @@ int main()
 
 	InitPlaneSize();
 
-	InitHardware();
+	#ifdef BOOT_HW_INIT
+		BOOT_HW_INIT();
+	#endif
+
+	Init_time(MCK);
+	WDT_Init();
 
 	com.Connect(BOOT_COM_MODE, BOOT_COM_SPEED, BOOT_COM_PARITY, BOOT_COM_STOPBITS);
 
@@ -623,9 +810,21 @@ int main()
 
 	CTM32	tm;
 
+	#ifdef BOOT_TIMEOUT
+		timeOut = BOOT_TIMEOUT;
+	#endif
+
 	while(run)
 	{
 		UpdateCom();
+
+		#ifdef BOOT_HW_UPDATE
+				BOOT_HW_UPDATE();
+		#endif
+
+		#ifdef BOOT_TIMEOUT
+				if (tm64.Timeout(timeOut)) break;
+		#endif
 
 		HW::ResetWDT();
 
