@@ -1268,6 +1268,18 @@ static void WDT_Init()
 		HW::WDT->CTR = WDT_CTR_ENB_Msk;
 		#endif
 
+	#elif defined(CPU_LPC824)
+
+		HW::SYSCON->SYSAHBCLKCTRL |= HW::CLK::WWDT_M;
+		HW::SYSCON->PDRUNCFG &= ~(1<<6); // WDTOSC_PD = 0
+		HW::SYSCON->WDTOSCCTRL = (1<<5)|59; // 600kHz/60 = 10kHz = 0.1ms
+
+		#ifndef _DEBUG
+			HW::WDT->TC = 2500; // * 0.4ms
+			HW::WDT->MOD = 0x3;
+			HW::ResetWDT();
+		#endif
+
 	#endif
 }
 
@@ -1392,6 +1404,10 @@ int main()
 
 		HW::WDT_Disable();
 
+	#elif defined(CPU_LPC824)
+
+		HW::WDT->Update();
+	
 	#endif
 
 	SEGGER_RTT_printf(0, RTT_CTRL_TEXT_BRIGHT_GREEN "Main App Start ... %u ms\n", GetMilliseconds());

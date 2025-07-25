@@ -457,7 +457,7 @@ extern "C" void SystemInit()
 
 		IOCON->PIO0_1.B.MODE = 0;
 
-		HW::GPIO->NOT0 = 1<<12;
+		Pin_MainLoop_Tgl();
 
 		SWM->PINENABLE0.B.CLKIN = 0;
 
@@ -472,7 +472,7 @@ extern "C" void SystemInit()
 		SYSCON->SYSPLLCLKUEN  = 1;					/* Update Clock Source      */
 		while (!(SYSCON->SYSPLLCLKUEN & 1));		/* Wait Until Updated       */
 
-		HW::GPIO->NOT0 = 1<<12;
+		Pin_MainLoop_Tgl();
 
 		#ifdef PLL_MHz
 
@@ -502,7 +502,7 @@ extern "C" void SystemInit()
 		SYSCON->MAINCLKUEN    = 1;					/* Update MCLK Clock Source */
 		while (!(SYSCON->MAINCLKUEN & 1));			/* Wait Until Updated       */
 
-		HW::GPIO->NOT0 = 1<<12;
+		Pin_MainLoop_Tgl();
 
 		if ((u32)MCK_MHz <= 30) HW::FLASHCTRL->FLASHCFG &= ~3;
 
@@ -524,7 +524,7 @@ extern "C" void SystemInit()
 			DMA->CTRL = 1;
 		#endif
 
-		HW::GPIO->NOT0 = 1<<12;
+			Pin_MainLoop_Tgl();
 
 	#endif
 
