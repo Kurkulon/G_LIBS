@@ -38,7 +38,11 @@ template <int L> List< REQUEST<L> > REQUEST<L>::_freeList;
 
 typedef REQUEST<REQUEST_DATA_LEN> RQST;
 
-static RQST reqArray[8];
+#ifndef REQUEST_ARRAY_NUM
+#define REQUEST_ARRAY_NUM 8
+#endif
+
+static RQST reqArray[REQUEST_ARRAY_NUM];
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

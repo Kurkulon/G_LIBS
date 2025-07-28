@@ -124,8 +124,9 @@
 	#define SECTORSIZE (PAGESIZE*PAGES_IN_SECTOR)
 	#define SECTORDWORDS (SECTORSIZE>>2)
 	#define SECTORMASK (~(SECTORSIZE-1))
+	#define PLANESIZE 0x8000
 
-	u32 PLANESIZE = 0x1000;
+	//u32 PLANESIZE = 0x1000;
 
 	#ifndef BOOT_START_SECTOR
 		#ifdef CPU_LPC824
@@ -205,6 +206,63 @@
 
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+	static bool LPC824_VerifyPage(u32 pagenum, __packed u32 *pbuf)
+	{
+		bool c = true;
+
+		u32 *p = (u32*)(FLASH_START + pagenum*PAGESIZE);
+
+		for (u32 i = 0; i < PAGEDWORDS; i++)
+		{
+			if (p[i] != pbuf[i])
+			{
+				c = false;
+				break;
+			};
+		};
+
+		return c;
+	}
+
+	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	static bool LPC824_WritePage(u32 adr, void *pbuf)
+	{
+		u32 pagenum = adr / PAGESIZE;
+		u32 sector = pagenum/PAGES_IN_SECTOR;
+
+		if ((pagenum & (PAGES_IN_SECTOR-1)) == 0)
+		{
+			if (!IAP_PrepareSector(sector))
+			{
+				return false;
+			};
+			if (!IAP_EraseSector(sector))
+			{
+				return false;
+			};
+		};
+
+		if (!IAP_PrepareSector(sector))
+		{
+			return false;
+		};
+
+		if (!IAP_WritePage(pagenum, (__packed u32*)pbuf))
+		{
+			return false;
+		};
+
+		if (!LPC824_VerifyPage(pagenum, (__packed u32*)pbuf))
+		{
+			return false;
+		};
+
+		return true;
+	}
+
+	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 #endif	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -239,6 +297,8 @@ protected:
 		return HW::NVMCTRL->STATUS & NVMCTRL_READY;
 	#elif defined(CPU_XMC48)
 		return (HW::FLASH0->FSR & FLASH_FSR_PBUSY_Msk) == 0;
+	#else
+		return true;
 	#endif
 	}
 	
@@ -250,6 +310,8 @@ protected:
 		return HW::NVMCTRL->INTFLAG == NVMCTRL_INTFLAG_DONE;
 	#elif defined(CPU_XMC48)
 		return (HW::FLASH0->FSR & (FLASH_FSR_VER_Msk|FLASH_FSR_SQER_Msk)) == 0;
+	#else
+		return true;
 	#endif
 	}
 
@@ -309,14 +371,19 @@ bool FlashInt::RequestWrite(Ptr<MB> &b)
 
 	if ((b.Valid()) && (flwb.dataLen > 0))
 	{
-		writeFlBuf.Add(b);
-
-		return true;
+		#ifdef CPU_LPC824
+			return LPC824_WritePage(flwb.adr, flwb.data+flwb.dataOffset);
+		#else
+			writeFlBuf.Add(b);
+			return true;
+		
+		#endif
 	}
 	else
 	{
 		return false;
 	};
+
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -406,6 +473,8 @@ u32 FlashInt::Read(u32 addr, void *data, u32 size)
 
 void FlashInt::Update()
 {
+#ifndef CPU_LPC824
+
 	switch(state_write_flash)
 	{
 		case WRITE_WAIT:
@@ -532,6 +601,8 @@ void FlashInt::Update()
 			break;
 
 	}; // switch(state_write_flash)
+
+#endif
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

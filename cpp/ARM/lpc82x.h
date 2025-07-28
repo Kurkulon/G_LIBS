@@ -198,6 +198,22 @@ namespace T_HW
 	#define MAINCLKSEL_WDT_OSC			(0x2U) 
 	#define MAINCLKSEL_PLL_OUT			(0x3U) 
 
+	#define WDTOSCCTRL_DIVSEL(v)		((((v)+1)/2-1)&31)
+	#define WDTOSCCTRL_FREQSEL_600kHz	(0x1<<5)
+	#define WDTOSCCTRL_FREQSEL_1050kHz	(0x2<<5)
+	#define WDTOSCCTRL_FREQSEL_1400kHz	(0x3<<5)
+	#define WDTOSCCTRL_FREQSEL_1750kHz	(0x4<<5)
+	#define WDTOSCCTRL_FREQSEL_2100kHz	(0x5<<5)
+	#define WDTOSCCTRL_FREQSEL_2400kHz	(0x6<<5)
+	#define WDTOSCCTRL_FREQSEL_2700kHz	(0x7<<5)
+	#define WDTOSCCTRL_FREQSEL_3000kHz	(0x8<<5)
+	#define WDTOSCCTRL_FREQSEL_3250kHz	(0x9<<5)
+	#define WDTOSCCTRL_FREQSEL_3500kHz	(0xA<<5)
+	#define WDTOSCCTRL_FREQSEL_3750kHz	(0xB<<5)
+	#define WDTOSCCTRL_FREQSEL_4000kHz	(0xC<<5)
+	#define WDTOSCCTRL_FREQSEL_4200kHz	(0xD<<5)
+	#define WDTOSCCTRL_FREQSEL_4400kHz	(0xE<<5)
+	#define WDTOSCCTRL_FREQSEL_4600kHz	(0xF<<5)
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -855,9 +871,18 @@ namespace T_HW
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define CONFIG_SCT_nEV   (8)             /* Number of events */
-#define CONFIG_SCT_nRG   (8)             /* Number of match/compare registers */
-#define CONFIG_SCT_nOU   (5)             /* Number of outputs */
+	#define WDT_WDEN		(1<<0)                    
+	#define WDT_WDRESET		(1<<1)                    
+	#define WDT_WDTOF		(1<<2)                    
+	#define WDT_WDINT		(1<<3)                    
+	#define WDT_WDPROTECT	(1<<4)                    
+	#define WDT_LOCK		(1<<5)                    
+	
+	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	#define CONFIG_SCT_nEV   (8)             /* Number of events */
+	#define CONFIG_SCT_nRG   (8)             /* Number of match/compare registers */
+	#define CONFIG_SCT_nOU   (5)             /* Number of outputs */
 
 	struct S_SCT
 	{

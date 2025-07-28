@@ -1133,6 +1133,36 @@ static bool RequestHandler(Ptr<MB> &mb, RspMes &rsp)
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#ifdef BOOT_TEST_REQ02_WRITEPAGE
+
+static void Test_Request_02_WritePage()
+{
+	Ptr<MB> mb;
+	ReqMes *req = 0;
+	RspMes rsp;
+
+	mb = AllocMemBuffer(sizeof(ReqMes));
+
+	if (mb.Valid())
+	{
+		FLWB &flwb = *((FLWB*)mb->GetDataPtr());
+		req = (ReqMes*)flwb.data;
+
+		req->mes.F2.adr		= GetNetAdr();
+		req->mes.F2.rw		= BOOT_MAN_REQ_WORD|2;
+		req->mes.F2.padr	= 0;
+		req->mes.F2.plen	= ISP_DATASIZE;
+
+		req->len = sizeof(req->mes.F2) - 2 + ISP_DATASIZE;
+
+		RequestHandler(mb, rsp);
+	};
+}
+
+#endif
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 static void UpdateCom()
 {
 	static ComPort::WriteBuffer wb;
@@ -1271,12 +1301,12 @@ static void WDT_Init()
 	#elif defined(CPU_LPC824)
 
 		HW::SYSCON->SYSAHBCLKCTRL |= HW::CLK::WWDT_M;
-		HW::SYSCON->PDRUNCFG &= ~(1<<6); // WDTOSC_PD = 0
-		HW::SYSCON->WDTOSCCTRL = (1<<5)|59; // 600kHz/60 = 10kHz = 0.1ms
+		HW::SYSCON->PDRUNCFG &= ~PDRUNCFG_WDTOSC_PD; // WDTOSC_PD = 0
+		HW::SYSCON->WDTOSCCTRL = WDTOSCCTRL_FREQSEL_600kHz|WDTOSCCTRL_DIVSEL(60); // 600kHz/60 = 10kHz = 0.1ms
 
 		#ifndef _DEBUG
 			HW::WDT->TC = 2500; // * 0.4ms
-			HW::WDT->MOD = 0x3;
+			HW::WDT->MOD = WDT_WDEN|WDT_WDRESET;
 			HW::ResetWDT();
 		#endif
 
@@ -1326,6 +1356,10 @@ int main()
 	
 	#ifdef BOOT_TIMEOUT
 		 timeOut = BOOT_TIMEOUT;
+	#endif
+
+	#ifdef BOOT_TEST_REQ02_WRITEPAGE
+		Test_Request_02_WritePage();
 	#endif
 
 	while(runCom || runEmac)
@@ -1378,6 +1412,8 @@ int main()
 
 	#ifdef CORTEX_M4
 		CM4::SysTick->CTRL = 0;
+	#elif defined(CORTEX_M0)
+		CM0::SysTick->CTRL = 0;
 	#endif
 
 	#ifdef BOOT_EMAC
@@ -1406,6 +1442,7 @@ int main()
 
 	#elif defined(CPU_LPC824)
 
+		HW::WKT->CTRL = WKT_CLEARCTR; 
 		HW::WDT->Update();
 	
 	#endif
