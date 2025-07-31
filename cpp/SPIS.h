@@ -99,9 +99,8 @@ public:
 		byte pinspck, byte pinmosi, byte pinmiso, byte pinss, u32 muxspck, u32 muxmosi, u32 muxmiso, u32 muxss, 
 		u32 dipo, u32 dopo,	u32 gen_src, u32 gen_clk, DMA_CH *dmatx, DMA_CH *dmarx)
 		: USIC(num), _PIO_SPCK(pspck), _PIO_MOSI(pmosi), _PIO_MISO(pmiso), _PIO_SS(pss), 
-		_PIN_SPCK(pinspck), _PIN_MOSI(pinmosi), _PIN_MISO(pinmiso), _PIN_SS(pinss),
 		_PMUX_SPCK(muxspck), _PMUX_MOSI(muxmosi), _PMUX_MISO(muxmiso), _PMUX_SS(muxss), _GEN_SRC(gen_src), _GEN_CLK(gen_clk), _DIPO(dipo), _DOPO(dopo), 
-		 _DMATX(dmatx), _DMARX(dmarx), _state(WAIT) {}
+		_DMATX(dmatx), _DMARX(dmarx), _PIN_SPCK(pinspck), _PIN_MOSI(pinmosi), _PIN_MISO(pinmiso), _PIN_SS(pinss), _state(WAIT) {}
 
 	bool CheckWriteComplete() { return _DMATX->CheckComplete() && (_uhw.spi->INTFLAG & SPI_TXC); }
 	bool CheckReadComplete() { return _DMATX->CheckComplete() && _DMARX->CheckComplete(); }

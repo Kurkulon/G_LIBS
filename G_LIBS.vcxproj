@@ -290,10 +290,10 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win32_Debug|Win32'">
     <OutDir>$(ProjectDir)build\$(Configuration)\</OutDir>
     <IntDir>$(OutDir)</IntDir>
-    <NMakeBuildCommandLine>wmake -h version=Win32_Debug targetcpu=Win32</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>wmake -h -a version=Win32_Debug targetcpu=Win32</NMakeReBuildCommandLine>
+    <NMakeBuildCommandLine>make -h version=Win32_Debug targetcpu=Win32</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>make -h -a version=Win32_Debug targetcpu=Win32</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
-    <NMakeOutput>$(ProjectDir)\sam3x8e_d.a</NMakeOutput>
+    <NMakeOutput>$(ProjectDir)\Win32_Win32.a</NMakeOutput>
     <NMakePreprocessorDefinitions>_DEBUG;__softfp=;WIN32;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
     <NMakeIncludeSearchPath>.\cpp;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
     <ExecutablePath />

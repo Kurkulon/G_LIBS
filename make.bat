@@ -1,1 +1,2 @@
-@call wmake -h version=WIN32_Debug targetcpu=WIN32
+@call "%VS80COMNTOOLS%..\..\VC\vcvarsall.bat"
+@call wmake %*

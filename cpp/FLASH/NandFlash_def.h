@@ -74,6 +74,14 @@
 #define NAND_SR_RDY					0x40	// 0 = Busy, 1 = Ready
 #define NAND_SR_WP					0x80	// 0 = Protected, 1 = Not Protected
 
+#if defined(NAND_ECC_PAGE) || defined(NAND_ECC_SPARE)
+#define NAND_ECC_CHECK
+#endif
+
+#if defined(NAND_ECC_PAGE) && !defined(NAND_ECC_SPARE)
+#define NAND_ECC_SPARE
+#endif
+
 //#define FRAM_SPI_MAINVARS_ADR 0
 //#define FRAM_SPI_SESSIONS_ADR 0x200
 //
@@ -168,6 +176,11 @@ struct FLADR
 	static u64 RAWADR_MASK;
 
 	static u32 pg; //enum { pg = (1<<NAND_COL_BITS) };
+
+#ifdef NAND_ECC_CHECK
+	static u16 spareSize;
+#endif
+
 //	u32		rawpage;
 
 //	const NandMemSize& sz;
@@ -258,9 +271,24 @@ __packed struct SpareArea
 
 	} v1;
 
-#ifdef NAND_ECC_CHECK
-	byte ecc_code[99];
+#ifdef NAND_ECC_SPARE
+
+	byte ecc_spare[3];
+
+	#ifdef NAND_ECC_PAGE
+		byte ecc_page[NAND_PAGE_SIZE/256*3];
+	#elif defined(WIN32)
+		byte ecc_page[1];
+	#else
+		byte ecc_page[0];
+	#endif
+
 #endif
+
+#ifdef NAND_ECC_CHECK
+//	byte ecc_end[0];
+#endif
+
 		//__packed struct //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		//{
 		//	u16		len;			// struct lenght

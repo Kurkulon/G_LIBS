@@ -567,9 +567,9 @@ void Nand_ECC_Corr_V2(byte* dat, u16 len, const byte* read_ecc, u32 *pErrCount, 
 		len -= count;
 	};
 
-	if (pErrCount		!= 0) *pErrCount		= err;
-	if (pCorrErrCount	!= 0) *pCorrErrCount	= corrErr;
-	if (pParityErrCount != 0) *pParityErrCount	= parErr;
+	if (pErrCount		!= 0)	*pErrCount			+= err;
+	if (pCorrErrCount	!= 0)	*pCorrErrCount		+= corrErr;
+	if (pParityErrCount != 0) *pParityErrCount	+= parErr;
 
 }
 

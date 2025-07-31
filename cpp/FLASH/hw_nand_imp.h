@@ -1182,6 +1182,10 @@ void NAND_Init()
 				FLADR::BLOCK_BITS	= block_bits;
 
 				nandSize.ch = 1ULL << (FLADR::COL_BITS+FLADR::PAGE_BITS+FLADR::BLOCK_BITS);
+
+#ifdef NAND_ECC_CHECK
+				FLADR::spareSize = K9K8_SPARE_SIZE;
+#endif
 			};
 			
 			nandSize.fl += nandSize.ch;
@@ -1237,6 +1241,10 @@ void NAND_Init()
 					FLADR::BLOCK_BITS	= block_bits;
 
 					nandSize.ch = 1ULL << (FLADR::COL_BITS+FLADR::PAGE_BITS+FLADR::BLOCK_BITS);
+
+#ifdef NAND_ECC_CHECK
+					FLADR::spareSize = MT29_SPARE_SIZE;
+#endif
 				};
 				
 				nandSize.fl += nandSize.ch;
@@ -1294,6 +1302,10 @@ void NAND_Init()
 	FLADR::RAWADR_MASK		= (1ULL<<(FLADR::COL_BITS+FLADR::PAGE_BITS+NAND_CHIP_BITS+FLADR::BLOCK_BITS))-1;
 	FLADR::pg				= 1UL << FLADR::COL_BITS;
 
+#ifdef NAND_ECC_CHECK
+	FLADR::spareSize = NAND_SPARE_SIZE;
+#endif
+
 	//nandSize.pg = 1 << (nandSize.bitCol = NAND_COL_BITS);
 	//nandSize.bl = 1 << (nandSize.shBl = NAND_COL_BITS+NAND_PAGE_BITS);
 	nandSize.ch = 1ULL << (NAND_COL_BITS+NAND_PAGE_BITS+NAND_BLOCK_BITS);
@@ -1318,7 +1330,6 @@ void NAND_Init()
 	NAND_Test_FLADR();
 
 	FLADR::InitVaildTables(nandSize.mask);
-
 	
 	cputs("Create thread 'writeThread' ... ");
 
@@ -1333,7 +1344,6 @@ void NAND_Init()
 	cputs((handleReadThread == INVALID_HANDLE_VALUE) ? "!!! ERROR !!!\n" : "OK\n");
 
 	for (u32 i = 0; i < ArraySize(_blockBuf); i++) freeBlockBuffer.Add(&(_blockBuf[i]));
-
 
 #endif
 }
