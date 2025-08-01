@@ -143,6 +143,10 @@ extern u16 NandFlash_PageErr_Get();
 
 extern bool NandFlash_SendStatus(u32 progress, byte status);
 
+extern u32 NandFlash_ErrECC_Get();
+extern u32 NandFlash_CorrectedErrECC_Get();
+extern u32 NandFlash_ParityErrECC_Get();
+
 
 //extern i64 FLASH_Empty_Size_Get();
 
