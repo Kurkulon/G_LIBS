@@ -140,6 +140,7 @@ extern u16 NandFlash_Chip_Mask_Get();
 extern u64 NandFlash_Used_Size_Get();
 extern u16 NandFlash_BlockErr_Get();
 extern u16 NandFlash_PageErr_Get();
+extern u16 NandFlash_BlockSize_Get();
 
 extern bool NandFlash_SendStatus(u32 progress, byte status);
 

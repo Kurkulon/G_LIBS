@@ -357,7 +357,28 @@ bool TRAP_MEMORY_SendInfo()
 	trap.size = NandFlash_Full_Size_Get();
 	trap.size_used = NandFlash_Used_Size_Get();
 
+#if TRAP_PACKET_VERSION >= 5
+	trap.options = 0;
+#endif
+
+#if TRAP_PACKET_VERSION >= 7
+	
+	trap.blocks = NandFlash_BlockSize_Get();
+	
+	u16 n = 0;
+
+	for (u32 i = 0; i < ArraySize(trap.bad_blocks); i++)
+	{
+		if (trap.mask & (1<<i)) trap.bad_blocks[n] = 0, n++;
+	};
+
+	mb->len = sizeof(EthUdp) + sizeof(trap) - sizeof(trap.bad_blocks) + sizeof(trap.bad_blocks[0])*n;
+
+#else
+
 	mb->len = sizeof(EthUdp) + sizeof(trap);
+
+#endif
 
 	SendTrap(mb);
 
@@ -411,12 +432,19 @@ bool TRAP_MEMORY_SendSession(u16 session, i64 size, i64 last_adress, RTC_type st
 
 	trap.hdr.cmd = TRAP_MEMORY_COMMAND_SESSION;
 
-	trap.si.session = session;
-	trap.si.size = size;
-	trap.si.last_adress = last_adress;
-	trap.si.start_rtc = start_rtc;
-	trap.si.stop_rtc = stop_rtc;
-	trap.si.flags = flags;
+	trap.si.session			= session;
+	trap.si.size			= size;
+	trap.si.start_rtc		= start_rtc;
+	trap.si.stop_rtc		= stop_rtc;
+
+#if TRAP_PACKET_VERSION >= 5
+	trap.si.start_adress	= last_adress;
+	trap.si.last_adress		= last_adress+size;
+#else
+	trap.si.last_adress		= last_adress;
+#endif
+
+	trap.si.flags			= flags;
 
 	mb->len = sizeof(EthUdp) + sizeof(trap);
 
@@ -1092,6 +1120,7 @@ static bool UpdateSendVector()
 	static u32 fragLen = 0;
 	static u32 fragOff = 0;
 	static u16 ipID = 0;
+	static u32 count = 0;
 	//static u16 crc = 0;
 
 	static TM32 tm;
@@ -1133,6 +1162,7 @@ static bool UpdateSendVector()
 				};
 
 				vecCount = 0;
+				count = 0;
 
 				NandFlash_SendStatus(0, NANDFL_STAT_READ_VECTOR_IDLE);
 
@@ -1205,13 +1235,22 @@ static bool UpdateSendVector()
 
 					MakePacketHeaders(&trap.hdr, TRAP_PACKET_NO_NEED_ASK, TRAP_PACKET_NO_ASK, TRAP_MEMORY_DEVICE);
 
-					trap.hdr.cmd = TRAP_MEMORY_COMMAND_VECTOR;
-					trap.session = flrb.hdr.session;
-					trap.device = flrb.hdr.device;
-					trap.rtc = flrb.hdr.rtc;
-					trap.flags = flrb.hdr.flags;
+					trap.hdr.cmd	= TRAP_MEMORY_COMMAND_VECTOR;
+					trap.session	= flrb.hdr.session;
+					trap.device		= flrb.hdr.device;
+					trap.rtc		= flrb.hdr.rtc;
+					trap.flags		= flrb.hdr.flags;
 
+#if TRAP_PACKET_VERSION >= 5
+					trap.tx_size	= 0;
+					trap.rx_size	= flrb.hdr.dataLen;
+#endif
+
+#if TRAP_PACKET_VERSION >= 7
+					trap.counter	= count;
+#endif
 					vecCount += flrb.hdr.dataLen;
+					count += 1;
 
 					ipID = GetIpID(); 
 
@@ -1235,7 +1274,10 @@ static bool UpdateSendVector()
 					{
 						mb->len -=  (flrb.crc != 0) ? flrb.len : 2;
 
-						if (flrb.crc != 0) TRAP_TRACE_PrintString("Send vector CRC Error !!!");
+						if (flrb.crc != 0)
+						{
+							TRAP_TRACE_PrintString("Send vector %u CRC Error !!!", count);
+						};
 
 						i = 1;
 					};
@@ -1299,7 +1341,7 @@ static bool UpdateSendVector()
 						{
 							mb->len = 0;
 							
-							TRAP_TRACE_PrintString("Send vector CRC Error !!!");
+							TRAP_TRACE_PrintString("Send vector %u CRC Error !!!", count);
 						}
 						else
 						{

@@ -153,6 +153,16 @@ __packed struct TrapMemInfo
 	u16 mask;
 	i64 size;
 	i64 size_used;
+
+#if TRAP_PACKET_VERSION >= 5
+	u16 options;
+#endif
+
+#if TRAP_PACKET_VERSION >= 7
+	u16 blocks;
+	u16 bad_blocks[8];
+#endif
+
 };	
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -173,6 +183,11 @@ __packed struct SessionInfo
 	i64			size;		//если 0 то сессия немного порченная
 	RTC_type	start_rtc;	//если 0 то сессия немного порченная
 	RTC_type	stop_rtc;  
+
+#if TRAP_PACKET_VERSION >= 5
+	i64			start_adress;
+#endif
+
 	i64			last_adress; 
 	byte		flags;
 //	u16			crc;
@@ -198,6 +213,16 @@ __packed struct TrapVector
 	u16 device;
 	RTC_type rtc;
 	byte flags;
+
+#if TRAP_PACKET_VERSION >= 7
+	u32 counter;
+#endif
+
+#if TRAP_PACKET_VERSION >= 5
+	u16 tx_size;
+	u16 rx_size;
+#endif
+
 };	
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
