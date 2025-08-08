@@ -1,5 +1,7 @@
-#ifndef SAMD21_H__09_04_2019__08_14
-#define SAMD21_H__09_04_2019__08_14
+#ifndef SAME53_H__08_08_2025__13_37
+#define SAME53_H__08_08_2025__13_37
+
+#pragma once
 
 #ifndef CORETYPE_SAME53
 #error  Must #include "core.h"
@@ -15,9 +17,54 @@
 
 #include "cm4.h"
 
-//#define MCK_MHz 200
-//#define MCK (MCK_MHz*1000000)
-//#define NS2CLK(x) (((x)*MCK_MHz+500)/1000)
+#if !defined(SAME53N20) && !defined(SAME53N19) && !defined(SAME53J20) && !defined(SAME53J19) && !defined(SAME53J18) && !defined(SAME54P20) && !defined(SAME54P19) && !defined(SAME54N20) && \
+	!defined(SAME54N19) && !defined(SAMD51P20) && !defined(SAMD51P19) && !defined(SAMD51N20) && !defined(SAMD51N19) && !defined(SAMD51J20) && !defined(SAMD51J19) && !defined(SAMD51J18) && \
+	!defined(SAMD51G19) && !defined(SAMD51G18) && !defined(SAME51N20) && !defined(SAME51N19) && !defined(SAME51J20) && !defined(SAME51J19) && !defined(SAME51J18) && !defined(SAME51G18) && !defined(SAME51G19)
+#define SAME53N19
+#endif
+
+#if defined(SAME53N20) || defined(SAME53J20) || defined(SAME54P20) || defined(SAME54N20) || defined(SAMD51P20) || defined(SAMD51N20) || defined(SAMD51J20) || defined(SAME51N20) || defined(SAME51J20) 
+#define SAM____20
+#endif
+
+#if defined(SAME53N19) || defined(SAME53J19) || defined(SAME54P19) || defined(SAME54N19) || defined(SAMD51P19) || defined(SAMD51N19) || defined(SAMD51J19) || defined(SAMD51G19) || defined(SAME51N19) || defined(SAME51J19) || defined(SAME51G19)
+#define SAM____19
+#endif
+
+#if defined(SAME53J18) || defined(SAMD51J18) || defined(SAMD51G18) || defined(SAME51J18) || defined(SAME51G18)
+#define SAM____18
+#endif
+
+#if defined(SAME53N20) || defined(SAME53N19) || defined(SAME54N20) || defined(SAME54N19) || defined(SAMD51N20) || defined(SAMD51N19) || defined(SAME51N20) || defined(SAME51N19)
+#define SAM___N__
+#endif
+
+#if defined(SAME54P20) || defined(SAME54P19) || defined(SAMD51P20) || defined(SAMD51P19)
+#define SAM___P__
+#endif
+
+#if defined(SAME53J20) || defined(SAME53J19) || defined(SAME53J18) || defined(SAMD51J20) || defined(SAMD51J19) || defined(SAMD51J18) || defined(SAME51J20) || defined(SAME51J19) || defined(SAME51J18)
+#define SAM___J__
+#endif
+
+#if defined(SAMD51G19) || defined(SAMD51G18) || defined(SAME51G18) || defined(SAME51G19)
+#define SAM___G__
+#endif
+
+#if defined(SAME53N20) || defined(SAME53N19) || defined(SAME53J20) || defined(SAME53J19) || defined(SAME53J18)
+#define SAME53___
+#endif
+
+#if defined(SAME54P20) || defined(SAME54P19) || defined(SAME54N20) || defined(SAME54N19)
+#define SAME54___
+#endif
+#if defined(SAMD51P20) || defined(SAMD51P19) || defined(SAMD51N20) || defined(SAMD51N19) || defined(SAMD51J20) || defined(SAMD51J19) || defined(SAMD51J18) || defined(SAMD51G19) || defined(SAMD51G18)
+#define SAMD51___
+#endif
+
+#if defined(SAME51N20) || defined(SAME51N19) || defined(SAME51J20) || defined(SAME51J19) || defined(SAME51J18) || defined(SAME51G18) || defined(SAME51G19)
+#define SAME51___
+#endif
 
 
 #ifndef WIN32
@@ -98,6 +145,7 @@ extern byte core_sys_array[0x100000];
 	#define SERCOM5_1_IRQ            67		/**< 67 SAME53N19A Serial Communication Interface 5 (SERCOM5): SERCOM5_1 */
 	#define SERCOM5_2_IRQ            68		/**< 68 SAME53N19A Serial Communication Interface 5 (SERCOM5): SERCOM5_2 */
 	#define SERCOM5_3_IRQ            69		/**< 69 SAME53N19A Serial Communication Interface 5 (SERCOM5): SERCOM5_3, SERCOM5_4, SERCOM5_5, SERCOM5_6 */
+#if defined(SAM___N__) || defined(SAM___P__)
 	#define SERCOM6_0_IRQ            70		/**< 70 SAME53N19A Serial Communication Interface 6 (SERCOM6): SERCOM6_0 */
 	#define SERCOM6_1_IRQ            71		/**< 71 SAME53N19A Serial Communication Interface 6 (SERCOM6): SERCOM6_1 */
 	#define SERCOM6_2_IRQ            72		/**< 72 SAME53N19A Serial Communication Interface 6 (SERCOM6): SERCOM6_2 */
@@ -106,11 +154,14 @@ extern byte core_sys_array[0x100000];
 	#define SERCOM7_1_IRQ            75		/**< 75 SAME53N19A Serial Communication Interface 7 (SERCOM7): SERCOM7_1 */
 	#define SERCOM7_2_IRQ            76		/**< 76 SAME53N19A Serial Communication Interface 7 (SERCOM7): SERCOM7_2 */
 	#define SERCOM7_3_IRQ            77		/**< 77 SAME53N19A Serial Communication Interface 7 (SERCOM7): SERCOM7_3, SERCOM7_4, SERCOM7_5, SERCOM7_6 */
+#endif
 	#define USB_0_IRQ                80		/**< 80 SAME53N19A Universal Serial Bus (USB): USB_EORSM_DNRSM, USB_EORST_RST, USB_LPMSUSP_DDISC, USB_LPM_DCONN, USB_MSOF, USB_RAMACER, USB_RXSTP_TXSTP_0, USB_RXSTP_TXSTP_1, USB_RXSTP_TXSTP_2, USB_RXSTP_TXSTP_3, USB_RXSTP_TXSTP_4, USB_RXSTP_TXSTP_5, USB_RXSTP_TXSTP_6, USB_RXSTP_TXSTP_7, USB_STALL0_STALL_0, USB_STALL0_STALL_1, USB_STALL0_STALL_2, USB_STALL0_STALL_3, USB_STALL0_STALL_4, USB_STALL0_STALL_5, USB_STALL0_STALL_6, USB_STALL0_STALL_7, USB_STALL1_0, USB_STALL1_1, USB_STALL1_2, USB_STALL1_3, USB_STALL1_4, USB_STALL1_5, USB_STALL1_6, USB_STALL1_7, USB_SUSPEND, USB_TRFAIL0_TRFAIL_0, USB_TRFAIL0_TRFAIL_1, USB_TRFAIL0_TRFAIL_2, USB_TRFAIL0_TRFAIL_3, USB_TRFAIL0_TRFAIL_4, USB_TRFAIL0_TRFAIL_5, USB_TRFAIL0_TRFAIL_6, USB_TRFAIL0_TRFAIL_7, USB_TRFAIL1_PERR_0, USB_TRFAIL1_PERR_1, USB_TRFAIL1_PERR_2, USB_TRFAIL1_PERR_3, USB_TRFAIL1_PERR_4, USB_TRFAIL1_PERR_5, USB_TRFAIL1_PERR_6, USB_TRFAIL1_PERR_7, USB_UPRSM, USB_WAKEUP */
 	#define USB_1_IRQ                81		/**< 81 SAME53N19A Universal Serial Bus (USB): USB_SOF_HSOF */
 	#define USB_2_IRQ                82		/**< 82 SAME53N19A Universal Serial Bus (USB): USB_TRCPT0_0, USB_TRCPT0_1, USB_TRCPT0_2, USB_TRCPT0_3, USB_TRCPT0_4, USB_TRCPT0_5, USB_TRCPT0_6, USB_TRCPT0_7 */
 	#define USB_3_IRQ                83		/**< 83 SAME53N19A Universal Serial Bus (USB): USB_TRCPT1_0, USB_TRCPT1_1, USB_TRCPT1_2, USB_TRCPT1_3, USB_TRCPT1_4, USB_TRCPT1_5, USB_TRCPT1_6, USB_TRCPT1_7 */
+#if defined(SAME53___) || defined(SAME54___)
 	#define GMAC_IRQ                 84		/**< 84 SAME53N19A Ethernet MAC (GMAC) */
+#endif
 	#define TCC0_0_IRQ               85		/**< 85 SAME53N19A Timer Counter Control 0 (TCC0): TCC0_CNT_A, TCC0_DFS_A, TCC0_ERR_A, TCC0_FAULT0_A, TCC0_FAULT1_A, TCC0_FAULTA_A, TCC0_FAULTB_A, TCC0_OVF, TCC0_TRG, TCC0_UFS_A */
 	#define TCC0_1_IRQ               86		/**< 86 SAME53N19A Timer Counter Control 0 (TCC0): TCC0_MC_0 */
 	#define TCC0_2_IRQ               87		/**< 87 SAME53N19A Timer Counter Control 0 (TCC0): TCC0_MC_1 */
@@ -127,20 +178,24 @@ extern byte core_sys_array[0x100000];
 	#define TCC2_1_IRQ               98		/**< 98 SAME53N19A Timer Counter Control 2 (TCC2): TCC2_MC_0 */
 	#define TCC2_2_IRQ               99		/**< 99 SAME53N19A Timer Counter Control 2 (TCC2): TCC2_MC_1 */
 	#define TCC2_3_IRQ               100 	/**< 100 SAME53N19A Timer Counter Control 2 (TCC2): TCC2_MC_2 */
+#if !defined(SAM___G__)
 	#define TCC3_0_IRQ               101 	/**< 101 SAME53N19A Timer Counter Control 3 (TCC3): TCC3_CNT_A, TCC3_DFS_A, TCC3_ERR_A, TCC3_FAULT0_A, TCC3_FAULT1_A, TCC3_FAULTA_A, TCC3_FAULTB_A, TCC3_OVF, TCC3_TRG, TCC3_UFS_A */
 	#define TCC3_1_IRQ               102 	/**< 102 SAME53N19A Timer Counter Control 3 (TCC3): TCC3_MC_0 */
 	#define TCC3_2_IRQ               103 	/**< 103 SAME53N19A Timer Counter Control 3 (TCC3): TCC3_MC_1 */
 	#define TCC4_0_IRQ               104 	/**< 104 SAME53N19A Timer Counter Control 4 (TCC4): TCC4_CNT_A, TCC4_DFS_A, TCC4_ERR_A, TCC4_FAULT0_A, TCC4_FAULT1_A, TCC4_FAULTA_A, TCC4_FAULTB_A, TCC4_OVF, TCC4_TRG, TCC4_UFS_A */
 	#define TCC4_1_IRQ               105 	/**< 105 SAME53N19A Timer Counter Control 4 (TCC4): TCC4_MC_0 */
 	#define TCC4_2_IRQ               106 	/**< 106 SAME53N19A Timer Counter Control 4 (TCC4): TCC4_MC_1 */
+#endif
 	#define TC0_IRQ                  107 	/**< 107 SAME53N19A Basic Timer Counter 0 (TC0) */
 	#define TC1_IRQ                  108 	/**< 108 SAME53N19A Basic Timer Counter 1 (TC1) */
 	#define TC2_IRQ                  109 	/**< 109 SAME53N19A Basic Timer Counter 2 (TC2) */
 	#define TC3_IRQ                  110 	/**< 110 SAME53N19A Basic Timer Counter 3 (TC3) */
 	#define TC4_IRQ                  111 	/**< 111 SAME53N19A Basic Timer Counter 4 (TC4) */
 	#define TC5_IRQ                  112 	/**< 112 SAME53N19A Basic Timer Counter 5 (TC5) */
+#if defined(SAM___N__) || defined(SAM___P__)
 	#define TC6_IRQ                  113 	/**< 113 SAME53N19A Basic Timer Counter 6 (TC6) */
 	#define TC7_IRQ                  114 	/**< 114 SAME53N19A Basic Timer Counter 7 (TC7) */
+#endif
 	#define PDEC_0_IRQ               115 	/**< 115 SAME53N19A Quadrature Decodeur (PDEC): PDEC_DIR_A, PDEC_ERR_A, PDEC_OVF, PDEC_VLC_A */
 	#define PDEC_1_IRQ               116 	/**< 116 SAME53N19A Quadrature Decodeur (PDEC): PDEC_MC_0 */
 	#define PDEC_2_IRQ               117 	/**< 117 SAME53N19A Quadrature Decodeur (PDEC): PDEC_MC_1 */
@@ -178,7 +233,11 @@ extern byte core_sys_array[0x100000];
 	#define PID_AHB_BKUPRAM    			(11)       	/**< \brief (MCLK_AHBMASK) BKUPRAM AHB Clock Mask */
 	#define PID_AHB_PAC        			(12)       	/**< \brief (MCLK_AHBMASK) PAC AHB Clock Mask */
 	#define PID_AHB_QSPI       			(13)       	/**< \brief (MCLK_AHBMASK) QSPI AHB Clock Mask */
+
+#if defined(SAME53___) || defined(SAME54___)
 	#define PID_AHB_GMAC       			(14)       	/**< \brief (MCLK_AHBMASK) GMAC AHB Clock Mask */
+#endif
+
 	#define PID_AHB_SDHC0      			(15)       	/**< \brief (MCLK_AHBMASK) SDHC0 AHB Clock Mask */
 	#define PID_AHB_SDHC1      			(16)       	/**< \brief (MCLK_AHBMASK) SDHC1 AHB Clock Mask */
 	#define PID_AHB_ICM        			(19)       	/**< \brief (MCLK_AHBMASK) ICM AHB Clock Mask */
@@ -218,9 +277,15 @@ extern byte core_sys_array[0x100000];
 	#define PID_TC3       			(64+14)       	/**< \brief (MCLK_APBBMASK) TC3 APB Clock Enable */
 	#define PID_RAMECC    			(64+16)       	/**< \brief (MCLK_APBBMASK) RAMECC APB Clock Enable */
 
+#if defined(SAME53___) || defined(SAME54___)
 	#define PID_GMAC      			(96+2)        	/**< \brief (MCLK_APBCMASK) GMAC APB Clock Enable */
+#endif
+
 	#define PID_TCC2      			(96+3)        	/**< \brief (MCLK_APBCMASK) TCC2 APB Clock Enable */
+
+#if !defined(SAM___G__)
 	#define PID_TCC3      			(96+4)        	/**< \brief (MCLK_APBCMASK) TCC3 APB Clock Enable */
+#endif
 	#define PID_TC4       			(96+5)        	/**< \brief (MCLK_APBCMASK) TC4 APB Clock Enable */
 	#define PID_TC5       			(96+6)        	/**< \brief (MCLK_APBCMASK) TC5 APB Clock Enable */
 	#define PID_PDEC      			(96+7)        	/**< \brief (MCLK_APBCMASK) PDEC APB Clock Enable */
@@ -233,11 +298,21 @@ extern byte core_sys_array[0x100000];
 
 	#define PID_SERCOM4   			(128+0)        	/**< \brief (MCLK_APBDMASK) SERCOM4 APB Clock Enable */
 	#define PID_SERCOM5   			(128+1)        	/**< \brief (MCLK_APBDMASK) SERCOM5 APB Clock Enable */
+
+#if defined(SAM___N__) || defined(SAM___P__)
 	#define PID_SERCOM6   			(128+2)        	/**< \brief (MCLK_APBDMASK) SERCOM6 APB Clock Enable */
 	#define PID_SERCOM7   			(128+3)        	/**< \brief (MCLK_APBDMASK) SERCOM7 APB Clock Enable */
+#endif
+
+#if !defined(SAM___G__)
 	#define PID_TCC4      			(128+4)        	/**< \brief (MCLK_APBDMASK) TCC4 APB Clock Enable */
+#endif
+
+#if defined(SAM___N__) || defined(SAM___P__)
 	#define PID_TC6       			(128+5)        	/**< \brief (MCLK_APBDMASK) TC6 APB Clock Enable */
 	#define PID_TC7       			(128+6)        	/**< \brief (MCLK_APBDMASK) TC7 APB Clock Enable */
+#endif
+
 	#define PID_ADC0      			(128+7)        	/**< \brief (MCLK_APBDMASK) ADC0 APB Clock Enable */
 	#define PID_ADC1      			(128+8)      	/**< \brief (MCLK_APBDMASK) ADC1 APB Clock Enable */
 	#define PID_DAC       			(128+9)      	/**< \brief (MCLK_APBDMASK) DAC APB Clock Enable */
@@ -357,10 +432,18 @@ namespace T_HW
 	#define GCLK_CCL					33
 	#define GCLK_SERCOM4_CORE			34
 	#define GCLK_SERCOM5_CORE			35
+
+#if defined(SAM___N__) || defined(SAM___P__)
 	#define GCLK_SERCOM6_CORE			36
 	#define GCLK_SERCOM7_CORE			37
+#endif
+
 	#define GCLK_TCC4					38
+
+#if defined(SAM___N__) || defined(SAM___P__)
 	#define GCLK_TC6_TC7				39
+#endif
+
 	#define GCLK_ADC0					40
 	#define GCLK_ADC1					41
 	#define GCLK_DAC					42
@@ -887,7 +970,7 @@ namespace T_HW
 			WRCONFIG = t | (mask >> 16) | PORT_HWSEL_HI; };
 	};										
 											
-	typedef S_PORT S_PIOA, S_PIOB, S_PIOC;
+	typedef S_PORT S_PIOA, S_PIOB, S_PIOC, S_PIOD;
 
 	#define PORT_PID0(value)	(((value)&0x1F)<<0)	/**< \brief (PORT_EVCTRL) PORT Event Pin Identifier 0 */
 	#define	PORT_EVACT0_OUT   	(0x0<<5)			/**< \brief (PORT_EVCTRL) Event output to pin */
@@ -995,6 +1078,7 @@ namespace T_HW
 	#define PB30 	(1UL<<30)
 	#define PB31 	(1UL<<31)
 
+#if defined(SAM___N__) || defined(SAM___P__)
 	#define PC00 	(1UL<<0)
 	#define PC01 	(1UL<<1)
 	#define PC02 	(1UL<<2)
@@ -1027,7 +1111,42 @@ namespace T_HW
 	#define PC29 	(1UL<<29)
 	#define PC30 	(1UL<<30)
 	#define PC31 	(1UL<<31)
+#endif
 
+#ifdef SAM___P__
+	#define PD00 	(1UL<<0)
+	#define PD01 	(1UL<<1)
+	#define PD02 	(1UL<<2)
+	#define PD03 	(1UL<<3)
+	#define PD04 	(1UL<<4)
+	#define PD05 	(1UL<<5)
+	#define PD06 	(1UL<<6)
+	#define PD07 	(1UL<<7)
+	#define PD08 	(1UL<<8)
+	#define PD09 	(1UL<<9)
+	#define PD10 	(1UL<<10)
+	#define PD11 	(1UL<<11)
+	#define PD12 	(1UL<<12)
+	#define PD13 	(1UL<<13)
+	#define PD14 	(1UL<<14)
+	#define PD15 	(1UL<<15)
+	#define PD16 	(1UL<<16)
+	#define PD17 	(1UL<<17)
+	#define PD18 	(1UL<<18)
+	#define PD19 	(1UL<<19)
+	#define PD20 	(1UL<<20)
+	#define PD21 	(1UL<<21)
+	#define PD22 	(1UL<<22)
+	#define PD23 	(1UL<<23)
+	#define PD24 	(1UL<<24)
+	#define PD25 	(1UL<<25)
+	#define PD26 	(1UL<<26)
+	#define PD27 	(1UL<<27)
+	#define PD28 	(1UL<<28)
+	#define PD29 	(1UL<<29)
+	#define PD30 	(1UL<<30)
+	#define PD31 	(1UL<<31)
+#endif
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -2647,6 +2766,8 @@ namespace T_HW
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#if defined(SAME53___) || defined(SAME54___)
+
 	struct S_GMAC
 	{
 		union ADR
@@ -2919,6 +3040,8 @@ namespace T_HW
 	#define OWNERSHIP_BIT		1
 	#define WRAP_BIT			2
 
+#endif
+
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 	struct S_CMCC
@@ -2999,7 +3122,17 @@ namespace HW
 
 	MK_PTR(PIOA,	0x41008000);
 	MK_PTR(PIOB,	0x41008080);
+
+#if defined(SAM___N__) || defined(SAM___P__)
 	MK_PTR(PIOC,	0x41008100);
+#endif
+
+#ifdef SAM___P__
+
+	MK_PTR(PIOD,	0x41008180);
+
+#endif
+
 
 	MK_PTR(ADC0,	0x43001c00);
 	MK_PTR(ADC1,	0x43002000);
@@ -3014,8 +3147,6 @@ namespace HW
 	MK_PTR(USART3,	0x41014000);
 	MK_PTR(USART4,	0x43000000);
 	MK_PTR(USART5,	0x43000400);
-	MK_PTR(USART6,	0x43000800);
-	MK_PTR(USART7,	0x43000C00);
 
 	MK_PTR(SPI0,	0x40003000);
 	MK_PTR(SPI1,	0x40003400);
@@ -3023,8 +3154,6 @@ namespace HW
 	MK_PTR(SPI3,	0x41014000);
 	MK_PTR(SPI4,	0x43000000);
 	MK_PTR(SPI5,	0x43000400);
-	MK_PTR(SPI6,	0x43000800);
-	MK_PTR(SPI7,	0x43000C00);
 
 	MK_PTR(I2C0,	0x40003000);
 	MK_PTR(I2C1,	0x40003400);
@@ -3032,14 +3161,28 @@ namespace HW
 	MK_PTR(I2C3,	0x41014000);
 	MK_PTR(I2C4,	0x43000000);
 	MK_PTR(I2C5,	0x43000400);
+
+#if defined(SAM___N__) || defined(SAM___P__)
+
+	MK_PTR(USART6,	0x43000800);
+	MK_PTR(USART7,	0x43000C00);
+
+	MK_PTR(SPI6,	0x43000800);
+	MK_PTR(SPI7,	0x43000C00);
+
 	MK_PTR(I2C6,	0x43000800);
 	MK_PTR(I2C7,	0x43000C00);
+
+#endif
 
 	MK_PTR(TCC0,	0x41016000);
 	MK_PTR(TCC1,	0x41018000);
 	MK_PTR(TCC2,	0x42000C00);
+
+#if !defined(SAM___G__)
 	MK_PTR(TCC3,	0x42001000);
 	MK_PTR(TCC4,	0x43001000);
+#endif
 
 	MK_PTR(EIC,		0x40002800);
 	MK_PTR(EVSYS,	0x4100E000);
@@ -3050,15 +3193,20 @@ namespace HW
 	MK_PTR(TC3,		0x4101C000);
 	MK_PTR(TC4,		0x42001400);
 	MK_PTR(TC5,		0x42001800);
+
+#if defined(SAM___N__) || defined(SAM___P__)
 	MK_PTR(TC6,		0x43001400);
 	MK_PTR(TC7,		0x43001800);
+#endif
 
 	MK_PTR(DMAC, 	0x4100A000);
 
 	MK_PTR(CMCC,	0x41006000);
 	MK_PTR(SUPC,	0x40001800);
 
+#if defined(SAME53___) || defined(SAME54___)
 	MK_PTR(GMAC,	0x42000800);
+#endif
 
 	//MK_PTR(MATRIX,	0x400E0200);
 	//MK_PTR(UART0,	0x400E0600);
@@ -3102,9 +3250,13 @@ namespace HW
 
 	inline bool RamCheck(const void *ptr)
 	{
-		u32 v = ((u32)ptr);
-
-		return ((v & ~0x3FFFF) == 0x20000000);
+#ifdef SAM____20		
+		return ((((u32)ptr) & ~0x3FFFF) == 0x20000000);
+#elif defined(SAM____19)
+		return ((u32)(((u32)ptr)-0x20000000) < 0x30000);
+#elif defined(SAM____18)
+		return ((((u32)ptr) & ~0x1FFFF) == 0x20000000);
+#endif 
 	};
 
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -3112,10 +3264,13 @@ namespace HW
 
 	inline bool RomCheck(const void *ptr)
 	{
-		//u32 v = (u32)ptr;
-
-		return ((u32)ptr & ~0x7FFFF) == 0; //(v >= 0x000000 && v < 0x20000);
-
+#ifdef SAM____20		
+		return ((u32)ptr & ~0xFFFFF) == 0; 
+#elif defined(SAM____19)
+		return ((u32)ptr & ~0x7FFFF) == 0; 
+#elif defined(SAM____18)
+		return ((u32)ptr & ~0x3FFFF) == 0;
+#endif 
 	};
 
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -3146,4 +3301,4 @@ extern T_HW::DMADESC DmaWRB[32];
 
 #pragma pop
 
-#endif // SAMD21_H__09_04_2019__08_14
+#endif // SAME53_H__08_08_2025__13_37

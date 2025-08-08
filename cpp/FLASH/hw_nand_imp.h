@@ -124,6 +124,7 @@ const u16 testNandChipMask = 0xFFFF;
 #define NAND_CMD_COPYBACK_PROGRAM	0x85
 #define NAND_CMD_SET_FEATURES		0xEF
 #define NAND_CMD_GET_FEATURES		0xEE
+#define NAND_CMD_READ_UNIQUE_ID		0xED
 
 
 
@@ -544,6 +545,50 @@ static void NAND_Get_Features(byte adr, byte* p)
 	p[1] = NAND_READ(); 
 	p[2] = NAND_READ(); 
 	p[3] = NAND_READ(); 
+#endif
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static void NAND_Read_Unique_ID(byte* p)
+{
+#ifndef WIN32
+
+	byte temp[32];
+
+	NAND_DIR_OUT();
+	NAND_CMD_LATCH(NAND_CMD_READ_UNIQUE_ID);
+	NAND_ADR_LATCH(0);
+	NAND_DIR_IN();
+
+	delay(1000); //while(!NAND_BUSY());
+
+	while(NAND_BUSY());
+
+	bool c = true;
+
+	for (byte n = 0; n < 16; n++)
+	{
+		NAND_ReadDataDMA(temp, sizeof(temp)); while (!NAND_CheckDataComplete());
+	
+		c = true;
+
+		for (byte i = 0; i < 16; i++)
+		{
+			if ((temp[i]^temp[i+16]) != 0xFF)
+			{
+				c = false;
+				break;
+			};
+		};
+
+		if (c)
+		{
+			COPY(temp, p, 8);
+			break;
+		};
+	};
+
 #endif
 }
 
@@ -1253,6 +1298,12 @@ void NAND_Init()
 
 				SEGGER_RTT_printf(0, "%u MB - ", chipSize);
 			};
+
+			u32 uid[2] = {0};
+
+			NAND_Read_Unique_ID((byte*)uid);
+
+			SEGGER_RTT_printf(0, "UID:%08X.%08X - ", uid[0], uid[1]);
 		};
 		
 		SEGGER_RTT_WriteString(0, (nandSize.mask & (1 << chip)) ? (RTT_CTRL_TEXT_BRIGHT_GREEN "OK\n") : (RTT_CTRL_TEXT_BRIGHT_RED "!!! ERROR !!!\n"));
