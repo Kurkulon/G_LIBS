@@ -1,5 +1,5 @@
-#if !defined(NANDFLASH_IMP_TEMP_H__07_08_2025__18_21) && defined(NANDFLASH_IMP_TEMP)
-#define NANDFLASH_IMP_TEMP_H__07_08_2025__18_21
+#if !defined(NANDFLASH_IMP_V2_H__18_09_2025__18_28) && defined(NANDFLASH_IMP_VERSION)
+#define NANDFLASH_IMP_V2_H__18_09_2025__18_28
 
 #pragma once
 
@@ -57,6 +57,24 @@ static bool check_ecc_pagebuf = true;
 #else
 static const bool check_ecc_pagebuf = false;					
 #endif
+
+#if defined(NAND_ECC_PAGE) || defined(NAND_ECC_PAGEBUF)
+#define NAND_ECC_PAGE_PAGEBUF
+#undef NAND_VERIFY_WRITEPAGE
+#endif
+
+#ifdef NAND_VERIFY_WRITEPAGE
+static const bool verifyWritePage = true;			// Проверка записаной страницы, путём чтения страницы и сравнения с буфером
+#else
+static const bool verifyWritePage = false;		// Проверка записаной страницы, путём чтения страницы и сравнения с буфером
+#endif
+
+//#ifdef NAND_VERIFY_SPARE
+//static const bool verifySpare = true;				// Проверка записаной страницы, путём чтения страницы и сравнения с буфером
+//#else
+//static const bool verifySpare = false;				// Проверка записаной страницы, путём чтения страницы и сравнения с буфером
+//#endif
+
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -747,7 +765,7 @@ struct Write
 			WRITE_PAGE_8,			ERASE,			
 			WRITE_CREATE_FILE_0,	WRITE_CREATE_FILE_1,	WRITE_CREATE_FILE_2,	WRITE_CREATE_FILE_3,	WRITE_CREATE_FILE_4
 
-#if defined(NAND_ECC_PAGE) || defined(NAND_ECC_PAGEBUF)
+#ifdef NAND_ECC_PAGE_PAGEBUF
 			,WRITE_ECC_0	
 #endif
 		};
@@ -774,8 +792,6 @@ struct Write
 
 	SpareArea spare;
 
-	//SpareArea rspare; 
-
 	byte state;
 
 	bool createFile;
@@ -790,8 +806,22 @@ struct Write
 
 	u16		ver_index;
 
+	u16		tryVerifyCount;
+
 	u32	wrBuf[NAND_PAGE_SIZE/4];
-	u32	rdBuf[(NAND_PAGE_SIZE+NAND_SPARE_SIZE)/4];
+
+	struct RDBUF
+	{
+#if defined(NAND_VERIFY_WRITEPAGE) || defined(NAND_ECC_PAGE_PAGEBUF)
+
+	#define NAND_WRITE_RDBUF
+
+		u32	data[(NAND_PAGE_SIZE)/4];
+#endif
+
+		SpareArea spare; 
+	}
+	rdBuf;
 
 	bool Start();
 	bool Update();
@@ -944,34 +974,43 @@ bool Write::Start()
 
 #endif
 
-	if (lastRTC.time == timeBDC.time) return false;
-
-	curWrBuf = writeFlBuf.Get();
-
-	if (curWrBuf.Valid())
+	if (!writeFlashEnabled || flashFull)
 	{
-		rcvVec += 1;
+		curWrBuf = writeFlBuf.Get();
 
-		if (!writeFlashEnabled || flashFull)
+		if (curWrBuf.Valid())
 		{
+			rcvVec += 1;
 			rejVec += 1;
 
 			curWrBuf.Free();
-			return false;
 		};
 
-		//GetTime(&lastRTC);
-
-		vector = (NandVecData*)((byte*)curWrBuf->GetDataPtr()-sizeof(NandVecData::Hdr));
-		vector->h.dataLen = curWrBuf->len;
-
-		state = (vector->h.flags) ? CRC_START : VECTOR_UPDATE;
-
-		return true;
-	}
-	else
-	{
 		return false;
+	}
+	else 
+	{
+		if (lastRTC.time == timeBDC.time) return false;
+
+		curWrBuf = writeFlBuf.Get();
+
+		if (curWrBuf.Valid())
+		{
+			rcvVec += 1;
+
+			//GetTime(&lastRTC);
+
+			vector = (NandVecData*)((byte*)curWrBuf->GetDataPtr()-sizeof(NandVecData::Hdr));
+			vector->h.dataLen = curWrBuf->len;
+
+			state = (vector->h.flags) ? CRC_START : VECTOR_UPDATE;
+
+			return true;
+		}
+		else
+		{
+			return false;
+		};
 	};
 }
 
@@ -1078,7 +1117,7 @@ bool Write::Update()
 				wr_count -= wr.pg;
 				wr_data += wr.pg;
 
-#if defined(NAND_ECC_PAGE) || defined(NAND_ECC_PAGEBUF)
+#ifdef NAND_ECC_PAGE_PAGEBUF
 				state = WRITE_ECC_0; ver_index = 0;
 #else
 				state = WRITE_PAGE;
@@ -1109,7 +1148,7 @@ bool Write::Update()
 					wr_ptr = wrBuf;
 //					wr.col = 0;
 
-#if defined(NAND_ECC_PAGE) || defined(NAND_ECC_PAGEBUF)
+#ifdef NAND_ECC_PAGE_PAGEBUF
 					state = WRITE_ECC_0; ver_index = 0;
 #else
 					state = WRITE_PAGE;
@@ -1131,7 +1170,7 @@ bool Write::Update()
 
 			break;
 
-#if defined(NAND_ECC_PAGE) || defined(NAND_ECC_PAGEBUF)
+#ifdef NAND_ECC_PAGE_PAGEBUF
 
 		case WRITE_ECC_0:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
 		{
@@ -1228,25 +1267,29 @@ bool Write::Update()
 
 					state = WRITE_PAGE_4;
 				}
-#ifdef NAND_ECC_CHECK
-				else if (verifyWritePage || verifySpare || check_ecc_spare || check_ecc_page)
+//#ifdef NAND_ECC_CHECK
+				else	//if (verifyWritePage || verifySpare || check_ecc_spare || check_ecc_page)
 				{
-					NAND_CmdReadPage((verifyWritePage || check_ecc_page) ? 0 : wr.pg, wr.GetBlock(), wr.GetPage());
-
-					state = WRITE_PAGE_6;
-				}
-#else
-				else if (verifyWritePage || verifySpare)
-				{
-					NAND_CmdReadPage((verifyWritePage) ? 0 : wr.pg, wr.GetBlock(), wr.GetPage());
+					tryVerifyCount = 3;
 					
-					state = WRITE_PAGE_6;
-				}
-#endif
-				else
-				{
-					state = WRITE_PAGE_8;
+					goto write_page_verify_start;
+
+					//NAND_CmdReadPage((verifyWritePage || check_ecc_page) ? 0 : wr.pg, wr.GetBlock(), wr.GetPage());
+
+					//state = WRITE_PAGE_6;
 				};
+//#else
+//				else //if (verifyWritePage || verifySpare)
+//				{
+//					NAND_CmdReadPage((verifyWritePage) ? 0 : wr.pg, wr.GetBlock(), wr.GetPage());
+//					
+//					state = WRITE_PAGE_6;
+//				}
+//#endif
+//				else
+//				{
+//					state = WRITE_PAGE_8;
+//				};
 			};
 
 			break;
@@ -1286,28 +1329,36 @@ bool Write::Update()
 																																
 			break;	
 
+		write_page_verify_start:
+
+			NAND_CmdReadPage((verifyWritePage || check_ecc_page) ? 0 : wr.pg, wr.GetBlock(), wr.GetPage());
+
+			state = WRITE_PAGE_6;
+
+			break;
+
 		case WRITE_PAGE_6:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
 
 			if(!NAND_BUSY())
 			{
 #ifdef NAND_ECC_CHECK
-				if (verifyWritePage || check_ecc_page)
-				{
-					NAND_ReadDataDMA(&rdBuf, wr.pg+wr.spareSize);
-				}
-				else
-				{
-					NAND_ReadDataDMA(rdBuf+wr.pg/4, wr.spareSize);
-				};
+	
+	#ifdef NAND_WRITE_RDBUF
+
+				NAND_ReadDataDMA(&rdBuf, wr.pg+wr.spareSize);
+	#else
+				NAND_ReadDataDMA(&rdBuf.spare, wr.spareSize);
+	#endif
+
 #else
-				if (verifyWritePage)
-				{
-					NAND_ReadDataDMA(&rdBuf, sizeof(rdBuf));
-				}
-				else
-				{
-					NAND_ReadDataDMA(rdBuf+wr.pg/4, sizeof(SpareArea));
-				};
+
+	#ifdef NAND_WRITE_RDBUF
+
+				NAND_ReadDataDMA(&rdBuf, sizeof(rdBuf));
+	#else
+				NAND_ReadDataDMA(&rdBuf.spare, sizeof(SpareArea));
+	#endif
+
 #endif
 				state = WRITE_PAGE_7;
 			};
@@ -1318,10 +1369,21 @@ bool Write::Update()
 
 			if (NAND_CheckDataComplete())
 			{
-				SpareArea &sp = *((SpareArea*)(rdBuf+wr.pg/4));
-#ifdef _DEBUG
-				if (sp.v1.rawPage != wr.GetRawPage()) __breakpoint(0);
-#endif
+				SpareArea &sp = rdBuf.spare; //*((SpareArea*)(rdBuf+wr.pg/4));
+
+				if (sp.v1.rawPage != wr.GetRawPage())
+				{
+					if (tryVerifyCount > 0)
+					{
+						tryVerifyCount -= 1;
+
+						goto write_page_verify_start;
+					}
+					else
+					{
+						DEBUG_ASSERT(0);
+					};
+				};
 
 #ifdef NAND_ECC_SPARE
 
@@ -1355,23 +1417,25 @@ bool Write::Update()
 
 		case WRITE_PAGE_VRF:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++			
 		{
-#if defined(NAND_ECC_PAGE) || defined(NAND_ECC_PAGEBUF)
-			SpareArea &sp = *((SpareArea*)(rdBuf+wr.pg/4));
+#ifdef NAND_WRITE_RDBUF
+
+	#ifdef NAND_ECC_PAGE_PAGEBUF
+			SpareArea &sp = rdBuf.spare; // *((SpareArea*)(rdBuf+wr.pg/4));
 
 			byte *ecc_read = sp.ecc_page + (ver_index>>8)*3;
 
 			u32 corrErr = 0, err = 0, parErr = 0;
 
-			Nand_ECC_Corr_V2((byte*)rdBuf + ver_index, 256, ecc_read, &err, &corrErr, &parErr);
+			Nand_ECC_Corr_V2((byte*)rdBuf.data + ver_index, 256, ecc_read, &err, &corrErr, &parErr);
 
 			eccErrCount			+= err;
 			eccCorrErrCount		+= corrErr;
 			eccParityErrCount	+= parErr;
 
 			if (err != 0)
-#else
-			if (!__memcmp((byte*)wr_ptr + ver_index, (byte*)rdBuf + ver_index, 256))
-#endif
+	#else
+			if (!__memcmp((byte*)wr_ptr + ver_index, (byte*)rdBuf.data + ver_index, 256))
+	#endif
 			{
 				state = WRITE_PAGE_ERR;
 			}
@@ -1381,7 +1445,9 @@ bool Write::Update()
 
 				if (ver_index >= wr.pg) state = WRITE_PAGE_8;
 			};
-
+#else
+			state = WRITE_PAGE_8;
+#endif
 			break;
 		};
 
@@ -1470,7 +1536,7 @@ bool Write::Update()
 
 				createFile = true;
 
-#if defined(NAND_ECC_PAGE) || defined(NAND_ECC_PAGEBUF)
+#ifdef NAND_ECC_PAGE_PAGEBUF
 				state = WRITE_ECC_0; ver_index = 0;
 #else
 				state = WRITE_PAGE;
@@ -1704,7 +1770,7 @@ struct Read2
 	u16		rd_count;
 	u16		findTryCount;
 
-#if defined(NAND_ECC_PAGE) || defined(NAND_ECC_PAGEBUF)
+#ifdef NAND_ECC_PAGE_PAGEBUF
 	u16		ecc_count;
 #endif
 
@@ -1936,6 +2002,11 @@ void Read2::UpdatePage()
 
 		case 6:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 			
+			if (page != 0)
+			{
+				freePageBuffer.Add(page); page = 0;
+			};
+
 			if (rdPB != 0)
 			{
 				freePageBuffer.Add(rdPB);
@@ -4007,4 +4078,5 @@ void NandFlash_Update()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#endif // #if !defined(NANDFLASH_IMP_TEMP_H__07_08_2025__18_21) && defined(NANDFLASH_IMP_TEMP)
+#endif // #if !defined(NANDFLASH_IMP_V2_H__18_09_2025__18_28) && defined(NANDFLASH_IMP_VERSION)
+

@@ -54,12 +54,14 @@ protected:
 
 	u32		_count;
 
+	TaskList *_selfptr;
+
 	__forceinline u32 Lock()			{ return Push_IRQ(); }
 	__forceinline void Unlock(u32 t)	{ Pop_IRQ(t);  }
 
   public:
 
-	TaskList() : _first(0), _last(0), _cur(0), _count(0) {}
+	TaskList() : _first(0), _last(0), _cur(0), _count(0), _selfptr(this) {}
 
 	void	Add(Task* t);
 	void	Update();
@@ -100,6 +102,7 @@ void TaskList::Add(Task* task)
 
 void TaskList::Update()
 {
+	DEBUG_ASSERT(_selfptr == this);
 	DEBUG_ASSERT(_cur != 0);
 
 	_cur->Call();

@@ -26,7 +26,7 @@
 				ReBuildCommandLine="wmake -h -a version=Debug targetcpu=SAME53"
 				CleanCommandLine="@del /Q $(OutDir)\*.*"
 				Output="$(OutDir)\SAME53_d.a"
-				PreprocessorDefinitions="_DEBUG,__softfp=,CPU_SAME53"
+				PreprocessorDefinitions="_DEBUG,__softfp=,CPU_SAME53,__CC_ARM"
 				IncludeSearchPath=".\cpp;$(ARMCC50INC);"
 				ForcedIncludes=""
 				AssemblySearchPath=""
@@ -46,7 +46,7 @@
 				ReBuildCommandLine="wmake -h -a version=Release targetcpu=SAME53"
 				CleanCommandLine="@del /Q $(OutDir)\*.*"
 				Output="$(OutDir)\SAME53_r.a"
-				PreprocessorDefinitions="__softfp=,CPU_SAME53"
+				PreprocessorDefinitions="__softfp=,CPU_SAME53,__CC_ARM"
 				IncludeSearchPath=".\cpp;$(ARMCC50INC);"
 				ForcedIncludes=""
 				AssemblySearchPath=""
@@ -66,7 +66,7 @@
 				ReBuildCommandLine="wmake -h -a version=Debug targetcpu=XMC48"
 				CleanCommandLine="@del /Q $(OutDir)\*.*"
 				Output="$(OutDir)\xmc48_d.a"
-				PreprocessorDefinitions="_DEBUG,__softfp=,CPU_XMC48"
+				PreprocessorDefinitions="_DEBUG,__softfp=,CPU_XMC48,__CC_ARM"
 				IncludeSearchPath=".\cpp;$(ARMCC50INC);"
 				ForcedIncludes=""
 				AssemblySearchPath=""
@@ -86,7 +86,7 @@
 				ReBuildCommandLine="wmake -h -a version=Release targetcpu=XMC48"
 				CleanCommandLine="@del /Q $(OutDir)\*.*"
 				Output="$(OutDir)\xmc48_r.a"
-				PreprocessorDefinitions="__softfp=,CPU_XMC48"
+				PreprocessorDefinitions="__softfp=,CPU_XMC48,__CC_ARM"
 				IncludeSearchPath=".\cpp;$(ARMCC50INC);"
 				ForcedIncludes=""
 				AssemblySearchPath=""
@@ -126,7 +126,7 @@
 				ReBuildCommandLine="wmake -h -a version=Debug targetcpu=LPC824"
 				CleanCommandLine="@del /Q $(OutDir)\*.*"
 				Output="$(OutDir)\LPC824_d.a"
-				PreprocessorDefinitions="_DEBUG,__softfp=,CPU_LPC824"
+				PreprocessorDefinitions="_DEBUG,__softfp=,CPU_LPC824,__CC_ARM"
 				IncludeSearchPath=".\cpp;$(ARMCC50INC);"
 				ForcedIncludes=""
 				AssemblySearchPath=""
@@ -146,7 +146,7 @@
 				ReBuildCommandLine="wmake -h -a version=Release targetcpu=LPC824"
 				CleanCommandLine="@del /Q $(OutDir)\*.*"
 				Output="$(OutDir)\LPC824_r.a"
-				PreprocessorDefinitions="__softfp=,CPU_LPC824"
+				PreprocessorDefinitions="__softfp=,CPU_LPC824,__CC_ARM"
 				IncludeSearchPath=".\cpp;$(ARMCC50INC);"
 				ForcedIncludes=""
 				AssemblySearchPath=""
@@ -166,7 +166,7 @@
 				ReBuildCommandLine="wmake -h -a version=Debug targetcpu=LPC812"
 				CleanCommandLine="@del /Q $(OutDir)\*.*"
 				Output="$(OutDir)\LPC812_d.a"
-				PreprocessorDefinitions="_DEBUG,__softfp=,CPU_LPC812"
+				PreprocessorDefinitions="_DEBUG,__softfp=,CPU_LPC812,__CC_ARM"
 				IncludeSearchPath=".\cpp;$(ARMCC50INC);"
 				ForcedIncludes=""
 				AssemblySearchPath=""
@@ -186,7 +186,7 @@
 				ReBuildCommandLine="wmake -h -a version=Release targetcpu=LPC812"
 				CleanCommandLine="@del /Q $(OutDir)\*.*"
 				Output="$(OutDir)\LPC812_r.a"
-				PreprocessorDefinitions="__softfp=,CPU_LPC812"
+				PreprocessorDefinitions="__softfp=,CPU_LPC812,__CC_ARM"
 				IncludeSearchPath=".\cpp;$(ARMCC50INC);"
 				ForcedIncludes=""
 				AssemblySearchPath=""
@@ -789,6 +789,18 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Scatter\SAM4SA.sct"
+				>
+			</File>
+			<File
+				RelativePath=".\Scatter\SAM4SA_BOOT.sct"
+				>
+			</File>
+			<File
+				RelativePath=".\Scatter\SAM4SA_NO_BOOTLOADER.sct"
+				>
+			</File>
+			<File
 				RelativePath=".\Scatter\SAME53.sct"
 				>
 			</File>
@@ -810,6 +822,18 @@
 			</File>
 			<File
 				RelativePath=".\Scatter\SAME53_NO_BOOTLOADER.sct"
+				>
+			</File>
+			<File
+				RelativePath=".\Scatter\SAME54_20.sct"
+				>
+			</File>
+			<File
+				RelativePath=".\Scatter\SAME54_20_BOOT.sct"
+				>
+			</File>
+			<File
+				RelativePath=".\Scatter\SAME54_20_NO_BOOTLOADER.sct"
 				>
 			</File>
 			<File

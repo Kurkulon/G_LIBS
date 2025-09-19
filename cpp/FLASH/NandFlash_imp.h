@@ -1,7 +1,15 @@
-#if !defined(NANDFLASH_IMP_H__24_02_2024__15_38) && !defined(NANDFLASH_IMP_TEMP)
-#define NANDFLASH_IMP_H__24_02_2024__15_38
-
 #pragma once
+
+#ifdef NANDFLASH_IMP_VERSION
+
+#if NANDFLASH_IMP_VERSION == 2
+#include "FLASH\NandFlash_imp_v2.h"
+#else 
+#error NANDFLASH_IMP_VERSION !!! ERROR !!!
+#endif
+
+#elif !defined(NANDFLASH_IMP_H__24_02_2024__15_38)
+#define NANDFLASH_IMP_H__24_02_2024__15_38
 
 #include "NandFlash.h"
 #include "EMAC\vector.h"
@@ -3074,6 +3082,39 @@ u16 NandFlash_BlockErr_Get()
 u16 NandFlash_PageErr_Get()
 {
 	return write.spare.v1.fbp;
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+u32 NandFlash_ErrECC_Get()
+{
+#ifdef NAND_ECC_CHECK
+	return write.eccErrCount;
+#else
+	return 0;
+#endif
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+u32 NandFlash_CorrectedErrECC_Get()
+{
+#ifdef NAND_ECC_CHECK
+	return write.eccCorrErrCount;
+#else
+	return 0;
+#endif
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+u32 NandFlash_ParityErrECC_Get()
+{
+#ifdef NAND_ECC_CHECK
+	return write.eccParityErrCount;
+#else
+	return 0;
+#endif
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

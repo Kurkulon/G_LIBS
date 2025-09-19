@@ -1180,66 +1180,67 @@ namespace T_HW
 		RO32  	SEESTAT;		/**< \brief Offset: 0x2C (R/  32) SmartEEPROM Status Register */
 	};
 
-	#define NVMCTRL_RWS(value)  				(((value)&0xF) << 1)	/**< \brief (NVMCTRL_CTRLB) NVM Read Wait States */
-	#define NVMCTRL_RWS_SINGLE  				(0 << 1)
-	#define NVMCTRL_RWS_HALF    				(1 << 1)
-	#define NVMCTRL_RWS_DUAL    				(2 << 1)
-	#define NVMCTRL_MANW						(1<<7)					/**< \brief (NVMCTRL_CTRLB) Manual Write */
-	#define NVMCTRL_SLEEPPRM(value)				(((value)&3)<<8)        /**< \brief (NVMCTRL_CTRLB) Power Reduction Mode during Sleep */
-	#define NVMCTRL_SLEEPPRM_WAKEONACCESS		(0 << 8)
-	#define NVMCTRL_SLEEPPRM_WAKEUPINSTANT		(1 << 8)
-	#define NVMCTRL_SLEEPPRM_DISABLED			(3 << 8)
-	#define NVMCTRL_READMODE_Pos(value)			(((value)&3) << 16)     /**< \brief (NVMCTRL_CTRLB) NVMCTRL Read Mode */
-	#define NVMCTRL_READMODE_NO_MISS_PENALTY	(0 << 16)
-	#define NVMCTRL_READMODE_LOW_POWER			(1 << 16)
-	#define NVMCTRL_READMODE_DETERMINISTIC		(2 << 16)
-	#define NVMCTRL_CACHEDIS					(1<<18)					/**< \brief (NVMCTRL_CTRLB) Cache Disable */
+	#define NVMCTRL_AUTOWS				(1<<2)						/**< (NVMCTRL_CTRLA) Auto Wait State Enable Mask */
+	#define NVMCTRL_SUSPEN				(1<<3)						/**< (NVMCTRL_CTRLA) Suspend Enable Mask */
+	#define	NVMCTRL_WMODE_MAN			(0<<4)						/**< (NVMCTRL_CTRLA) Manual Write  */
+	#define	NVMCTRL_WMODE_ADW			(1<<4)						/**< (NVMCTRL_CTRLA) Automatic Double Word Write  */
+	#define	NVMCTRL_WMODE_AQW			(2<<4)						/**< (NVMCTRL_CTRLA) Automatic Quad Word  */
+	#define	NVMCTRL_WMODE_AP			(3<<4)						/**< (NVMCTRL_CTRLA) Automatic Page Write  */
+	#define	NVMCTRL_PRM_SEMIAUTO		(0<<6)						/**< (NVMCTRL_CTRLA) NVM block enters low-power mode when entering standby mode. NVM block enters low-power mode when SPRM command is issued. NVM block exits low-power mode upon first access.  */
+	#define	NVMCTRL_PRM_FULLAUTO		(1<<6)						/**< (NVMCTRL_CTRLA) NVM block enters low-power mode when entering standby mode. NVM block enters low-power mode when SPRM command is issued. NVM block exits low-power mode when system is not in standby mode.  */
+	#define	NVMCTRL_PRM_MANUAL			(3<<6)						/**< (NVMCTRL_CTRLA) NVM block does not enter low-power mode when entering standby mode. NVM block enters low-power mode when SPRM command is issued. NVM block exits low-power mode upon first access.  */
+	#define NVMCTRL_RWS(v)				(((v)&0xF)<<8)				/**< (NVMCTRL_CTRLA) NVM Read Wait States Mask */
+	#define NVMCTRL_AHBNS0_Msk          (1<<12)						/**< (NVMCTRL_CTRLA) Force AHB0 access to NONSEQ, burst transfers are continuously rearbitrated Mask */
+	#define NVMCTRL_AHBNS1_Msk          (1<<13)						/**< (NVMCTRL_CTRLA) Force AHB1 access to NONSEQ, burst transfers are continuously rearbitrated Mask */
+	#define NVMCTRL_CACHEDIS0_Msk       (1<<14)						/**< (NVMCTRL_CTRLA) AHB0 Cache Disable Mask */
+	#define NVMCTRL_CACHEDIS1_Msk       (1<<15)						/**< (NVMCTRL_CTRLA) AHB1 Cache Disable Mask */
 
-	#define NVMCTRL_READY    					(1 << 0)            	/**< \brief (NVMCTRL_STATUS) Ready to accept a command */
-	#define NVMCTRL_PRM      					(1 << 1)            	/**< \brief (NVMCTRL_STATUS) Power Reduction Mode */
-	#define NVMCTRL_LOAD     					(1 << 2)            	/**< \brief (NVMCTRL_STATUS) NVM Page Buffer Active Loading */
-	#define NVMCTRL_SUSP     					(1 << 3)            	/**< \brief (NVMCTRL_STATUS) NVM Write Or Erase Operation Is Suspended */
-	#define NVMCTRL_AFIRST   					(1 << 4)            	/**< \brief (NVMCTRL_STATUS) BANKA First */
-	#define NVMCTRL_BPDIS    					(1 << 5)            	/**< \brief (NVMCTRL_STATUS) Boot Loader Protection Disable */
 
-	#define NVMCTRL_CMDEX_KEY					(0xA5<<8)				/**< \brief (NVMCTRL_CTRLB) Execution Key */
+	#define NVMCTRL_READY    			(1<<0)            			/**< \brief (NVMCTRL_STATUS) Ready to accept a command */
+	#define NVMCTRL_PRM      			(1<<1)            			/**< \brief (NVMCTRL_STATUS) Power Reduction Mode */
+	#define NVMCTRL_LOAD     			(1<<2)            			/**< \brief (NVMCTRL_STATUS) NVM Page Buffer Active Loading */
+	#define NVMCTRL_SUSP     			(1<<3)            			/**< \brief (NVMCTRL_STATUS) NVM Write Or Erase Operation Is Suspended */
+	#define NVMCTRL_AFIRST   			(1<<4)            			/**< \brief (NVMCTRL_STATUS) BANKA First */
+	#define NVMCTRL_BPDIS    			(1<<5)            			/**< \brief (NVMCTRL_STATUS) Boot Loader Protection Disable */
 
-	#define   NVMCTRL_CMD_EP        	(NVMCTRL_CMDEX_KEY|0x0)   		/**< \brief (NVMCTRL_CTRLB) Erase Page - Only supported in the USER and AUX pages. */
-	#define   NVMCTRL_CMD_EB        	(NVMCTRL_CMDEX_KEY|0x1)   		/**< \brief (NVMCTRL_CTRLB) Erase Block - Erases the block addressed by the ADDR register, not supported in the user page */
-	#define   NVMCTRL_CMD_WP        	(NVMCTRL_CMDEX_KEY|0x3)   		/**< \brief (NVMCTRL_CTRLB) Write Page - Writes the contents of the page buffer to the page addressed by the ADDR register, not supported in the user page */
-	#define   NVMCTRL_CMD_WQW       	(NVMCTRL_CMDEX_KEY|0x4)   		/**< \brief (NVMCTRL_CTRLB) Write Quad Word - Writes a 128-bit word at the location addressed by the ADDR register. */
-	#define   NVMCTRL_CMD_SWRST     	(NVMCTRL_CMDEX_KEY|0x10)   		/**< \brief (NVMCTRL_CTRLB) Software Reset - Power-Cycle the NVM memory and replay the device automatic calibration procedure and resets the module configuration registers */
-	#define   NVMCTRL_CMD_LR        	(NVMCTRL_CMDEX_KEY|0x11)   		/**< \brief (NVMCTRL_CTRLB) Lock Region - Locks the region containing the address location in the ADDR register. */
-	#define   NVMCTRL_CMD_UR        	(NVMCTRL_CMDEX_KEY|0x12)   		/**< \brief (NVMCTRL_CTRLB) Unlock Region - Unlocks the region containing the address location in the ADDR register. */
-	#define   NVMCTRL_CMD_SPRM      	(NVMCTRL_CMDEX_KEY|0x13)   		/**< \brief (NVMCTRL_CTRLB) Sets the power reduction mode. */
-	#define   NVMCTRL_CMD_CPRM      	(NVMCTRL_CMDEX_KEY|0x14)   		/**< \brief (NVMCTRL_CTRLB) Clears the power reduction mode. */
-	#define   NVMCTRL_CMD_PBC       	(NVMCTRL_CMDEX_KEY|0x15)   		/**< \brief (NVMCTRL_CTRLB) Page Buffer Clear - Clears the page buffer. */
-	#define   NVMCTRL_CMD_SSB       	(NVMCTRL_CMDEX_KEY|0x16)   		/**< \brief (NVMCTRL_CTRLB) Set Security Bit */
-	#define   NVMCTRL_CMD_BKSWRST   	(NVMCTRL_CMDEX_KEY|0x17)   		/**< \brief (NVMCTRL_CTRLB) Bank swap and system reset, if SMEE is used also reallocate SMEE data into the opposite BANK */
-	#define   NVMCTRL_CMD_CELCK     	(NVMCTRL_CMDEX_KEY|0x18)   		/**< \brief (NVMCTRL_CTRLB) Chip Erase Lock - DSU.CE command is not available */
-	#define   NVMCTRL_CMD_CEULCK    	(NVMCTRL_CMDEX_KEY|0x19)   		/**< \brief (NVMCTRL_CTRLB) Chip Erase Unlock - DSU.CE command is available */
-	#define   NVMCTRL_CMD_SBPDIS    	(NVMCTRL_CMDEX_KEY|0x1A)   		/**< \brief (NVMCTRL_CTRLB) Sets STATUS.BPDIS, Boot loader protection is discarded until CBPDIS is issued or next start-up sequence */
-	#define   NVMCTRL_CMD_CBPDIS    	(NVMCTRL_CMDEX_KEY|0x1B)   		/**< \brief (NVMCTRL_CTRLB) Clears STATUS.BPDIS, Boot loader protection is not discarded */
-	#define   NVMCTRL_CMD_ASEES0    	(NVMCTRL_CMDEX_KEY|0x30)   		/**< \brief (NVMCTRL_CTRLB) Activate SmartEEPROM Sector 0, deactivate Sector 1 */
-	#define   NVMCTRL_CMD_ASEES1    	(NVMCTRL_CMDEX_KEY|0x31)   		/**< \brief (NVMCTRL_CTRLB) Activate SmartEEPROM Sector 1, deactivate Sector 0 */
-	#define   NVMCTRL_CMD_SEERALOC  	(NVMCTRL_CMDEX_KEY|0x32)   		/**< \brief (NVMCTRL_CTRLB) Starts SmartEEPROM sector reallocation algorithm */
-	#define   NVMCTRL_CMD_SEEFLUSH  	(NVMCTRL_CMDEX_KEY|0x33)   		/**< \brief (NVMCTRL_CTRLB) Flush SMEE data when in buffered mode */
-	#define   NVMCTRL_CMD_LSEE      	(NVMCTRL_CMDEX_KEY|0x34)   		/**< \brief (NVMCTRL_CTRLB) Lock access to SmartEEPROM data from any mean */
-	#define   NVMCTRL_CMD_USEE      	(NVMCTRL_CMDEX_KEY|0x35)   		/**< \brief (NVMCTRL_CTRLB) Unlock access to SmartEEPROM data */
-	#define   NVMCTRL_CMD_LSEER     	(NVMCTRL_CMDEX_KEY|0x36)   		/**< \brief (NVMCTRL_CTRLB) Lock access to the SmartEEPROM Register Address Space (above 64KB) */
-	#define   NVMCTRL_CMD_USEER     	(NVMCTRL_CMDEX_KEY|0x37)   		/**< \brief (NVMCTRL_CTRLB) Unlock access to the SmartEEPROM Register Address Space (above 64KB) */
+	#define NVMCTRL_CMDEX_KEY			(0xA5<<8)					/**< \brief (NVMCTRL_CTRLB) Execution Key */
 
-	#define NVMCTRL_INTFLAG_DONE    	(1 << 0)    					/**< \brief (NVMCTRL_INTFLAG) Command Done */
-	#define NVMCTRL_INTFLAG_ADDRE   	(1 << 1)    					/**< \brief (NVMCTRL_INTFLAG) Address Error */
-	#define NVMCTRL_INTFLAG_PROGE   	(1 << 2)    					/**< \brief (NVMCTRL_INTFLAG) Programming Error */
-	#define NVMCTRL_INTFLAG_LOCKE   	(1 << 3)    					/**< \brief (NVMCTRL_INTFLAG) Lock Error */
-	#define NVMCTRL_INTFLAG_ECCSE   	(1 << 4)    					/**< \brief (NVMCTRL_INTFLAG) ECC Single Error */
-	#define NVMCTRL_INTFLAG_ECCDE   	(1 << 5)    					/**< \brief (NVMCTRL_INTFLAG) ECC Dual Error */
-	#define NVMCTRL_INTFLAG_NVME    	(1 << 6)       					/**< \brief (NVMCTRL_INTFLAG) NVM Error */
-	#define NVMCTRL_INTFLAG_SUSP    	(1 << 7)       					/**< \brief (NVMCTRL_INTFLAG) Suspended Write Or Erase Operation */
-	#define NVMCTRL_INTFLAG_SEESFULL	(1 << 8)       					/**< \brief (NVMCTRL_INTFLAG) Active SEES Full */
-	#define NVMCTRL_INTFLAG_SEESOVF		(1 << 9)       					/**< \brief (NVMCTRL_INTFLAG) Active SEES Overflow */
-	#define NVMCTRL_INTFLAG_SEEWRC		(1 << 10)						/**< \brief (NVMCTRL_INTFLAG) SEE Write Completed */
+	#define   NVMCTRL_CMD_EP        	(NVMCTRL_CMDEX_KEY|0x0)   	/**< \brief (NVMCTRL_CTRLB) Erase Page - Only supported in the USER and AUX pages. */
+	#define   NVMCTRL_CMD_EB        	(NVMCTRL_CMDEX_KEY|0x1)   	/**< \brief (NVMCTRL_CTRLB) Erase Block - Erases the block addressed by the ADDR register, not supported in the user page */
+	#define   NVMCTRL_CMD_WP        	(NVMCTRL_CMDEX_KEY|0x3)   	/**< \brief (NVMCTRL_CTRLB) Write Page - Writes the contents of the page buffer to the page addressed by the ADDR register, not supported in the user page */
+	#define   NVMCTRL_CMD_WQW       	(NVMCTRL_CMDEX_KEY|0x4)   	/**< \brief (NVMCTRL_CTRLB) Write Quad Word - Writes a 128-bit word at the location addressed by the ADDR register. */
+	#define   NVMCTRL_CMD_SWRST     	(NVMCTRL_CMDEX_KEY|0x10)   	/**< \brief (NVMCTRL_CTRLB) Software Reset - Power-Cycle the NVM memory and replay the device automatic calibration procedure and resets the module configuration registers */
+	#define   NVMCTRL_CMD_LR        	(NVMCTRL_CMDEX_KEY|0x11)   	/**< \brief (NVMCTRL_CTRLB) Lock Region - Locks the region containing the address location in the ADDR register. */
+	#define   NVMCTRL_CMD_UR        	(NVMCTRL_CMDEX_KEY|0x12)   	/**< \brief (NVMCTRL_CTRLB) Unlock Region - Unlocks the region containing the address location in the ADDR register. */
+	#define   NVMCTRL_CMD_SPRM      	(NVMCTRL_CMDEX_KEY|0x13)   	/**< \brief (NVMCTRL_CTRLB) Sets the power reduction mode. */
+	#define   NVMCTRL_CMD_CPRM      	(NVMCTRL_CMDEX_KEY|0x14)   	/**< \brief (NVMCTRL_CTRLB) Clears the power reduction mode. */
+	#define   NVMCTRL_CMD_PBC       	(NVMCTRL_CMDEX_KEY|0x15)   	/**< \brief (NVMCTRL_CTRLB) Page Buffer Clear - Clears the page buffer. */
+	#define   NVMCTRL_CMD_SSB       	(NVMCTRL_CMDEX_KEY|0x16)   	/**< \brief (NVMCTRL_CTRLB) Set Security Bit */
+	#define   NVMCTRL_CMD_BKSWRST   	(NVMCTRL_CMDEX_KEY|0x17)   	/**< \brief (NVMCTRL_CTRLB) Bank swap and system reset, if SMEE is used also reallocate SMEE data into the opposite BANK */
+	#define   NVMCTRL_CMD_CELCK     	(NVMCTRL_CMDEX_KEY|0x18)   	/**< \brief (NVMCTRL_CTRLB) Chip Erase Lock - DSU.CE command is not available */
+	#define   NVMCTRL_CMD_CEULCK    	(NVMCTRL_CMDEX_KEY|0x19)   	/**< \brief (NVMCTRL_CTRLB) Chip Erase Unlock - DSU.CE command is available */
+	#define   NVMCTRL_CMD_SBPDIS    	(NVMCTRL_CMDEX_KEY|0x1A)   	/**< \brief (NVMCTRL_CTRLB) Sets STATUS.BPDIS, Boot loader protection is discarded until CBPDIS is issued or next start-up sequence */
+	#define   NVMCTRL_CMD_CBPDIS    	(NVMCTRL_CMDEX_KEY|0x1B)   	/**< \brief (NVMCTRL_CTRLB) Clears STATUS.BPDIS, Boot loader protection is not discarded */
+	#define   NVMCTRL_CMD_ASEES0    	(NVMCTRL_CMDEX_KEY|0x30)   	/**< \brief (NVMCTRL_CTRLB) Activate SmartEEPROM Sector 0, deactivate Sector 1 */
+	#define   NVMCTRL_CMD_ASEES1    	(NVMCTRL_CMDEX_KEY|0x31)   	/**< \brief (NVMCTRL_CTRLB) Activate SmartEEPROM Sector 1, deactivate Sector 0 */
+	#define   NVMCTRL_CMD_SEERALOC  	(NVMCTRL_CMDEX_KEY|0x32)   	/**< \brief (NVMCTRL_CTRLB) Starts SmartEEPROM sector reallocation algorithm */
+	#define   NVMCTRL_CMD_SEEFLUSH  	(NVMCTRL_CMDEX_KEY|0x33)   	/**< \brief (NVMCTRL_CTRLB) Flush SMEE data when in buffered mode */
+	#define   NVMCTRL_CMD_LSEE      	(NVMCTRL_CMDEX_KEY|0x34)   	/**< \brief (NVMCTRL_CTRLB) Lock access to SmartEEPROM data from any mean */
+	#define   NVMCTRL_CMD_USEE      	(NVMCTRL_CMDEX_KEY|0x35)   	/**< \brief (NVMCTRL_CTRLB) Unlock access to SmartEEPROM data */
+	#define   NVMCTRL_CMD_LSEER     	(NVMCTRL_CMDEX_KEY|0x36)   	/**< \brief (NVMCTRL_CTRLB) Lock access to the SmartEEPROM Register Address Space (above 64KB) */
+	#define   NVMCTRL_CMD_USEER     	(NVMCTRL_CMDEX_KEY|0x37)   	/**< \brief (NVMCTRL_CTRLB) Unlock access to the SmartEEPROM Register Address Space (above 64KB) */
+
+	#define NVMCTRL_INTFLAG_DONE    	(1 << 0)    				/**< \brief (NVMCTRL_INTFLAG) Command Done */
+	#define NVMCTRL_INTFLAG_ADDRE   	(1 << 1)    				/**< \brief (NVMCTRL_INTFLAG) Address Error */
+	#define NVMCTRL_INTFLAG_PROGE   	(1 << 2)    				/**< \brief (NVMCTRL_INTFLAG) Programming Error */
+	#define NVMCTRL_INTFLAG_LOCKE   	(1 << 3)    				/**< \brief (NVMCTRL_INTFLAG) Lock Error */
+	#define NVMCTRL_INTFLAG_ECCSE   	(1 << 4)    				/**< \brief (NVMCTRL_INTFLAG) ECC Single Error */
+	#define NVMCTRL_INTFLAG_ECCDE   	(1 << 5)    				/**< \brief (NVMCTRL_INTFLAG) ECC Dual Error */
+	#define NVMCTRL_INTFLAG_NVME    	(1 << 6)       				/**< \brief (NVMCTRL_INTFLAG) NVM Error */
+	#define NVMCTRL_INTFLAG_SUSP    	(1 << 7)       				/**< \brief (NVMCTRL_INTFLAG) Suspended Write Or Erase Operation */
+	#define NVMCTRL_INTFLAG_SEESFULL	(1 << 8)       				/**< \brief (NVMCTRL_INTFLAG) Active SEES Full */
+	#define NVMCTRL_INTFLAG_SEESOVF		(1 << 9)       				/**< \brief (NVMCTRL_INTFLAG) Active SEES Overflow */
+	#define NVMCTRL_INTFLAG_SEEWRC		(1 << 10)					/**< \brief (NVMCTRL_INTFLAG) SEE Write Completed */
 											 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

@@ -299,7 +299,7 @@
     <ClInclude Include="cpp\I2C_IMP.h">
       <Filter>CPP</Filter>
     </ClInclude>
-    <ClInclude Include="cpp\FLASH\NandFlash_imp_temp.h">
+    <ClInclude Include="cpp\FLASH\NandFlash_imp_v2.h">
       <Filter>CPP\FLASH</Filter>
     </ClInclude>
   </ItemGroup>

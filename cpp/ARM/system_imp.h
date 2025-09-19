@@ -143,6 +143,8 @@ extern "C" void SystemInit()
 
 		using namespace CM4;
 
+		HW::NVMCTRL->CTRLA = NVMCTRL_AUTOWS; //NVMCTRL_RWS(((MCK_MHz+18)/19)-1);
+
 		#if defined(_DEBUG) && !defined(BOOTLOADER)
 			Test_PIO_Pins();
 		#endif
@@ -155,9 +157,17 @@ extern "C" void SystemInit()
 		HW::PIOB->CLR(	PIOB_INIT_CLR);
 		HW::PIOB->SET(	PIOB_INIT_SET);
 
-		HW::PIOC->DIR =	PIOC_INIT_DIR;
-		HW::PIOC->CLR(	PIOC_INIT_CLR);
-		HW::PIOC->SET(	PIOC_INIT_SET);
+		#ifdef PC00 //defined(SAM___N__) || defined(SAM___P__)
+			HW::PIOC->DIR =	PIOC_INIT_DIR;
+			HW::PIOC->CLR(	PIOC_INIT_CLR);
+			HW::PIOC->SET(	PIOC_INIT_SET);
+		#endif
+
+		#ifdef PD00 //SAM___P__
+			HW::PIOD->DIR =	PIOD_INIT_DIR;
+			HW::PIOD->CLR(	PIOD_INIT_CLR);
+			HW::PIOD->SET(	PIOD_INIT_SET);
+		#endif
 
 		Pin_MainLoop_Set();
 
@@ -198,13 +208,13 @@ extern "C" void SystemInit()
 
 		Pin_MainLoop_Set();
 
-		HW::MCLK->AHBMASK |= AHB_DMAC;
-		HW::DMAC->CTRL = 0;
-		HW::DMAC->CTRL = DMAC_SWRST;
-		HW::DMAC->DBGCTRL = DMAC_DBGRUN;
+		HW::MCLK->AHBMASK  |= AHB_DMAC;
+		HW::DMAC->CTRL		= 0;
+		HW::DMAC->CTRL		= DMAC_SWRST;
+		HW::DMAC->DBGCTRL	= DMAC_DBGRUN;
 		HW::DMAC->BASEADDR	= DmaTable;
 		HW::DMAC->WRBADDR	= DmaWRB;
-		HW::DMAC->CTRL = DMAC_DMAENABLE|DMAC_LVLEN0|DMAC_LVLEN1|DMAC_LVLEN2|DMAC_LVLEN3;
+		HW::DMAC->CTRL		= DMAC_DMAENABLE|DMAC_LVLEN0|DMAC_LVLEN1|DMAC_LVLEN2|DMAC_LVLEN3;
 
 		Pin_MainLoop_Clr();
 
