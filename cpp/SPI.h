@@ -104,8 +104,8 @@ protected:
 	const u32 			_DIPO;
 	const u32 			_DOPO;
 
-	DMA_CH *	const 	_DMATX;
-	DMA_CH *	const 	_DMARX;
+	DMA_CH				_DMATX;
+	DMA_CH				_DMARX;
 
 #elif defined(CPU_SAM4SA)
 
@@ -287,18 +287,18 @@ public:
 		u32 mspck, u32 mmosi, u32 mmiso, 
 		u32 muxspck, u32 muxmosi, u32 muxmiso,
 		u32* mcs, u32 mcslen, u32 dipo, u32 dopo,
-		u32 gen_src, u32 gen_clk, DMA_CH *dmatx, DMA_CH *dmarx)
+		u32 gen_src, u32 gen_clk, byte dmatx, byte dmarx)
 		: USIC(num), _PIO_SPCK(pspck), _PIO_MOSI(pmosi), _PIO_MISO(pmiso), _PIO_CS(pcs), 
 		_MASK_SPCK(mspck), _MASK_MOSI(mmosi), _MASK_MISO(mmiso),
 		_PMUX_SPCK(muxspck), _PMUX_MOSI(muxmosi), _PMUX_MISO(muxmiso), _GEN_SRC(gen_src), _GEN_CLK(gen_clk), _MASK_CS(mcs), _MASK_CS_LEN(mcslen), _DIPO(dipo), _DOPO(dopo), 
 		 _DMATX(dmatx), _DMARX(dmarx), _dsc(0), _state(WAIT) {}
 
-			bool CheckWriteComplete() { return _DMATX->CheckComplete() && (_uhw.spi->INTFLAG & SPI_TXC); }
-			bool CheckReadComplete() { return _DMATX->CheckComplete() && _DMARX->CheckComplete(); }
+			bool CheckWriteComplete() { return _DMATX.CheckComplete() && (_uhw.spi->INTFLAG & SPI_TXC); }
+			bool CheckReadComplete() { return _DMATX.CheckComplete() && _DMARX.CheckComplete(); }
 			void ChipSelect(byte num)	{ _PIO_CS->CLR(_MASK_CS[num]); }
 			void ChipDisable()			{ _PIO_CS->SET(_MASK_CS_ALL); }
-			void DisableTX() { _DMATX->Disable(); }
-			void DisableRX() { _uhw.spi->CTRLB &= ~SPI_RXEN; _DMATX->Disable(); _DMARX->Disable(); }
+			void DisableTX() { _DMATX.Disable(); }
+			void DisableRX() { _uhw.spi->CTRLB &= ~SPI_RXEN; _DMATX.Disable(); _DMARX.Disable(); }
 
 			void WriteByteSync(byte v)		{ WriteReadByte(v); }
 			void WriteByteAsync(byte v);

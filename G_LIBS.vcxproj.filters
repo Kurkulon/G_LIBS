@@ -143,9 +143,6 @@
     <ClInclude Include="cpp\EMAC\vector.h">
       <Filter>CPP\EMAC</Filter>
     </ClInclude>
-    <ClInclude Include="cpp\EMAC\xtrap.h">
-      <Filter>CPP\EMAC</Filter>
-    </ClInclude>
     <ClInclude Include="cpp\DMA\DMA.h">
       <Filter>CPP\DMA</Filter>
     </ClInclude>
@@ -302,21 +299,21 @@
     <ClInclude Include="cpp\FLASH\NandFlash_imp_v2.h">
       <Filter>CPP\FLASH</Filter>
     </ClInclude>
+    <ClInclude Include="cpp\EMAC\trap_imp.h">
+      <Filter>CPP\EMAC</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\time_imp.h">
+      <Filter>CPP</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\usic_imp.h">
+      <Filter>CPP</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\DMA\DMA_imp.h">
+      <Filter>CPP\DMA</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="cpp\i2c.cpp">
-      <Filter>CPP</Filter>
-    </ClCompile>
     <ClCompile Include="cpp\PointerCRC.cpp">
-      <Filter>CPP</Filter>
-    </ClCompile>
-    <ClCompile Include="cpp\spi.cpp">
-      <Filter>CPP</Filter>
-    </ClCompile>
-    <ClCompile Include="cpp\time.cpp">
-      <Filter>CPP</Filter>
-    </ClCompile>
-    <ClCompile Include="cpp\usic.cpp">
       <Filter>CPP</Filter>
     </ClCompile>
     <ClCompile Include="cpp\SEGGER_RTT\SEGGER_RTT.cpp">
@@ -324,21 +321,6 @@
     </ClCompile>
     <ClCompile Include="cpp\SEGGER_RTT\SEGGER_RTT_printf.cpp">
       <Filter>CPP\SEGGER_RTT</Filter>
-    </ClCompile>
-    <ClCompile Include="cpp\EMAC\trap.cpp">
-      <Filter>CPP\EMAC</Filter>
-    </ClCompile>
-    <ClCompile Include="cpp\EMAC\xtrap.cpp">
-      <Filter>CPP\EMAC</Filter>
-    </ClCompile>
-    <ClCompile Include="cpp\DMA\DMA.cpp">
-      <Filter>CPP\DMA</Filter>
-    </ClCompile>
-    <ClCompile Include="cpp\DMA\DMA_CH.cpp">
-      <Filter>CPP\DMA</Filter>
-    </ClCompile>
-    <ClCompile Include="cpp\DMA\DMA_DSC.cpp">
-      <Filter>CPP\DMA</Filter>
     </ClCompile>
     <ClCompile Include="cpp\CRC\CRC16.cpp">
       <Filter>CPP\CRC</Filter>

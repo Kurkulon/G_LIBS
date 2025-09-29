@@ -1,4 +1,7 @@
-#ifndef _ADI_COMPILER
+#if !defined(TIME_IMP_H__25_09_2025__19_20) && !defined(_ADI_COMPILER)
+#define TIME_IMP_H__25_09_2025__19_20
+
+#pragma once
 
 #include "time.h"
 #include "core.h"
@@ -323,4 +326,5 @@ void Init_time(u32 cpuclk)
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#endif // #ifndef _ADI_COMPILER
+#endif // #if !defined(TIME_IMP_H__25_09_2025__19_20) && !defined(_ADI_COMPILER)
+

@@ -30,7 +30,7 @@ DWORD txThreadCount = 0;
 #endif
 
 #include "emac.h"
-#include "xtrap.h"
+#include "trap.h"
 #include "list.h"
 #include "SEGGER_RTT\SEGGER_RTT.h"
 

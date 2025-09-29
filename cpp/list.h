@@ -252,7 +252,7 @@ public:
 	~Ptr()							{ Free(); }
 	bool Valid() const				{ return ptr != 0; }
 	void Alloc()					{ Free(); ptr = T::Create(); if (ptr != 0) { DEBUG_ASSERT(ptr->_count == 0); ptr->SetCount(); }; }
-	void Free()						{ if (ptr != 0) { ptr->DecCount(this); ptr = 0;}; }
+	void Free()						{ if (ptr != 0) { ptr->DecCount(/*this*/); ptr = 0;}; }
 	T* operator->()					{ return ptr; }
 	T& operator*()					{ return *ptr; }
 	u32	 Count() const				{ return (ptr != 0) ? ptr->Count() : 0; }
@@ -276,9 +276,9 @@ private:
 
 protected:
 
-	__forceinline void IncCount()			{ u32 t = Lock(); /*DEBUG_ASSERT(alcc);*/ _count++; Unlock(t); }
-	__forceinline void DecCount(Ptr<T> *p)	{ u32 t = Lock(); if (_count != 0) { /*DEBUG_ASSERT(alcc);*/ _count--; if (_count == 0) /*last_ptr = p,*/ Destroy(); } else { /*DEBUG_ASSERT(!alcc);*/ }; Unlock(t); }
-	__forceinline void SetCount()			{ /*DEBUG_ASSERT(alcc);*/ _count = 1; }
+	__forceinline void IncCount()				{ u32 t = Lock(); /*DEBUG_ASSERT(alcc);*/ _count++; Unlock(t); }
+	__forceinline void DecCount(/*Ptr<T> *p*/)	{ u32 t = Lock(); if (_count != 0) { /*DEBUG_ASSERT(alcc);*/ _count--; if (_count == 0) /*last_ptr = p,*/ Destroy(); } else { /*DEBUG_ASSERT(!alcc);*/ }; Unlock(t); }
+	__forceinline void SetCount()				{ /*DEBUG_ASSERT(alcc);*/ _count = 1; }
 
 public:
 
@@ -341,7 +341,7 @@ template <class T> Ptr<T> ListPtr<T>::Get()
 
 		count--;
 
-		r->DecCount(&r);
+		r->DecCount(/*&r*/);
 	};
 
 	Unlock(t);
@@ -430,7 +430,7 @@ template <class T> Ptr<T> ListRef<T>::Get()
 
 		if (first == 0) last = 0;
 
-		if (r.Valid()) r->DecCount((Ptr<T>*)~0);
+		if (r.Valid()) r->DecCount(/*(Ptr<T>*)~0*/);
 		
 		i->Free();
 	};

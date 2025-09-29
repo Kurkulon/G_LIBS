@@ -317,53 +317,53 @@ public:
 
 #ifdef CPU_SAME53
 
-extern DMA_CH		DMA_CH0	;
-extern DMA_CH		DMA_CH1	;
-extern DMA_CH		DMA_CH2	;
-extern DMA_CH		DMA_CH3	;
-extern DMA_CH		DMA_CH4	;
-extern DMA_CH		DMA_CH5	;
-extern DMA_CH		DMA_CH6	;
-extern DMA_CH		DMA_CH7	;
-extern DMA_CH		DMA_CH8	;
-extern DMA_CH		DMA_CH9	;
-extern DMA_CH		DMA_CH10;
-extern DMA_CH		DMA_CH11;
-extern DMA_CH		DMA_CH12;
-extern DMA_CH		DMA_CH13;
-extern DMA_CH		DMA_CH14;
-extern DMA_CH		DMA_CH15;
-extern DMA_CH		DMA_CH16;
-extern DMA_CH		DMA_CH17;
-extern DMA_CH		DMA_CH18;
-extern DMA_CH		DMA_CH19;
-extern DMA_CH		DMA_CH20;
-extern DMA_CH		DMA_CH21;
-extern DMA_CH		DMA_CH22;
-extern DMA_CH		DMA_CH23;
-extern DMA_CH		DMA_CH24;
-extern DMA_CH		DMA_CH25;
-extern DMA_CH		DMA_CH26;
-extern DMA_CH		DMA_CH27;
-extern DMA_CH		DMA_CH28;
-extern DMA_CH		DMA_CH29;
-extern DMA_CH		DMA_CH30;
-extern DMA_CH		DMA_CH31;
+//extern DMA_CH		DMA_CH0	;
+//extern DMA_CH		DMA_CH1	;
+//extern DMA_CH		DMA_CH2	;
+//extern DMA_CH		DMA_CH3	;
+//extern DMA_CH		DMA_CH4	;
+//extern DMA_CH		DMA_CH5	;
+//extern DMA_CH		DMA_CH6	;
+//extern DMA_CH		DMA_CH7	;
+//extern DMA_CH		DMA_CH8	;
+//extern DMA_CH		DMA_CH9	;
+//extern DMA_CH		DMA_CH10;
+//extern DMA_CH		DMA_CH11;
+//extern DMA_CH		DMA_CH12;
+//extern DMA_CH		DMA_CH13;
+//extern DMA_CH		DMA_CH14;
+//extern DMA_CH		DMA_CH15;
+//extern DMA_CH		DMA_CH16;
+//extern DMA_CH		DMA_CH17;
+//extern DMA_CH		DMA_CH18;
+//extern DMA_CH		DMA_CH19;
+//extern DMA_CH		DMA_CH20;
+//extern DMA_CH		DMA_CH21;
+//extern DMA_CH		DMA_CH22;
+//extern DMA_CH		DMA_CH23;
+//extern DMA_CH		DMA_CH24;
+//extern DMA_CH		DMA_CH25;
+//extern DMA_CH		DMA_CH26;
+//extern DMA_CH		DMA_CH27;
+//extern DMA_CH		DMA_CH28;
+//extern DMA_CH		DMA_CH29;
+//extern DMA_CH		DMA_CH30;
+//extern DMA_CH		DMA_CH31;
 
 #elif defined(CPU_XMC48)
 
-extern DMA_CH		DMA_CH0;
-extern DMA_CH		DMA_CH1;
-extern DMA_CH		DMA_CH2;
-extern DMA_CH		DMA_CH3;
-extern DMA_CH		DMA_CH4;
-extern DMA_CH		DMA_CH5;
-extern DMA_CH		DMA_CH6;
-extern DMA_CH		DMA_CH7;
-extern DMA_CH		DMA_CH8;
-extern DMA_CH		DMA_CH9;
-extern DMA_CH		DMA_CH10;
-extern DMA_CH		DMA_CH11;
+//extern DMA_CH		DMA_CH0;
+//extern DMA_CH		DMA_CH1;
+//extern DMA_CH		DMA_CH2;
+//extern DMA_CH		DMA_CH3;
+//extern DMA_CH		DMA_CH4;
+//extern DMA_CH		DMA_CH5;
+//extern DMA_CH		DMA_CH6;
+//extern DMA_CH		DMA_CH7;
+//extern DMA_CH		DMA_CH8;
+//extern DMA_CH		DMA_CH9;
+//extern DMA_CH		DMA_CH10;
+//extern DMA_CH		DMA_CH11;
 
 #endif
 

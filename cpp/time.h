@@ -56,7 +56,7 @@ extern RTC timeBDC;
 #ifndef ADSP_BLACKFIN
 
 extern void Init_time(u32 mck);
-extern void RTT_Init();
+//extern void RTT_Init();
 #else
 
 #define Init_time(v)

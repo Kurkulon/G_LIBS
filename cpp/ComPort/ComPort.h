@@ -128,7 +128,7 @@ class ComPort : public USIC
 		const u32	_TXPO;
 		const u32	_RXPO;
 
-		DMA_CH *	const _DMA;
+		DMA_CH		_DMA;
 
 		u32 _CTRLA;
 		u32 _CTRLB;
@@ -138,8 +138,8 @@ class ComPort : public USIC
 		u32 _status;
 
 		bool IsTransmited() { return (_uhw.usart->INTFLAG & (USART_TXC|USART_DRE)) == (USART_TXC|USART_DRE); }
-		bool IsRecieved()	{ _DMA->Update(); u32 s = _uhw.usart->INTFLAG & (USART_ERROR|USART_RXS); if (s) { _status |= s; _uhw.usart->INTFLAG = s; return true; } else return false; }
-		u32	GetDmaCounter() { return _DMA->GetBytesLeft(); }
+		bool IsRecieved()	{ _DMA.Update(); u32 s = _uhw.usart->INTFLAG & (USART_ERROR|USART_RXS); if (s) { _status |= s; _uhw.usart->INTFLAG = s; return true; } else return false; }
+		u32	GetDmaCounter() { return _DMA.GetBytesLeft(); }
 		u16	GetRecievedLen() { return _pReadBuffer->maxLen - GetDmaCounter(); }
 
 	#elif defined(CPU_SAM4SA)
@@ -332,9 +332,9 @@ class ComPort : public USIC
 
 #elif defined(CPU_SAME53)
 
-	ComPort(byte num, T_HW::S_PORT* psck, T_HW::S_PORT* ptx, T_HW::S_PORT* prx, T_HW::S_PORT* prts, byte pinsck, byte pintx, byte pinrx, byte pinrts, u32 muxsck, u32 muxtx, u32 muxrx, u32 txpo, u32 rxpo, u32 gen_src, u32 gen_clk, DMA_CH *dma)
+	ComPort(byte num, T_HW::S_PORT* psck, T_HW::S_PORT* ptx, T_HW::S_PORT* prx, T_HW::S_PORT* prts, byte pinsck, byte pintx, byte pinrx, byte pinrts, u32 muxsck, u32 muxtx, u32 muxrx, u32 txpo, u32 rxpo, u32 gen_src, u32 gen_clk, byte dmach)
 		: USIC(num), _PIO_SCK(psck), _PIO_TX(ptx), _PIO_RX(prx), _PIO_RTS(prts), _PIN_SCK(pinsck), _PIN_TX(pintx), _PIN_RX(pinrx), _MASK_RTS(1UL<<pinrts),
-		_PMUX_SCK(muxsck), _PMUX_TX(muxtx), _PMUX_RX(muxrx), _GEN_SRC(gen_src), _GEN_CLK(gen_clk), _TXPO(txpo), _RXPO(rxpo), _DMA(dma), _status485(READ_END) {}
+		_PMUX_SCK(muxsck), _PMUX_TX(muxtx), _PMUX_RX(muxrx), _GEN_SRC(gen_src), _GEN_CLK(gen_clk), _TXPO(txpo), _RXPO(rxpo), _DMA(dmach), _status485(READ_END) {}
 
 #elif defined(CPU_SAM4SA)
 

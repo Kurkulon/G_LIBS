@@ -3,6 +3,10 @@
 
 #pragma once
 
+#ifdef __CC_ARM
+#pragma anon_unions
+#endif
+
 #if defined(_DEBUG) && !defined(__DEBUG)
 #define __DEBUG
 #endif

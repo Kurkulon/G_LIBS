@@ -79,6 +79,9 @@ static volatile bool busyWriteThread = false;
 
 #endif 
 
+static DMA_CH NAND_DMA(NAND_DMA_CH);
+static DMA_CH NAND_MEMCOPY_DMA(NAND_MEMCOPY_DMA_CH);
+
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static byte clog2(u32 v) {byte r = 0; while (v>>=1) {r++;}; return r;}

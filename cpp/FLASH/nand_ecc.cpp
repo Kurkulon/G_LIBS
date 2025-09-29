@@ -457,29 +457,147 @@ static inline int countbits(u32 b)
 //#endif
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void Nand_ECC_Calc_V2(const byte *dat, u16 len, byte *ecc_code)
+//void Nand_ECC_Calc_256(const byte *dat, u16 len, byte *ecc_code)
+//{
+//    int idx;
+//	int reg1, reg2, reg3;//, tmp1, tmp2;
+//  
+//	while (len > 0)
+//	{
+//		/* Initialize variables */
+//		reg1 = reg2 = reg3 = 0;
+//
+//		u16 count = (len > 256) ? 256 : len;
+//	  
+//		/* Build up column parity */
+//		for (u16 i = 0; i < count; i++)
+//		{
+//			/* Get CP0 - CP5 from table */
+//			idx = nand_ecc_precalc_table[*dat++];
+//			reg1 ^= (idx & 0x3f);
+//	  
+//			/* All bit XOR = 1 ? */
+//			if (idx & 0x40) reg3 ^= i, reg2 ^= ~i;
+//		};
+//	  
+//		/* Calculate final ECC code */
+//		ecc_code[0] = ~reg3;
+//		ecc_code[1] = ~reg2;
+//		ecc_code[2] = ((~reg1) << 2) | 0x03;
+//
+//		len -= count;
+//		ecc_code += 3;
+//	};
+//}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+//void Nand_ECC_Corr_256(byte* dat, u16 len, const byte* read_ecc, u32 *pErrCount, u32 *pCorrErrCount, u32 *pParityErrCount)
+//{
+//    int idx;
+//	int reg1, reg2, reg3;
+//		
+//	UECC s;//, tmp;
+//
+//	u32 corrErr = 0, err = 0, parErr = 0;
+//
+//	while (len > 0)
+//	{
+//		/* Initialize variables */
+//		reg1 = reg2 = reg3 = 0;
+//		//tmp.d = 0;
+//
+//		byte *src = dat;
+//
+//		u16 count = (len > 256) ? 256 : len;
+//	  
+//		/* Build up column parity */
+//		for (u16 i = 0; i < count; i++)
+//		{
+//			/* Get CP0 - CP5 from table */
+//			idx = nand_ecc_precalc_table[*dat++];
+//			reg1 ^= (idx & 0x3f);
+//	  
+//			/* All bit XOR = 1 ? */
+//			if (idx & 0x40) reg3 ^= i, reg2 ^= ~i;
+//		};
+//	  
+//		s.d = 0;
+//
+//		//tmp.b8[0] = ~reg3;
+//		//tmp.b8[1] = ~reg2;
+//		//tmp.b8[2] = ((~reg1) << 2) | 0x03;
+//
+//
+//		s.b8[0] = (~reg3) 					^ read_ecc[0];
+//		s.b8[1] = (~reg2) 					^ read_ecc[1];
+//		s.b8[2] = (((~reg1) << 2) | 0x03)	^ read_ecc[2];
+//
+//		read_ecc += 3;
+//
+//		//s.d ^= tmp.d;
+//
+//		if (s.d == 0)
+//		{
+//				
+//		}
+//		else if ((byte)(s.b8[0] ^ s.b8[1]) == 0xFF && ((s.b8[2] ^ (s.b8[2] >> 1)) & 0x54) == 0x54)
+//		{
+//			RX bitnum;
+//
+//			bitnum.d = 0;
+//
+//			bitnum.b.B2 = s.b.B23;//(s2 >> 5) & 0x04;
+//			bitnum.b.B1 = s.b.B21;//(s2 >> 4) & 0x02;
+//			bitnum.b.B0 = s.b.B19;//(s2 >> 3) & 0x01;
+//
+//			src[s.b8[0]] ^= (1 << bitnum.d);
+//
+//			corrErr++;
+//		}
+//		else if (countbits(s.d) == 1)
+//		{
+//			parErr++;	
+//		}
+//		else
+//		{
+//			err++;
+//		};
+//
+//		len -= count;
+//	};
+//
+//	if (pErrCount		!= 0)	*pErrCount			+= err;
+//	if (pCorrErrCount	!= 0)	*pCorrErrCount		+= corrErr;
+//	if (pParityErrCount != 0) *pParityErrCount	+= parErr;
+//
+//}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void Nand_ECC_Calc(const byte *dat, u16 len, u16 blockLen, byte *ecc_code)
 {
-    int idx;
+	int idx;
 	int reg1, reg2, reg3;//, tmp1, tmp2;
-  
+
 	while (len > 0)
 	{
 		/* Initialize variables */
 		reg1 = reg2 = reg3 = 0;
 
-		u16 count = (len > 256) ? 256 : len;
-	  
+		u16 count = (len > blockLen) ? blockLen : len;
+
 		/* Build up column parity */
 		for (u16 i = 0; i < count; i++)
 		{
 			/* Get CP0 - CP5 from table */
 			idx = nand_ecc_precalc_table[*dat++];
-			reg1 ^= (idx & 0x3f);
-	  
+			reg1 ^= (idx & 0x3F);
+
 			/* All bit XOR = 1 ? */
 			if (idx & 0x40) reg3 ^= i, reg2 ^= ~i;
 		};
-	  
+
 		/* Calculate final ECC code */
 		ecc_code[0] = ~reg3;
 		ecc_code[1] = ~reg2;
@@ -492,11 +610,11 @@ void Nand_ECC_Calc_V2(const byte *dat, u16 len, byte *ecc_code)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void Nand_ECC_Corr_V2(byte* dat, u16 len, const byte* read_ecc, u32 *pErrCount, u32 *pCorrErrCount, u32 *pParityErrCount)
+void Nand_ECC_Corr(byte* dat, u16 len, u16 blockLen, const byte* read_ecc, u32 *pErrCount, u32 *pCorrErrCount, u32 *pParityErrCount)
 {
-    int idx;
+	int idx;
 	int reg1, reg2, reg3;
-		
+
 	UECC s;//, tmp;
 
 	u32 corrErr = 0, err = 0, parErr = 0;
@@ -509,19 +627,19 @@ void Nand_ECC_Corr_V2(byte* dat, u16 len, const byte* read_ecc, u32 *pErrCount, 
 
 		byte *src = dat;
 
-		u16 count = (len > 256) ? 256 : len;
-	  
+		u16 count = (len > blockLen) ? blockLen : len;
+
 		/* Build up column parity */
 		for (u16 i = 0; i < count; i++)
 		{
 			/* Get CP0 - CP5 from table */
 			idx = nand_ecc_precalc_table[*dat++];
-			reg1 ^= (idx & 0x3f);
-	  
+			reg1 ^= (idx & 0x3F);
+
 			/* All bit XOR = 1 ? */
 			if (idx & 0x40) reg3 ^= i, reg2 ^= ~i;
 		};
-	  
+
 		s.d = 0;
 
 		//tmp.b8[0] = ~reg3;
@@ -530,7 +648,7 @@ void Nand_ECC_Corr_V2(byte* dat, u16 len, const byte* read_ecc, u32 *pErrCount, 
 
 
 		s.b8[0] = (~reg3) 					^ read_ecc[0];
-		s.b8[1] = (~reg2) 					^ read_ecc[1];
+		s.b8[1] = (~reg2)			 		^ read_ecc[1];
 		s.b8[2] = (((~reg1) << 2) | 0x03)	^ read_ecc[2];
 
 		read_ecc += 3;
@@ -539,7 +657,7 @@ void Nand_ECC_Corr_V2(byte* dat, u16 len, const byte* read_ecc, u32 *pErrCount, 
 
 		if (s.d == 0)
 		{
-				
+
 		}
 		else if ((byte)(s.b8[0] ^ s.b8[1]) == 0xFF && ((s.b8[2] ^ (s.b8[2] >> 1)) & 0x54) == 0x54)
 		{

@@ -298,10 +298,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\cpp\i2c.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\cpp\I2C.h"
 				>
 			</File>
@@ -330,10 +326,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\cpp\spi.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\cpp\SPI.h"
 				>
 			</File>
@@ -354,11 +346,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\cpp\time.cpp"
+				RelativePath=".\cpp\time.h"
 				>
 			</File>
 			<File
-				RelativePath=".\cpp\time.h"
+				RelativePath=".\cpp\time_imp.h"
 				>
 			</File>
 			<File
@@ -366,11 +358,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\cpp\usic.cpp"
+				RelativePath=".\cpp\usic.h"
 				>
 			</File>
 			<File
-				RelativePath=".\cpp\usic.h"
+				RelativePath=".\cpp\usic_imp.h"
 				>
 			</File>
 			<Filter

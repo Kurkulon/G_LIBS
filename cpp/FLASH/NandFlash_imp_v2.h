@@ -12,6 +12,7 @@
 #include "CRC\CRC_CCITT_DMA.h"
 
 #include "FLASH\NandFlash_def.h"
+#include <MEM\mem.h>
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -34,7 +35,9 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #ifdef NAND_ECC_CHECK
+
 #include "FLASH\Nand_ECC.h"
+
 static const bool check_ecc = true;					
 #else
 static const bool check_ecc = false;					
@@ -68,13 +71,6 @@ static const bool verifyWritePage = true;			// Проверка записаной страницы, путё
 #else
 static const bool verifyWritePage = false;		// Проверка записаной страницы, путём чтения страницы и сравнения с буфером
 #endif
-
-//#ifdef NAND_VERIFY_SPARE
-//static const bool verifySpare = true;				// Проверка записаной страницы, путём чтения страницы и сравнения с буфером
-//#else
-//static const bool verifySpare = false;				// Проверка записаной страницы, путём чтения страницы и сравнения с буфером
-//#endif
-
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -166,15 +162,16 @@ static ListRef<MB> writeFlBuf;
 static List<NANDFLRB> freeFlRdBuf;
 static List<NANDFLRB> readFlBuf;
 
-struct PageBuffer { PageBuffer *next; u32 page; u32 prevPage; byte data[NAND_PAGE_SIZE]; SpareArea spare; };
+struct PageBuffer { /*PageBuffer *next;*/ u32 page; u32 prevPage; byte data[NAND_PAGE_SIZE]; SpareArea spare; };
 
-static PageBuffer _pageBuf[3];
+//static PageBuffer _pageBuf[3];
 
-static List<PageBuffer> freePageBuffer;
-static List<PageBuffer> readyPageBuffer;
+//static List<PageBuffer> freePageBuffer;
+
+static ListPtr<MB> readyPageBuffer;
 
 #ifdef NAND_ECC_PAGEBUF
-static List<PageBuffer> eccPageBuffer;
+static ListPtr<MB> eccPageBuffer;
 #endif
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -458,10 +455,10 @@ static void InitFlashBuffer()
 	//	freeFlRdBuf.Add(&flashReadBuffer[i]);
 	//};
 
-	for (byte i = 0; i < ArraySize(_pageBuf); i++)
-	{
-		freePageBuffer.Add(&_pageBuf[i]);
-	};
+	//for (byte i = 0; i < ArraySize(_pageBuf); i++)
+	//{
+	//	freePageBuffer.Add(&_pageBuf[i]);
+	//};
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -666,7 +663,7 @@ bool EraseBlock::Update()
 #ifdef NAND_ECC_SPARE
 				u32 err = 0;
 
-				Nand_ECC_Corr_V2((byte*)&spare, spare.ecc_spare - (byte*)&spare, spare.ecc_spare, &err, &eccCorrErrCount, &eccParityErrCount);
+				Nand_ECC_Corr((byte*)&spare, spare.ecc_spare - (byte*)&spare, NAND_ECC_LEN, spare.ecc_spare, &err, &eccCorrErrCount, &eccParityErrCount);
 
 				if (err != 0)
 				{
@@ -818,10 +815,10 @@ struct Write
 
 		u32	data[(NAND_PAGE_SIZE)/4];
 #endif
-
 		SpareArea spare; 
-	}
-	rdBuf;
+	};
+
+	Ptr<MB> rdPtr;
 
 	bool Start();
 	bool Update();
@@ -1174,9 +1171,9 @@ bool Write::Update()
 
 		case WRITE_ECC_0:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
 		{
-			byte *ecc_calc = spare.ecc_page + (ver_index>>8)*3;
+			byte *ecc_calc = spare.ecc_page + (ver_index/NAND_ECC_LEN)*3;
 
-			Nand_ECC_Calc_V2((byte*)wr_ptr+ver_index, 256, ecc_calc);
+			Nand_ECC_Calc((byte*)wr_ptr+ver_index, 256, NAND_ECC_LEN, ecc_calc);
 
 			ver_index += 256;
 
@@ -1226,7 +1223,7 @@ bool Write::Update()
 
 #ifdef NAND_ECC_CHECK
 
-				Nand_ECC_Calc_V2((byte*)&spare, spare.ecc_spare - (byte*)&spare, spare.ecc_spare);
+				Nand_ECC_Calc((byte*)&spare, spare.ecc_spare - (byte*)&spare, NAND_ECC_LEN, spare.ecc_spare);
 
 				NAND_WriteDataDMA(&spare, wr.spareSize);
 #else
@@ -1339,24 +1336,33 @@ bool Write::Update()
 
 		case WRITE_PAGE_6:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
 
+			if (!rdPtr.Valid())
+			{
+				rdPtr = AllocMemBuffer(sizeof(RDBUF));
+
+				if (!rdPtr.Valid()) break;
+			};
+
 			if(!NAND_BUSY())
 			{
+				RDBUF &p = *((RDBUF*)rdPtr->GetDataPtr());
+
 #ifdef NAND_ECC_CHECK
 	
 	#ifdef NAND_WRITE_RDBUF
 
-				NAND_ReadDataDMA(&rdBuf, wr.pg+wr.spareSize);
+				NAND_ReadDataDMA(p.data, wr.pg+wr.spareSize);
 	#else
-				NAND_ReadDataDMA(&rdBuf.spare, wr.spareSize);
+				NAND_ReadDataDMA(&p.spare, wr.spareSize);
 	#endif
 
 #else
 
 	#ifdef NAND_WRITE_RDBUF
 
-				NAND_ReadDataDMA(&rdBuf, sizeof(rdBuf));
+				NAND_ReadDataDMA(p.data, sizeof(p));
 	#else
-				NAND_ReadDataDMA(&rdBuf.spare, sizeof(SpareArea));
+				NAND_ReadDataDMA(&p.spare, sizeof(p.spare));
 	#endif
 
 #endif
@@ -1369,7 +1375,9 @@ bool Write::Update()
 
 			if (NAND_CheckDataComplete())
 			{
-				SpareArea &sp = rdBuf.spare; //*((SpareArea*)(rdBuf+wr.pg/4));
+				RDBUF &p = *((RDBUF*)rdPtr->GetDataPtr());
+
+				SpareArea &sp = p.spare; //*((SpareArea*)(rdBuf+wr.pg/4));
 
 				if (sp.v1.rawPage != wr.GetRawPage())
 				{
@@ -1389,7 +1397,7 @@ bool Write::Update()
 
 				u32 corrErr = 0, err = 0, parErr = 0;
 
-				Nand_ECC_Corr_V2((byte*)&sp, sp.ecc_spare - (byte*)&sp, sp.ecc_spare, &err, &corrErr, &parErr);
+				Nand_ECC_Corr((byte*)&sp, sp.ecc_spare - (byte*)&sp, NAND_ECC_LEN, sp.ecc_spare, &err, &corrErr, &parErr);
 
 				eccErrCount			+= err;
 				eccCorrErrCount		+= corrErr;
@@ -1419,14 +1427,17 @@ bool Write::Update()
 		{
 #ifdef NAND_WRITE_RDBUF
 
-	#ifdef NAND_ECC_PAGE_PAGEBUF
-			SpareArea &sp = rdBuf.spare; // *((SpareArea*)(rdBuf+wr.pg/4));
+			RDBUF &p = *((RDBUF*)rdPtr->GetDataPtr());
 
-			byte *ecc_read = sp.ecc_page + (ver_index>>8)*3;
+	#ifdef NAND_ECC_PAGE_PAGEBUF
+
+			SpareArea &sp = p.spare; // *((SpareArea*)(rdBuf+wr.pg/4));
+
+			byte *ecc_read = sp.ecc_page + (ver_index/NAND_ECC_LEN)*3;
 
 			u32 corrErr = 0, err = 0, parErr = 0;
 
-			Nand_ECC_Corr_V2((byte*)rdBuf.data + ver_index, 256, ecc_read, &err, &corrErr, &parErr);
+			Nand_ECC_Corr((byte*)p.data + ver_index, 256, NAND_ECC_LEN, ecc_read, &err, &corrErr, &parErr);
 
 			eccErrCount			+= err;
 			eccCorrErrCount		+= corrErr;
@@ -1434,7 +1445,7 @@ bool Write::Update()
 
 			if (err != 0)
 	#else
-			if (!__memcmp((byte*)wr_ptr + ver_index, (byte*)rdBuf.data + ver_index, 256))
+			if (!__memcmp((byte*)wr_ptr + ver_index, (byte*)p.data + ver_index, 256))
 	#endif
 			{
 				state = WRITE_PAGE_ERR;
@@ -1682,7 +1693,7 @@ bool ReadSpare::Update()
 #ifdef NAND_ECC_SPARE
 				u32 err = 0;
 
-				Nand_ECC_Corr_V2((byte*)spare, spare->ecc_spare - (byte*)spare, spare->ecc_spare, &err, &eccCorrErrCount, &eccParityErrCount);
+				Nand_ECC_Corr((byte*)spare, spare->ecc_spare - (byte*)spare, NAND_ECC_LEN, spare->ecc_spare, &err, &eccCorrErrCount, &eccParityErrCount);
 
 				if (err != 0)
 				{
@@ -1777,8 +1788,8 @@ struct Read2
 	u32 	sparePage;
 	u32 	prevSparePage;
 
-	PageBuffer *page;
-	PageBuffer *rdPB;
+	Ptr<MB> page; //PageBuffer *page;
+	Ptr<MB> rdPB; //PageBuffer *rdPB;
 
 #ifdef NAND_ECC_CHECK
 	u32		eccErrCount;
@@ -1789,7 +1800,7 @@ struct Read2
 	u32 	initFlushSparePage;
 
 #ifdef NAND_ECC_PAGEBUF
-	PageBuffer *eccPB;
+	Ptr<MB> eccPB;
 
 	byte statePageECC;
 
@@ -1883,13 +1894,15 @@ void Read2::UpdatePage()
 
 			if (/*state < CRC_START &&*/ sparePage != ~0ul)
 			{
-				rdPB = freePageBuffer.Get();
+				rdPB = AllocMemBuffer(sizeof(PageBuffer)); //freePageBuffer.Get();
 
-				if (rdPB != 0)
+				if (rdPB.Valid())
 				{
+					PageBuffer &p = *((PageBuffer*)rdPB->GetDataPtr());
+
 					padr.SetRawPage(sparePage);
 
-					readSpare.Start(&rdPB->spare, &padr);	
+					readSpare.Start(&p.spare, &padr);	
 
 					statePage++;
 				};
@@ -1901,15 +1914,17 @@ void Read2::UpdatePage()
 
 			if (!readSpare.Update())
 			{
-				rdPB->prevPage	= prevSparePage;
-				rdPB->page		= sparePage = padr.GetRawPage();
+				PageBuffer &p = *((PageBuffer*)rdPB->GetDataPtr());
+
+				p.prevPage	= prevSparePage;
+				p.page		= sparePage = padr.GetRawPage();
 
 #ifdef NAND_ECC_CHECK
 				eccErrCount			+= readSpare.eccErrCount;
 				eccCorrErrCount		+= readSpare.eccCorrErrCount;
 				eccParityErrCount	+= readSpare.eccParityErrCount;
 #endif
-				if (!readPageCheckSpareCRC || rdPB->spare.v1.crc == 0)
+				if (!readPageCheckSpareCRC || p.spare.v1.crc == 0)
 				{
 					NAND_CmdRandomRead(0);
 					statePage++;
@@ -1926,7 +1941,9 @@ void Read2::UpdatePage()
 			
 			if(!NAND_BUSY())
 			{
-				NAND_ReadDataDMA(rdPB->data, padr.pg);
+				PageBuffer &p = *((PageBuffer*)rdPB->GetDataPtr());
+
+				NAND_ReadDataDMA(p.data, padr.pg);
 
 				statePage++;
 			};
@@ -1952,26 +1969,28 @@ void Read2::UpdatePage()
 		{
 #ifdef NAND_ECC_PAGE
 
-				byte *ecc_read = rdPB->spare.ecc_page + (ecc_count>>8)*3;
+			PageBuffer &p = *((PageBuffer*)rdPB->GetDataPtr());
 
-				u32 err = 0;
+			byte *ecc_read = p.spare.ecc_page + (ecc_count/NAND_ECC_LEN)*3;
 
-				Nand_ECC_Corr_V2(rdPB->data+ecc_count, 256, ecc_read, &err, &eccCorrErrCount, &eccParityErrCount);
+			u32 err = 0;
 
-				if (err != 0)
-				{
-					__nop();
-				};
+			Nand_ECC_Corr(p.data+ecc_count, 256, NAND_ECC_LEN, ecc_read, &err, &eccCorrErrCount, &eccParityErrCount);
 
-				eccErrCount += err;
+			if (err != 0)
+			{
+				__nop();
+			};
 
-				ecc_count += 256;
+			eccErrCount += err;
 
-				if (ecc_count >= padr.pg) statePage++;
+			ecc_count += 256;
 
-				break;
+			if (ecc_count >= padr.pg) statePage++;
+
+			break;
 #else
-				statePage++;
+			statePage++;
 #endif
 		};
 
@@ -1982,7 +2001,8 @@ void Read2::UpdatePage()
 #else
 			readyPageBuffer.Add(rdPB); 
 #endif
-			rdPB = 0;
+			rdPB.Free();
+
 			prevSparePage = sparePage;
 
 			sparePage++;
@@ -2002,32 +2022,34 @@ void Read2::UpdatePage()
 
 		case 6:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 			
-			if (page != 0)
+			if (page.Valid())
 			{
-				freePageBuffer.Add(page); page = 0;
+				page.Free(); //freePageBuffer.Add(page); page = 0;
 			};
 
-			if (rdPB != 0)
+			if (rdPB.Valid())
 			{
-				freePageBuffer.Add(rdPB);
+				rdPB.Free(); //freePageBuffer.Add(rdPB);
 			};
 				
-			while ((rdPB = readyPageBuffer.Get()) != 0)
+			while ((rdPB = readyPageBuffer.Get()).Valid())
 			{
-				freePageBuffer.Add(rdPB);
+				rdPB.Free(); //freePageBuffer.Add(rdPB);
 			};
 
 #ifdef NAND_ECC_PAGEBUF
 
-			if (eccPB != 0)
+			if (eccPB.Valid())
 			{
-				freePageBuffer.Add(eccPB);
+				eccPB.Free(); //freePageBuffer.Add(eccPB);
 			};
 				
-			while ((eccPB = eccPageBuffer.Get()) != 0)
+			while ((eccPB = eccPageBuffer.Get()).Valid())
 			{
-				freePageBuffer.Add(eccPB);
+				eccPB.Free(); //freePageBuffer.Add(eccPB);
 			};
+
+			statePageECC = 0;
 #endif 
 
 			sparePage = initFlushSparePage;
@@ -2052,7 +2074,7 @@ void Read2::UpdatePageECC()
 
 			eccPB = eccPageBuffer.Get();
 
-			if (eccPB != 0)
+			if (eccPB.Valid())
 			{
 				ecc_count = 0;
 
@@ -2063,11 +2085,13 @@ void Read2::UpdatePageECC()
 
 		case 1:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		{
-			byte *ecc_read = eccPB->spare.ecc_page + (ecc_count>>8)*3;
+			PageBuffer &p = *((PageBuffer*)eccPB->GetDataPtr());
+
+			byte *ecc_read = p.spare.ecc_page + (ecc_count/NAND_ECC_LEN)*3;
 
 			u32 err = 0;
 
-			Nand_ECC_Corr_V2(eccPB->data+ecc_count, 256, ecc_read, &err, &eccCorrErrCount, &eccParityErrCount);
+			Nand_ECC_Corr(p.data+ecc_count, 256, NAND_ECC_LEN, ecc_read, &err, &eccCorrErrCount, &eccParityErrCount);
 
 			if (err != 0)
 			{
@@ -2081,7 +2105,7 @@ void Read2::UpdatePageECC()
 			if (ecc_count >= rd.pg)
 			{
 				readyPageBuffer.Add(eccPB);
-				eccPB = 0;
+				eccPB.Free();
 				statePageECC = 0;
 			};
 
@@ -2108,23 +2132,24 @@ bool Read2::Update()
 
 		case READ_START:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-			if (page == 0)
+			if (!page.Valid())
 			{
 				page = readyPageBuffer.Get();
 
-				if (page != 0)
+				if (page.Valid())
 				{
-					if (!readPageCheckSpareCRC || page->spare.v1.crc == 0)
+					PageBuffer &p = *((PageBuffer*)page->GetDataPtr());
+
+					if (!readPageCheckSpareCRC || p.spare.v1.crc == 0)
 					{
 						u16 col = rd.GetCol();
 
-						rd.SetRawPage(page->page);
+						rd.SetRawPage(p.page);
 						rd.SetCol(col);
 					}
 					else 
 					{
-						freePageBuffer.Add(page);
-						page = 0;
+						page.Free(); //freePageBuffer.Add(page); page = 0;
 
 						if (findTryCount > 0)
 						{
@@ -2139,13 +2164,15 @@ bool Read2::Update()
 				};
 			};
 
-			if (page != 0)
+			if (page.Valid())
 			{
+				PageBuffer &p = *((PageBuffer*)page->GetDataPtr());
+
 				u16 c = rd.pg - rd.GetCol();
 
 				if (rd_count < c) c = rd_count;
 
-				NAND_CopyDataDMA(page->data+rd.GetCol(), rd_data, c);
+				NAND_CopyDataDMA(p.data+rd.GetCol(), rd_data, c);
 
 				rd_count -= c;
 				rd.raw += c;
@@ -2161,11 +2188,11 @@ bool Read2::Update()
 
 			if (NAND_CheckCopyComplete())
 			{
-				if (rd.GetRawPage() != page->page)
-				{ 
-					freePageBuffer.Add(page);
+				PageBuffer &p = *((PageBuffer*)page->GetDataPtr());
 
-					page = 0;
+				if (rd.GetRawPage() != p.page)
+				{ 
+					page.Free(); //freePageBuffer.Add(page); page = 0;
 				};
 
 				if (rd_count == 0)
@@ -2203,15 +2230,15 @@ bool Read2::Update()
 
 							findTryCount -= 1;
 
-							if (page != 0 && (readPageCheckSpareCRC || page->spare.v1.crc == 0))
+							if (page.Valid() && (readPageCheckSpareCRC || p.spare.v1.crc == 0))
 							{
-								SpareArea &spare = page->spare;
+								SpareArea &spare = p.spare;
 
 								if (spare.v1.vecFstOff == 0xFFFF || spare.v1.vecLstOff == 0xFFFF || rd.GetCol() > spare.v1.vecLstOff)
 								{
 									rd.NextPage();
 
-									freePageBuffer.Add(page); page = 0;
+									page.Free(); //freePageBuffer.Add(page); page = 0;
 								}
 								else if (rd.GetCol() <= spare.v1.vecFstOff)
 								{
@@ -3154,6 +3181,9 @@ NandFileDsc* NandFlash_GetSessionInfo(u16 session, u64 adr)
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+static FLADR NAND_Idle_er(0);
+static EraseBlock NAND_Idle_eraseBlock;
+
 void NAND_Idle()
 {
 //	register u32 t;
@@ -3161,8 +3191,10 @@ void NAND_Idle()
 	static i32 t = 0;
 	static i32 eb = 0;
 	static TM32 tm;
-	static FLADR er(0);
-	static EraseBlock eraseBlock;
+	
+	FLADR &er = NAND_Idle_er;
+	EraseBlock &eraseBlock = NAND_Idle_eraseBlock;
+
 	//static bool blackBox = false;
 	static byte blackBoxCount = 0;
 
@@ -4036,11 +4068,11 @@ void NandFlash_Init()
 	
 	SpareArea spare;
 
-	u16 size = sizeof(spare) - sizeof(spare.ecc_page) + (FLADR::pg>>8)*3;
+	u16 size = sizeof(spare) - sizeof(spare.ecc_page) + (FLADR::pg/NAND_ECC_LEN)*3;
 
 	if (FLADR::spareSize < size || !(check_ecc_page||check_ecc_pagebuf))
 	{
-		size -= (FLADR::pg>>8)*3;
+		size -= (FLADR::pg/NAND_ECC_LEN)*3;
 
 		#ifdef NAND_ECC_PAGE
 			check_ecc_page = false;					

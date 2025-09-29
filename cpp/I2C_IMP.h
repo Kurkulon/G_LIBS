@@ -895,7 +895,7 @@ bool S_I2C::Update()
 
 					if (_dsc->wlen == 0)
 					{
-						_DMA->ReadPeripheral(&i2c->DATA, _dsc->rdata, _dsc->rlen, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_RX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
+						_DMA.ReadPeripheral(&i2c->DATA, _dsc->rdata, _dsc->rlen, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_RX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
 
 						i2c->ADDR = ((_dsc->rlen <= 255) ? (I2C_LEN(_dsc->rlen)|I2C_LENEN) : 0) | (_dsc->adr << 1) | 1;
 						_state = I2C_READ; 
@@ -904,7 +904,7 @@ bool S_I2C::Update()
 					{
 						i2c->ADDR = (_dsc->adr << 1);
 
-						_DMA->WritePeripheral(_dsc->wdata, &i2c->DATA, _dsc->wlen, _dsc->wdata2, _dsc->wlen2, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_TX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
+						_DMA.WritePeripheral(_dsc->wdata, &i2c->DATA, _dsc->wlen, _dsc->wdata2, _dsc->wlen2, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_TX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
 
 						_state = I2C_WRITE; 
 					};
@@ -936,19 +936,19 @@ bool S_I2C::Update()
 
 				__disable_irq();
 
-				bool c = _DMA->CheckComplete() && (i2c->INTFLAG & I2C_MB);
+				bool c = _DMA.CheckComplete() && (i2c->INTFLAG & I2C_MB);
 				
 				__enable_irq();
 
 				if (c)
 				{
-					_DMA->Disable();
+					_DMA.Disable();
 
 					dsc.ack = (i2c->STATUS.RXNACK == 0);
 
 					if (dsc.ack && _dsc->rlen > 0)
 					{
-						_DMA->ReadPeripheral(&i2c->DATA, _dsc->rdata, _dsc->rlen, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_RX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
+						_DMA.ReadPeripheral(&i2c->DATA, _dsc->rdata, _dsc->rlen, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_RX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
 
 						i2c->ADDR = ((_dsc->rlen <= 255) ? (I2C_LEN(_dsc->rlen)|I2C_LENEN) : 0) | (_dsc->adr << 1) | 1;
 		
@@ -966,7 +966,7 @@ bool S_I2C::Update()
 				}
 				else
 				{
-					u32 t = _DMA->GetBytesLeft();
+					u32 t = _DMA.GetBytesLeft();
 
 					if (t != _prevCount) _prevCount = t, _tm.Reset();
 				};
@@ -994,13 +994,13 @@ bool S_I2C::Update()
 
 				__disable_irq();
 
-				bool c = _DMA->CheckComplete();
+				bool c = _DMA.CheckComplete();
 				
 				__enable_irq();
 
 				if (c)
 				{
-					_DMA->Disable();
+					_DMA.Disable();
 
 					dsc.ack = (i2c->STATUS.RXNACK == 0);
 
@@ -1012,13 +1012,13 @@ bool S_I2C::Update()
 				}
 				else
 				{
-					u32 t = _DMA->GetBytesLeft();
+					u32 t = _DMA.GetBytesLeft();
 
 					if (t != _prevCount) _prevCount = t, _tm.Reset();
 				};
 			};
 
-			_dsc->readedLen = _DMA->GetBytesReady(); //_dsc->rlen - DmaWRB[I2C_DMACH].BTCNT;
+			_dsc->readedLen = _DMA.GetBytesReady(); //_dsc->rlen - DmaWRB[I2C_DMACH].BTCNT;
 
 			break;
 
@@ -1047,7 +1047,7 @@ bool S_I2C::Update()
 
 			if (i2c->STATUS.BUSSTATE == BUSSTATE_IDLE)
 			{
-				_DMA->Disable();
+				_DMA.Disable();
 
 				_dsc->ready = false;
 

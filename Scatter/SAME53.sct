@@ -24,9 +24,14 @@ LR_IROM1 0x00004000 0x0007C000
         .ANY (+RO-DATA)
     }
 
-    RW_IRAM1 0x20000C00 0x00002F400     ; RW data
+    RW_IRAM1 0x20000C00 0x00002F3F0     ; RW data
     {  
         .ANY (+RW +ZI)
     }
+
+    HEAP +0 FILL 0x55555555 0x10
+    {
+    }
+
 }
 

@@ -9,7 +9,10 @@
 
 #define TRAP_TX_DATA_BUFFER_SIZE	8400
 /**************************************************************/
-#define TRAP_PACKET_VERSION	0x2
+#ifndef TRAP_PACKET_VERSION
+#error Must be defined TRAP_PACKET_VERSION [2...7]
+//#define TRAP_PACKET_VERSION	0x2
+#endif
 
 #define TRAP_TRACE_DEVICE		'T'
 #define TRAP_INFO_DEVICE		'I'

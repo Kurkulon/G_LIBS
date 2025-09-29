@@ -1,4 +1,7 @@
-#ifndef __ADSPBF59x__
+#if !defined(USIC_IMP_H__25_09_2025__19_21) && !defined(__ADSPBF59x__)
+#define USIC_IMP_H__25_09_2025__19_21
+
+#pragma once
 
 #include "usic.h"
 
@@ -138,4 +141,5 @@ void USIC::Usic_Update()
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#endif // #ifndef _ADI_COMPILER
+#endif // #if !defined(USIC_IMP_H__25_09_2025__19_21) && !defined(__ADSPBF59x__)
+

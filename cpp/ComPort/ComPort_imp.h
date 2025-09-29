@@ -728,7 +728,7 @@ void ComPort::EnableTransmit(void* src, word count)
 		_uhw.usart->CTRLB = _CTRLB|USART_TXEN;
 		_uhw.usart->INTFLAG = ~0;
 
-		_DMA->WritePeripheral(src, &_uhw.usart->DATA, count, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_TX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE); 
+		_DMA.WritePeripheral(src, &_uhw.usart->DATA, count, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_TX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE); 
 
 		//while (_uhw.usart->SYNCBUSY & USART_CTRLB);
 
@@ -851,7 +851,7 @@ void ComPort::DisableTransmit()
 			_uhw.usart->CTRLB = _CTRLB;	// Disable transmit and receive
 		};
 
-		_DMA->Disable(); 
+		_DMA.Disable(); 
 
 	#elif defined(CPU_SAM4SA)
 
@@ -925,7 +925,7 @@ void ComPort::EnableReceive(void* dst, word count)
 			while(_uhw.usart->SYNCBUSY);
 		};
 
-		_DMA->ReadPeripheral(&_uhw.usart->DATA, dst, count, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_RX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
+		_DMA.ReadPeripheral(&_uhw.usart->DATA, dst, count, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_RX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
 
 		//while (_uhw.usart->SYNCBUSY & USART_CTRLB);
 
@@ -1046,7 +1046,7 @@ void ComPort::DisableReceive()
 			_uhw.usart->CTRLB = _CTRLB;
 		};
 
-		_DMA->Disable();
+		_DMA.Disable();
 
 	#elif defined(CPU_SAM4SA)
 

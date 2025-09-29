@@ -485,6 +485,7 @@
     <ClInclude Include="cpp\CRC\CRC_CCITT_DMA.h" />
     <ClInclude Include="cpp\CRC\CRC_CCITT_DMA_IMP.h" />
     <ClInclude Include="cpp\DMA\DMA.h" />
+    <ClInclude Include="cpp\DMA\DMA_imp.h" />
     <ClInclude Include="cpp\EMAC\emac.h" />
     <ClInclude Include="cpp\EMAC\EMAC_DEF.h" />
     <ClInclude Include="cpp\EMAC\emac_imp.h" />
@@ -493,8 +494,8 @@
     <ClInclude Include="cpp\EMAC\tftp_imp.h" />
     <ClInclude Include="cpp\EMAC\trap.h" />
     <ClInclude Include="cpp\EMAC\trap_def.h" />
+    <ClInclude Include="cpp\EMAC\trap_imp.h" />
     <ClInclude Include="cpp\EMAC\vector.h" />
-    <ClInclude Include="cpp\EMAC\xtrap.h" />
     <ClInclude Include="cpp\extern_def.h" />
     <ClInclude Include="cpp\FLASH\at25df021.h" />
     <ClInclude Include="cpp\FLASH\at25df021_imp.h" />
@@ -527,8 +528,10 @@
     <ClInclude Include="cpp\SPIS_imp.h" />
     <ClInclude Include="cpp\TaskList.h" />
     <ClInclude Include="cpp\time.h" />
+    <ClInclude Include="cpp\time_imp.h" />
     <ClInclude Include="cpp\types.h" />
     <ClInclude Include="cpp\usic.h" />
+    <ClInclude Include="cpp\usic_imp.h" />
     <ClInclude Include="cpp\WAVEPACK\fdct.h" />
     <ClInclude Include="cpp\WAVEPACK\fdct_imp.h" />
     <ClInclude Include="cpp\WAVEPACK\mdct.h" />
@@ -547,19 +550,10 @@
     <ClCompile Include="cpp\CRC\GetCRC16_8005.cpp" />
     <ClCompile Include="cpp\CRC\GetCRC16_CCIT.cpp" />
     <ClCompile Include="cpp\CRC\GetCRC32.cpp" />
-    <ClCompile Include="cpp\DMA\DMA.cpp" />
-    <ClCompile Include="cpp\DMA\DMA_CH.cpp" />
-    <ClCompile Include="cpp\DMA\DMA_DSC.cpp" />
-    <ClCompile Include="cpp\EMAC\trap.cpp" />
-    <ClCompile Include="cpp\EMAC\xtrap.cpp" />
     <ClCompile Include="cpp\FLASH\nand_ecc.cpp" />
-    <ClCompile Include="cpp\i2c.cpp" />
     <ClCompile Include="cpp\PointerCRC.cpp" />
     <ClCompile Include="cpp\SEGGER_RTT\SEGGER_RTT.cpp" />
     <ClCompile Include="cpp\SEGGER_RTT\SEGGER_RTT_printf.cpp" />
-    <ClCompile Include="cpp\spi.cpp" />
-    <ClCompile Include="cpp\time.cpp" />
-    <ClCompile Include="cpp\usic.cpp" />
     <ClCompile Include="initcode\initcode_osc16.cpp" />
     <ClCompile Include="initcode\initcode_osc25.cpp" />
   </ItemGroup>

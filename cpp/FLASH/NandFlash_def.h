@@ -74,8 +74,15 @@
 #define NAND_SR_RDY					0x40	// 0 = Busy, 1 = Ready
 #define NAND_SR_WP					0x80	// 0 = Protected, 1 = Not Protected
 
+#if defined(NAND_ECC_PAGE) && defined(NAND_ECC_PAGEBUF)
+#error Must be defined or NAND_ECC_PAGE or NAND_ECC_PAGEBUF
+#endif 
+
 #if defined(NAND_ECC_PAGE) || defined(NAND_ECC_SPARE) || defined(NAND_ECC_PAGEBUF)
 #define NAND_ECC_CHECK
+#ifndef NAND_ECC_LEN
+#define NAND_ECC_LEN 256
+#endif
 #endif
 
 #if (defined(NAND_ECC_PAGE) || defined(NAND_ECC_PAGEBUF)) && !defined(NAND_ECC_SPARE)
@@ -276,7 +283,7 @@ __packed struct SpareArea
 	byte ecc_spare[3];
 
 	#if defined(NAND_ECC_PAGE) || defined(NAND_ECC_PAGEBUF)
-		byte ecc_page[NAND_PAGE_SIZE/256*3];
+		byte ecc_page[NAND_PAGE_SIZE/NAND_ECC_LEN*3];
 	#elif defined(WIN32)
 		byte ecc_page[1];
 	#else

@@ -465,7 +465,7 @@ void S_SPIM::WriteAsyncDMA(const void *data, u16 count)
 	_uhw.spi->INTENCLR = ~0;
 	_uhw.spi->CTRLB &= ~SPI_RXEN; while(_uhw.spi->SYNCBUSY);
 
-	_DMATX->WritePeripheral(data, &_uhw.spi->DATA, count, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_TX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
+	_DMATX.WritePeripheral(data, &_uhw.spi->DATA, count, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_TX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
 
 #elif defined(CPU_SAM4SA)	
 
@@ -524,7 +524,7 @@ void S_SPIM::WriteSyncDMA(const void *data, u16 count)
 	//#elif defined(__ADSPBF70x__)
 	//	DisableTX();
 	//#elif defined(CPU_SAME53)
-	//	_DMATX->Disable();
+	//	_DMATX.Disable();
 	//#elif defined(CPU_XMC48)
 	//	_DMA->Disable();
 	//#endif
@@ -561,7 +561,7 @@ void S_SPIM::WriteAsyncDMA(const void *data1, u16 count1, const void *data2, u16
 	_uhw.spi->INTENCLR = ~0;
 	_uhw.spi->CTRLB &= ~SPI_RXEN; while(_uhw.spi->SYNCBUSY);
 
-	_DMATX->WritePeripheral(data1, &_uhw.spi->DATA, count1, data2, count2, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_TX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
+	_DMATX.WritePeripheral(data1, &_uhw.spi->DATA, count1, data2, count2, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_TX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
 
 #elif defined(CPU_SAM4SA)	
 
@@ -590,7 +590,7 @@ void S_SPIM::WriteSyncDMA(const void *data1, u16 count1, const void *data2, u16 
 	//#elif defined(__ADSPBF70x__)
 	//	DisableTX();
 	//#elif defined(CPU_SAME53)
-	//	_DMATX->Disable();
+	//	_DMATX.Disable();
 	//#elif defined(CPU_XMC48)
 	//	_DMA->Disable();
 	//#endif
@@ -724,8 +724,8 @@ void S_SPIM::ReadAsyncDMA(void *data, u16 count)
 
 	do t = _uhw.spi->DATA; while(_uhw.spi->INTFLAG & SPI_RXC); 
 
-	_DMARX->ReadPeripheral(&_uhw.spi->DATA, data, count,	DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_RX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
-	_DMATX->WritePeripheral(data, &_uhw.spi->DATA, count, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_TX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
+	_DMARX.ReadPeripheral(&_uhw.spi->DATA, data, count,	DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_RX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
+	_DMATX.WritePeripheral(data, &_uhw.spi->DATA, count, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_TX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
 
 #elif defined(CPU_SAM4SA)	
 
@@ -792,8 +792,8 @@ void S_SPIM::ReadSyncDMA(void *data, u16 count)
 	//#elif defined(CPU_SAME53)	
 
 	//	_uhw.spi->CTRLB &= ~SPI_RXEN;
-	//	_DMATX->Disable();
-	//	_DMARX->Disable();
+	//	_DMATX.Disable();
+	//	_DMARX.Disable();
 
 	//#elif defined(CPU_XMC48)
 
@@ -1066,7 +1066,7 @@ bool S_SPIM::Update()
 						if (dsc.wdata != 0 && dsc.wlen > 0)
 						{
 							WriteAsyncDMA(dsc.wdata, dsc.wlen);
-							//_DMATX->WritePeripheral(dsc.wdata, &spi->DATA, dsc.wlen, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_TX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
+							//_DMATX.WritePeripheral(dsc.wdata, &spi->DATA, dsc.wlen, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_TX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
 
 							_state = WRITE; 
 						}
@@ -1074,8 +1074,8 @@ bool S_SPIM::Update()
 						{
 							ReadAsyncDMA(dsc.rdata, dsc.rlen);
 							//spi->CTRLB |= SPI_RXEN;
-							//_DMARX->ReadPeripheral(&spi->DATA, dsc.rdata, dsc.rlen, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_RX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
-							//_DMATX->WritePeripheral(dsc.rdata, &spi->DATA, dsc.rlen+1, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_TX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
+							//_DMARX.ReadPeripheral(&spi->DATA, dsc.rdata, dsc.rlen, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_RX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
+							//_DMATX.WritePeripheral(dsc.rdata, &spi->DATA, dsc.rlen+1, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_TX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
 
 							_state = STOP; 
 						};
@@ -1086,7 +1086,7 @@ bool S_SPIM::Update()
 						spi->INTENCLR = ~0;
 						spi->CTRLB &= ~SPI_RXEN;
 
-						_DMATX->WritePeripheral(&dsc.adr, &spi->DATA, dsc.alen, dsc.wdata, dsc.wlen, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_TX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
+						_DMATX.WritePeripheral(&dsc.adr, &spi->DATA, dsc.alen, dsc.wdata, dsc.wlen, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_TX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
 
 						_state = WRITE; 
 					};
@@ -1101,7 +1101,7 @@ bool S_SPIM::Update()
 
 			if (CheckWriteComplete())
 			{
-				_DMATX->Disable();
+				_DMATX.Disable();
 
 				if (dsc.rdata != 0 && dsc.rlen > 0)
 				{
@@ -1109,8 +1109,8 @@ bool S_SPIM::Update()
 
 					//spi->CTRLB |= SPI_RXEN;
 
-					//_DMARX->ReadPeripheral(&spi->DATA, dsc.rdata, dsc.rlen, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_RX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
-					//_DMATX->WritePeripheral(dsc.rdata, &spi->DATA, dsc.rlen+1, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_TX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
+					//_DMARX.ReadPeripheral(&spi->DATA, dsc.rdata, dsc.rlen, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_RX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
+					//_DMATX.WritePeripheral(dsc.rdata, &spi->DATA, dsc.rlen+1, DMCH_TRIGACT_BURST|(((DMCH_TRIGSRC_SERCOM0_TX>>8)+_usic_num*2)<<8), DMDSC_BEATSIZE_BYTE);
 				};
 
 				_state = STOP; 
@@ -1129,8 +1129,8 @@ bool S_SPIM::Update()
 				
 				ChipDisable();//_PIO_CS->SET(_MASK_CS_ALL);
 
-				_DMARX->Disable();
-				_DMATX->Disable();
+				_DMARX.Disable();
+				_DMATX.Disable();
 
 				spi->CTRLB &= ~SPI_RXEN;
 				spi->INTFLAG = ~0;
