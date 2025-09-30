@@ -273,6 +273,8 @@ void DMA_CH::_MemCopy(const volatile void *src, volatile void *dst, u16 len, u32
 
 	tm.Reset();
 
+	_err = 1;
+
 #elif defined(CPU_XMC48)
 
 	_GPDMA->DMACFGREG = 1;
@@ -345,6 +347,8 @@ void DMA_CH::WritePeripheral(const volatile void *src, volatile void *dst, u16 l
 
 	tm.Reset();
 
+	_err = 1;
+
 #elif defined(CPU_SAM4SA)
 
 	_dmach->TPR = (void*)src;
@@ -408,6 +412,8 @@ void DMA_CH::ReadPeripheral(const volatile void *src, volatile void *dst, u16 le
 
 		tm.Reset();
 
+		_err = 1;
+
 #elif defined(CPU_SAM4SA)
 
 	_dmach->RPR = dst;
@@ -467,6 +473,24 @@ void DMA_CH::SystemInit()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+byte DMA_CH::CheckComplete(u32 timeout)
+{
+	if ((_dmach->STATUS & DMCH_FERR) || _dmach->INTFLAG & DMCH_SUSP) _err = 2, _errCount++, _dmach->INTFLAG = DMCH_SUSP, _dmach->CTRLB = DMCH_CMD_RESUME; 
+
+	u16 t = GetBytesLeft();
+
+	if (_prevBTCNT != t)
+	{
+		_prevBTCNT = t;
+		tm.Reset();
+	}
+	else if (tm.Check(timeout)) _err = 2, _timeoutCount++, _dmach->CTRLB = DMCH_CMD_SUSPEND;
+
+	return  ((_dmach->CTRLA & DMCH_ENABLE) == 0) ? _err : 0;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 void DMA_CH::WritePeripheral(const volatile void *src, volatile void *dst, u16 len, const volatile void *src2, u16 len2, u32 ctrl1, u32 ctrl2)
 {
 	using namespace HW;
@@ -498,6 +522,8 @@ void DMA_CH::WritePeripheral(const volatile void *src, volatile void *dst, u16 l
 	_dmach->CTRLA = ctrl1 | DMCH_ENABLE; //DMCH_TRIGACT_BURST|_dma_trgsrc_tx;
 
 	tm.Reset();
+
+	_err = 1;
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

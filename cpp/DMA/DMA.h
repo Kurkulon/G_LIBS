@@ -46,7 +46,11 @@ protected:
 	CTM32	tm;
 
 	u16 _prevBTCNT;
-	
+	u16 _errCount;
+	u16 _timeoutCount;
+
+	byte _err;
+
 #elif defined(CPU_SAM4SA)
 
 	T_HW::S_PDC*				const _dmach;
@@ -182,7 +186,7 @@ public:
 
 #elif defined(CPU_SAME53) //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	DMA_CH(byte chnum) : _dmach(&HW::DMAC->CH[chnum]), _dmadsc(&DmaTable[chnum]), _dmawrb(&DmaWRB[chnum]), _act_mask(0x8000|(chnum<<8)), _chnum(chnum) { _dmach->PRILVL = DMCH_PRILVL_LVL0; }
+	DMA_CH(byte chnum) : _dmach(&HW::DMAC->CH[chnum]), _dmadsc(&DmaTable[chnum]), _dmawrb(&DmaWRB[chnum]), _act_mask(0x8000|(chnum<<8)), _errCount(0), _timeoutCount(0), _err(0), _chnum(chnum) { _dmach->PRILVL = DMCH_PRILVL_LVL0; }
 
 	//void Enable() {  }
 	
@@ -190,26 +194,14 @@ public:
 	void Reset() { _dmach->CTRLA = DMCH_SWRST; }
 	void Suspend() { _dmach->CTRLB = DMCH_CMD_SUSPEND; }
 
-	bool CheckComplete(u32 timeout = 200000)
-	{
-		if ((_dmach->STATUS & DMCH_FERR) || _dmach->INTFLAG & DMCH_SUSP) _dmach->INTFLAG = DMCH_SUSP, _dmach->CTRLB = DMCH_CMD_RESUME; 
+	byte CheckComplete(u32 timeout = 2000000);
 
-		if (_prevBTCNT != _dmawrb->BTCNT)
-		{
-			_prevBTCNT = _dmawrb->BTCNT;
-			tm.Reset();
-		}
-		else if (tm.Check(timeout)) _dmach->CTRLB = DMCH_CMD_SUSPEND;
-		
-		return (_dmach->CTRLA & DMCH_ENABLE) == 0 /*|| (_dmach->INTFLAG & DMCH_TCMPL)*/; 
-	}
-
-	void Update() { if (_dmach->STATUS & DMCH_FERR) _dmach->CTRLB = DMCH_CMD_RESUME; }
+	void Update() { if (_dmach->STATUS & DMCH_FERR) _errCount++, _dmach->CTRLB = DMCH_CMD_RESUME; }
 	
 	void MemCopy(volatile void *src, volatile void *dst, u16 len)		{ _MemCopy((byte*)src+len, (byte*)dst+len, len, DMDSC_VALID|DMDSC_BEATSIZE_BYTE|DMDSC_DSTINC|DMDSC_SRCINC); }
 	void MemCopySrcInc(volatile void *src, volatile void *dst, u16 len) { _MemCopy((byte*)src+len, dst, len, DMDSC_VALID|DMDSC_BEATSIZE_BYTE|DMDSC_SRCINC); }
 	void MemCopyDstInc(volatile void *src, volatile void *dst, u16 len) { _MemCopy(src, (byte*)dst+len, len, DMDSC_VALID|DMDSC_BEATSIZE_BYTE|DMDSC_DSTINC); }
-	bool CheckMemCopyComplete() { return CheckComplete(); }
+	byte CheckMemCopyComplete() { return CheckComplete(); }
 
 	u32 GetSrcBytesReady()	{ return 0; }
 	u32 GetDstBytesReady()	{ return 0; }

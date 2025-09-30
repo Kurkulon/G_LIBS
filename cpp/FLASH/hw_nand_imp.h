@@ -468,12 +468,16 @@ static u16	nandReadDataLen = 0;
 
 #endif
 
-static bool NAND_CheckDataComplete()
+static byte NAND_CheckDataComplete()
 {
 	#ifdef CPU_SAME53
 
-		if (NAND_DMA.CheckComplete())
+		byte res = 0;
+
+		if (res = NAND_DMA.CheckComplete())
 		{
+			NAND_DMA.Reset();
+
 			PIO_WE_RE->SET(WE|RE);
 			PIO_WE_RE->DIRSET = WE|RE;
 			PIO_WE_RE->PINCFG[PIN_RE] = PIN_RE_CFG;
@@ -486,13 +490,9 @@ static bool NAND_CheckDataComplete()
 							nandTC->CTRLA = 0;
 							nandTC->CTRLA = TC_SWRST;
 			#endif
-
-			return true;
-		}
-		else
-		{
-			return false;
 		};
+		
+		return res;
 	
 	#elif defined(CPU_XMC48)
 
@@ -1729,11 +1729,15 @@ void NAND_CopyDataDMA(volatile void *src, volatile void *dst, u16 len)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-inline bool NAND_CheckCopyComplete()
+inline byte NAND_CheckCopyComplete()
 {
 #ifndef WIN32
 
-	return NAND_MEMCOPY_DMA.CheckMemCopyComplete();
+	byte res = NAND_MEMCOPY_DMA.CheckMemCopyComplete();
+
+	if (res) NAND_MEMCOPY_DMA.Reset();
+
+	return res;
 
 #elif defined(WIN32)
 
