@@ -1598,10 +1598,38 @@ void NAND_WriteDataDMA(volatile void *src, u16 len)
 #endif
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#ifdef CPU_XMC48	
 
+#ifdef CPU_SAME53	
+
+u32 nand_RE_PER = NAND_RE_PER_SLOW;
+u32 nand_RE_CC0 = NAND_RE_CC0_SLOW;
+u32 nand_RE_CC1 = NAND_RE_CC1_SLOW;
 
 #endif
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void NAND_EnableReadDataDMA_Slow()
+{
+#ifdef CPU_SAME53	
+	nand_RE_PER = NAND_RE_PER_SLOW;
+	nand_RE_CC0 = NAND_RE_CC0_SLOW;
+	nand_RE_CC1 = NAND_RE_CC1_SLOW;
+#endif
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void NAND_EnableReadDataDMA_Fast()
+{
+#ifdef CPU_SAME53	
+	nand_RE_PER = NAND_RE_PER_FAST;
+	nand_RE_CC0 = NAND_RE_CC0_FAST;
+	nand_RE_CC1 = NAND_RE_CC1_FAST;
+#endif
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 void NAND_ReadDataDMA(volatile void *dst, u16 len)
 {
@@ -1618,9 +1646,9 @@ void NAND_ReadDataDMA(volatile void *dst, u16 len)
 
 						nandTCC->WAVE = TCC_WAVEGEN_NPWM|TCC_POL0;
 						nandTCC->DRVCTRL = TCC_NRE0|TCC_NRE1|TCC_NRV0|TCC_NRV1;
-						nandTCC->PER	= NAND_RE_PER;
-						nandTCC->CC[0]	= NAND_RE_CC0;
-						nandTCC->CC[1]	= NAND_RE_CC1;
+						nandTCC->PER	= nand_RE_PER;
+						nandTCC->CC[0]	= nand_RE_CC0;
+						nandTCC->CC[1]	= nand_RE_CC1;
 
 						nandTCC->EVCTRL = TCC_OVFEO|TCC_MCEO0|TCC_TCEI1|TCC_EVACT1_STOP;
 		#else

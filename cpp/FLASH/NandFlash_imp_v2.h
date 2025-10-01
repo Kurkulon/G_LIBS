@@ -1032,6 +1032,8 @@ bool Write::Start()
 
 			state = (vector->h.flags) ? CRC_START : VECTOR_UPDATE;
 
+			NAND_EnableReadDataDMA_Slow();
+
 			return true;
 		}
 		else
@@ -1924,6 +1926,8 @@ bool Read2::Start()
 {
 	if ((curRdBuf = readFlBuf.Get()) != 0)
 	{
+		NAND_EnableReadDataDMA_Fast();
+
 		if (curRdBuf->useAdr) 
 		{ 
 			rd.SetRawAdr(curRdBuf->adr); 
