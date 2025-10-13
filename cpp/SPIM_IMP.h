@@ -212,7 +212,7 @@ void S_SPIM::InitHW()
 
 	ChipDisable();
 
-	_DMA->SetDlrLineNum(_DRL);
+	_DMA.SetDlrLineNum(_DRL);
 
 #endif
 }
@@ -491,7 +491,7 @@ void S_SPIM::WriteAsyncDMA(const void *data, u16 count)
 
 	while(spi->PSR_SSCMode & SPI_TBIF) spi->PSCR = ~0;
 
-	_DMA->WritePeripheralByte(data, &spi->IN[4], count);
+	_DMA.WritePeripheralByte(data, &spi->IN[4], count);
 
 	spi->PSCR = ~0;
 	spi->CCR = USIC_MODE_SPI|USIC_TBIEN;
@@ -754,7 +754,7 @@ void S_SPIM::ReadAsyncDMA(void *data, u16 count)
 		SPI->PSCR = ~0;
 	};
 
-	_DMA->ReadPeripheralByte(&SPI->RBUF, data, count);
+	_DMA.ReadPeripheralByte(&SPI->RBUF, data, count);
 
 	SPI->INPR = USIC_RINP(Get_INPR_SR())|USIC_PINP(5)|USIC_TBINP(5);
 
@@ -1280,7 +1280,7 @@ bool S_SPIM::Update()
 
 					ChipSelect(_dsc->csnum);  //_PIO_CS->CLR(_MASK_CS[_dsc->csnum]);
 
-					_DMA->SetDlrLineNum(_DRL);
+					_DMA.SetDlrLineNum(_DRL);
 
 					DSCSPI &dsc = *_dsc;
 
@@ -1320,7 +1320,7 @@ bool S_SPIM::Update()
 
 			if (/*CheckWriteComplete() && */(psr & SPI_MSLS) == 0)
 			{
-				_DMA->Disable();
+				_DMA.Disable();
 
 				if (dsc.wdata != 0 && dsc.wlen > 0)
 				{
@@ -1347,7 +1347,7 @@ bool S_SPIM::Update()
 
 			if (/*CheckWriteComplete() && */(spi->PSR_SSCMode & SPI_MSLS) == 0)
 			{
-				_DMA->Disable();
+				_DMA.Disable();
 
 				if (dsc.rdata != 0 && dsc.rlen > 0)	ReadAsyncDMA(dsc.rdata, dsc.rlen);
 
@@ -1367,7 +1367,7 @@ bool S_SPIM::Update()
 				
 				ChipDisable();//_PIO_CS->SET(_MASK_CS_ALL);
 
-				_DMA->Disable();
+				_DMA.Disable();
 
 				spi->TCSR = SPI__TCSR|USIC_TDSSM(1);
 				spi->CCR = SPI__CCR;

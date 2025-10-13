@@ -82,7 +82,7 @@ protected:
 	const byte _MUX_SCL;
 	const byte _MUX_SDA;
 
-	DMA_CH *	const _DMA;
+	DMA_CH		_DMA;
 
 	const u32 _DX0CR;
 	const u32 _DX1CR;
@@ -165,8 +165,8 @@ public:
 
 #elif defined(CPU_XMC48)
 
-	S_I2C(byte num, T_HW::S_PORT* pio_scl, byte pin_scl, byte mux_scl, T_HW::S_PORT* pio_sda, byte pin_sda, byte mux_sda, DMA_CH *dma, u32 dx0cr, u32 dx1cr, u32 genclk)
-		: USIC(num), _PIO_SCL(pio_scl), _PIO_SDA(pio_sda), _PIN_SCL(pin_scl), _PIN_SDA(pin_sda), _MUX_SCL(mux_scl), _MUX_SDA(mux_sda), _DMA(dma),
+	S_I2C(byte num, T_HW::S_PORT* pio_scl, byte pin_scl, byte mux_scl, T_HW::S_PORT* pio_sda, byte pin_sda, byte mux_sda, byte dmach, u32 dx0cr, u32 dx1cr, u32 genclk)
+		: USIC(num), _PIO_SCL(pio_scl), _PIO_SDA(pio_sda), _PIN_SCL(pin_scl), _PIN_SDA(pin_sda), _MUX_SCL(mux_scl), _MUX_SDA(mux_sda), _DMA(dmach),
 		_DX0CR(dx0cr), _DX1CR(dx1cr), _GEN_CLK(genclk), _dsc(0), _state(I2C_WAIT) {}
 
 #elif defined (CORETYPE_LPC8XX)

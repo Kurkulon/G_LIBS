@@ -265,10 +265,11 @@ public:
 
 #elif defined(CPU_XMC48)	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	DMA_CH(T_HW::GPDMA_Type* gpdma, byte chnum) : _GPDMA(gpdma), _dmach(&gpdma->CH[chnum&7]), _chnumabs(chnum), _chnum(chnum&7) {}
+	DMA_CH(byte chnum) : _GPDMA((chnum>7) ? HW::DMA1 : HW::DMA0), _dmach(&_GPDMA->CH[chnum&7]), _chnumabs(chnum), _chnum(chnum&7) {}
 
 	void Enable() { _GPDMA->CHENREG = ((1<<GPDMA0_CHENREG_CH_Pos)|(1<<GPDMA0_CHENREG_WE_CH_Pos)) << _chnum; }
 	void Disable() { _GPDMA->CHENREG = (1<<GPDMA0_CHENREG_WE_CH_Pos) << _chnum; HW::DLR->LNEN &= ~_dlr_lnen_mask; }
+	void Reset() {  }
 	bool CheckComplete() { return (_GPDMA->CHENREG & ((1<<GPDMA0_CHENREG_CH_Pos)<<_chnum)) == 0; }
 	void SetDlrLineNum(byte num) { _dlr_lnen_mask = 1UL << (_drl = num);  }
 	void Enable_DLR() { HW::DLR->LNEN |= _dlr_lnen_mask; }

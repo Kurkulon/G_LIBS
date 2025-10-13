@@ -136,7 +136,7 @@ protected:
 	const byte * const	_PIN_CS;
 	const u32			_PIN_CS_LEN;
 
-	DMA_CH *	const 	_DMA;
+	DMA_CH  			_DMA;
 
 	const byte	_DRL;
 
@@ -338,17 +338,17 @@ public:
 #elif defined(CPU_XMC48)
 
 	S_SPIM(byte num, T_HW::S_PORT* pspck, T_HW::S_PORT* pmosi, T_HW::S_PORT* pmiso, T_HW::S_PORT* pcs, 
-		byte pinspck, byte pinmosi, byte pinmiso, byte muxspck, byte muxmosi, byte* pincs, u32 pincslen, DMA_CH *dma, byte drl, u32 dx0cr, u32 dx1cr, u32 genclk)
+		byte pinspck, byte pinmosi, byte pinmiso, byte muxspck, byte muxmosi, byte* pincs, u32 pincslen, byte dmach, byte drl, u32 dx0cr, u32 dx1cr, u32 genclk)
 		: USIC(num), _PIO_SPCK(pspck), _PIO_MOSI(pmosi), _PIO_MISO(pmiso), _PIO_CS(pcs), 
 		_PIN_SPCK(pinspck), _PIN_MOSI(pinmosi), _PIN_MISO(pinmiso), _MUX_SPCK(muxspck), _MUX_MOSI(muxmosi), _PIN_CS(pincs), _PIN_CS_LEN(pincslen),
-		_DMA(dma), _DRL(drl), _DX0CR(dx0cr), _DX1CR(dx1cr), _GEN_CLK(genclk), _dsc(0), _state(WAIT) {}
+		_DMA(dmach), _DRL(drl), _DX0CR(dx0cr), _DX1CR(dx1cr), _GEN_CLK(genclk), _dsc(0), _state(WAIT) {}
 
 			void ChipSelect(byte num)	{ _PIO_CS->BCLR(_PIN_CS[num]); }
-			bool CheckWriteComplete() { return _DMA->CheckComplete() /*&& (_uhw.spi->INTFLAG & SPI_TXC)*/; }
-			bool CheckReadComplete() { return _DMA->CheckComplete(); }
+			bool CheckWriteComplete() { return _DMA.CheckComplete() /*&& (_uhw.spi->INTFLAG & SPI_TXC)*/; }
+			bool CheckReadComplete() { return _DMA.CheckComplete(); }
 			void ChipDisable()			{ _PIO_CS->SET(_MASK_CS_ALL); }
-			void DisableTX() { _DMA->Disable();; }
-			void DisableRX() { _DMA->Disable();; }
+			void DisableTX() { _DMA.Disable();; }
+			void DisableRX() { _DMA.Disable();; }
 
 #elif defined(CPU_LPC824)
 

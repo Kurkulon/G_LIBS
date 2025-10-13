@@ -271,7 +271,7 @@ void ComPort::InitHW()
 		_uhw->PSCR			= ~0;
 		_uhw->CCR			= __CCR; //_ModeRegister;
 
-		_DMA->SetDlrLineNum(_DRL);
+		_DMA.SetDlrLineNum(_DRL);
 
 	#elif defined(CORETYPE_LPC8XX)
 
@@ -747,7 +747,7 @@ void ComPort::EnableTransmit(void* src, word count)
 		_uhw->TBCTR = 0;
 		_uhw->TRBSCR = ~0;//TRBSCR_FLUSHTB;
 
-		_DMA->SetDlrLineNum(_DRL);
+		_DMA.SetDlrLineNum(_DRL);
 		//_DMA->Enable_DLR();
 
 		__disable_irq();
@@ -757,7 +757,7 @@ void ComPort::EnableTransmit(void* src, word count)
 		_uhw->TBCTR = TBCTR_SIZE8|TBCTR_LIMIT(3)|TBCTR_STBTEN|TBCTR_STBTM|TBCTR_STBIEN|TBCTR_STBINP(Get_INPR_SR());
 		_uhw->INPR = USIC_TBINP(Get_INPR_SR());
 
-		_DMA->WritePeripheralByte(src, &_uhw->IN[0], count);
+		_DMA.WritePeripheralByte(src, &_uhw->IN[0], count);
 
 		if ((_uhw->PSR_ASCMode & UART_TBIF) == 0 && (_uhw->TRBSR & TRBSR_STBI) == 0)
 		{
@@ -865,7 +865,7 @@ void ComPort::DisableTransmit()
 		_uhw->TBCTR = 0;
 		_uhw->RBCTR = 0;
 		_uhw->TRBSCR = ~0;
-		_DMA->Disable(); 
+		_DMA.Disable(); 
 
 	#elif defined(CPU_LPC824)
 
@@ -948,7 +948,7 @@ void ComPort::EnableReceive(void* dst, word count)
 
 		volatile u32 t;
 
-		_DMA->SetDlrLineNum(_DRL);
+		_DMA.SetDlrLineNum(_DRL);
 
 		_uhw->RBCTR = 0;
 		_uhw->TRBSCR = ~0;
@@ -966,7 +966,7 @@ void ComPort::EnableReceive(void* dst, word count)
 		_uhw->CCR = __CCR;//|USIC_RIEN;//|USIC_AIEN;
 		_uhw->INPR = ~0;//USIC_RINP(Get_INPR_SR())|USIC_AINP(Get_INPR_SR());
 
-		_DMA->ReadPeripheralByte(&_uhw->OUTR, dst, count);
+		_DMA.ReadPeripheralByte(&_uhw->OUTR, dst, count);
 
 		__enable_irq();
 
@@ -1060,7 +1060,7 @@ void ComPort::DisableReceive()
 		_uhw->TBCTR = 0;
 		_uhw->RBCTR = 0;
 		_uhw->TRBSCR = ~0;
-		_DMA->Disable(); 
+		_DMA.Disable(); 
 
 	#elif defined(CPU_LPC824)
 
