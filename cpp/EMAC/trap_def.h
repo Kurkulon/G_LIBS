@@ -214,12 +214,13 @@ __packed struct TrapVector
 
 	u16 session;
 	u16 device;
-	RTC_type rtc;
-	byte flags;
 
 #if TRAP_PACKET_VERSION >= 7
 	u32 counter;
 #endif
+
+	RTC_type rtc;
+	byte flags;
 
 #if TRAP_PACKET_VERSION >= 5
 	u16 tx_size;

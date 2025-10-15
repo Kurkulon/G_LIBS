@@ -1276,7 +1276,7 @@ static bool UpdateSendVector()
 
 #if TRAP_PACKET_VERSION >= 5
 					trap.tx_size	= 0;
-					trap.rx_size	= flrb.hdr.dataLen;
+					trap.rx_size	= flrb.len-2;
 #endif
 
 #if TRAP_PACKET_VERSION >= 7
@@ -1397,7 +1397,6 @@ static bool UpdateSendVector()
 #endif
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-/*
 static bool UpdateSendVector_Dlya_Vova()
 {
 	static byte i = 0;
@@ -1407,7 +1406,8 @@ static bool UpdateSendVector_Dlya_Vova()
 //	static VecData::Hdr h;
 
 	static u32 vecCount = 0;
-//	static u32 fragLen = 0;
+	static u32 count = 0;
+	//	static u32 fragLen = 0;
 //	static u32 fragOff = 0;
 //	static u16 ipID = 0;
 //	static u16 crc = 0;
@@ -1494,7 +1494,16 @@ static bool UpdateSendVector_Dlya_Vova()
 					trap.device = 0xAD00;
 					trap.rtc = rtc;
 					trap.flags = 0;
-					
+
+#if TRAP_PACKET_VERSION >= 5
+					trap.tx_size	= 0;
+					trap.rx_size	= 1000;
+#endif
+
+#if TRAP_PACKET_VERSION >= 7
+					trap.counter	= count;
+#endif
+
 					if (rtc.msec < 999)
 					{
 						rtc.msec += 1;
@@ -1554,13 +1563,14 @@ static bool UpdateSendVector_Dlya_Vova()
 					};
 
 					vecCount += 2;
+					count += 1;
 
 					et.eu.iph.off = 0;
 
 					et.data[0] = 0x40;
 					et.data[1] = 0xAD;
 
-					mb->len = sizeof(et.eu) + sizeof(et.tv) + 0x1000;
+					mb->len = sizeof(et.eu) + sizeof(et.tv) + 1000;
 
 					SendTrap(mb);
 
@@ -1573,7 +1583,7 @@ static bool UpdateSendVector_Dlya_Vova()
 
 	return true;
 }
-*/
+
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 void TRAP_Init()

@@ -1830,7 +1830,7 @@ bool ReadSpare::Update()
 				else
 				{
 					spare->v1.CheckCRC();
-#ifdef _DEBUG
+#if defined(_DEBUG) && defined(CHECK_RAWPAGE_BREAKPOINT)
 					u32 rp = rd->GetRawPage();
 
 					if (spare->v1.crc == 0 && spare->v1.rawPage != rp) __breakpoint(0);
