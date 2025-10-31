@@ -9,7 +9,7 @@
 #include "core.h"
 #endif
 
-#if defined(CPU_SAME53) || defined(CPU_XMC48) || defined(WIN32)
+#if defined(CPU_SAME53) || defined(CPU_XMC48) || defined(CPU_BF607) || defined(WIN32)
 
 #define RTC_type RTC
 
@@ -132,7 +132,7 @@ inline word GetMillisecondsLow()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#ifndef ADSP_BLACKFIN
+#if !(defined(__ADSPBF59x__) || defined(__ADSPBF7xx__))
 
 struct TM32
 {
@@ -160,7 +160,7 @@ struct CTM32
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#if defined(ADSP_BLACKFIN) && defined(MS2CCLK)
+#if (defined(__ADSPBF59x__) || defined(__ADSPBF7xx__)) && defined(MS2CCLK)
 
 struct TM32
 {

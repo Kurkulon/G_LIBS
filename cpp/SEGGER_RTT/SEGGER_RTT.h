@@ -1,7 +1,7 @@
 #ifndef SEGGER_RTT_H__13_03_2023__17_37
 #define SEGGER_RTT_H__13_03_2023__17_37
 
-#if !defined(CORETYPE_LPC8XX) && !defined(_ADI_COMPILER)
+#if !defined(CORETYPE_LPC8XX) && !defined(_ADI_COMPILER234234)
 
 /*********************************************************************
 *              SEGGER MICROCONTROLLER SYSTEME GmbH                   *

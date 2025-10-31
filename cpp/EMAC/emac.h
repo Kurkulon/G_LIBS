@@ -158,6 +158,55 @@ __packed struct MAC
 
 	};
 
+#elif defined(CPU_BF607)
+
+	struct Receive_Desc
+	{
+		private:
+
+			u32		stat;
+			u32		ctrl;
+			void*	addr1;
+			void*	addr2;
+
+		public:
+
+			bool 	CheckRcvFrame()				{ return addr1 != 0 && (stat & (RD0_LS|RD0_FS|RD0_CE|RD0_FT)) == (RD0_LS|RD0_FS|RD0_FT); }
+			bool 	CheckOwn()					{ return (stat & RD0_OWN) == 0; }
+			void 	SetOwn() 					{ stat |= RD0_OWN; }
+			void 	ClrOwn() 					{ stat &= ~RD0_OWN; }
+			void	SetWrap()					{ ctrl |= RD1_RER; }
+			bool	ChkWrap()					{ return ctrl & RD1_RER; }
+			//void	ClrWrap()					{ ctrl &= ~RD1_RER; }
+			byte*	GetAdr() 					{ return (byte*)addr1; }
+			void 	SetAdr(void *adr, u32 len)	{ addr1 = adr; ctrl = (ctrl & RD1_RER) | (len & RD1_RBS1); addr2 = 0; SetOwn(); }
+			void 	ClrAdr()					{ addr1 = 0;ClrOwn(); }
+			u32		GetStatus()					{ return stat; }
+	};
+
+	struct Transmit_Desc
+	{
+		private:
+
+			u32		stat;
+			u32		ctrl;
+			void*	addr1;
+			void*	addr2;
+
+		public:
+
+			void	Init()						{ addr1 = 0; addr2 = 0; ctrl = 0; stat = TD0_IC; }
+			void	SetWrap()					{ stat |= TD0_TER; }
+			bool	ChkWrap()					{ return stat & TD0_TER; }
+			bool	ChkFree()					{ return (stat & TD0_OWN) == 0 && (ctrl & TD1_TBS1) == 0; }
+			bool	ChkTransmit()				{ return (stat & TD0_OWN) == 0 && (ctrl & TD1_TBS1) != 0; }
+			void	Free()						{ ctrl = 0; }
+
+			void 	SetAdr(void *adr, u32 len)	{ addr1 = adr; addr2 = 0; ctrl = TBS1(len); stat |= TD0_LS|TD0_FS; stat |= TD0_OWN; }
+			byte*	GetAdr() 					{ return (byte*)addr1; }
+
+	};
+
 #endif
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

@@ -311,6 +311,9 @@
     <ClInclude Include="cpp\DMA\DMA_imp.h">
       <Filter>CPP\DMA</Filter>
     </ClInclude>
+    <ClInclude Include="cpp\ADSP\BF607.h">
+      <Filter>CPP\ADSP</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpp\PointerCRC.cpp">

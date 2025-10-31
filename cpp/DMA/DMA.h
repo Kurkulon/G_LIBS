@@ -27,6 +27,13 @@ protected:
 	T_HW::DMADSC_LM				_dsc1;
 	T_HW::DMADSC_LM				_dsc2;
 
+#elif defined(__ADSPBF60x__)
+
+	T_HW::S_DMACH*				const _dmach;
+
+	T_HW::DMADSC_LM				_dsc1;
+	T_HW::DMADSC_LM				_dsc2;
+
 #elif defined(CPU_SAME53)
 
 	//static T_HW::DMADESC _DmaTable[32];
@@ -149,7 +156,7 @@ public:
 		inline void ReadInterleaved16(volatile void *dst, u16 dummy_len, u16 len) { Trans2D(dst, dummy_len*2, 0, 0, 0, dst, 2, len*2, len, 2-len*2, WDSIZE_16|WNR);	}
 		inline void ReadInterleaved32(volatile void *dst, u16 dummy_len, u16 len) { Trans2D(dst, dummy_len*2, 0, 0, 0, dst, 2, len*4, len, 4-len*4, WDSIZE_32|WNR);	}
 	
-	#elif defined(__ADSPBF70x__)
+	#elif defined(__ADSPBF70x__) || defined(__ADSPBF60x__)
 
 		inline void Disable()		{ _dmach->CFG = 0; _dmach->STAT = ~0; }
 		inline bool CheckComplete() { return _dmach->STAT & (DMA_STAT_IRQDONE|DMA_STAT_IRQERR); }

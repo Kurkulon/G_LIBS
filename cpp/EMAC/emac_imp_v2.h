@@ -178,6 +178,11 @@ u16  txIpID = 0;
 	Transmit_Desc	Tx_Desc[NUM_TX_DSC];
 	Ptr<MB>			Rx_MB[NUM_RX_DSC];
 	Ptr<MB>			Tx_MB[NUM_TX_DSC];
+#elif defined(CPU_BF607)
+	Receive_Desc	Rx_Desc[NUM_RX_DSC];
+	Transmit_Desc	Tx_Desc[NUM_TX_DSC];
+	Ptr<MB>			Rx_MB[NUM_RX_DSC];
+	Ptr<MB>			Tx_MB[NUM_TX_DSC];
 #endif
 
 /* GMAC local buffers must be 8-byte aligned. */
@@ -225,6 +230,16 @@ void EnablePHY()	{ PIO_RESET_PHY->BSET(PIN_RESET_PHY); }
 	inline	bool CheckStatusIP(u32 stat) { return (stat & RD_IP_ERR) == 0; }
 	inline 	bool CheckStatusUDP(u32 stat) { return (stat & RD_UDP_ERR) == 0; }
 	inline	void ResumeReceiveProcessing() { HW::ETH0->STATUS = ETH_STATUS_RU_Msk; HW::ETH0->RECEIVE_POLL_DEMAND = 0; }
+
+#elif defined(CPU_BF607)
+
+	inline void EnableMDI()	{ }
+	inline void DisableMDI()	{ }
+	bool IsReadyPHY() { return (HWEMAC->SMI_ADDR & EMAC_SMI_SMIB) == 0; }
+	u16 ResultPHY() { return HWEMAC->SMI_DATA; }
+	inline	bool CheckStatusIP(u32 stat) { return (stat /*& RD_IP_ERR*/) == 0; }
+	inline 	bool CheckStatusUDP(u32 stat) { return (stat /*& RD_UDP_ERR*/) == 0; }
+	inline	void ResumeReceiveProcessing() {  }
 
 #endif
 
@@ -338,7 +353,7 @@ u16 IpChkSum(u16 *p, u16 size)
 	register u32 sum = 0;
 	register u32 t;
 
-#ifndef WIN32
+#ifdef __CC_ARM
 
 	__asm
 	{
@@ -353,6 +368,19 @@ loop:
 		ADD		sum, sum, t
 		ADD		sum, sum, sum, LSR#16 
 	};
+
+#else 
+
+	while (size > 0)
+	{
+		sum += *p++;
+		size--;
+	};
+
+	t = sum >> 16;
+	sum &= 0xFFFF;
+	sum += t;
+	sum += sum >> 16;
  
 #endif
 

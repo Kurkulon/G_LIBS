@@ -182,4 +182,97 @@ void initcode(ADI_ROM_BOOT_CONFIG* pBootStruct)
 } /* initcode */ 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#elif  defined(__ADSPBF60x__)
+
+#define CLKIN_DIV			1	// 1, 2
+
+#define PLL_MUL				16	// 1...128
+#define CCLK_DIV			2   // 1...32
+#define SCLK_DIV			2	// 1...32
+#define SCLK0_DIV			1	// 1...8
+#define SCLK1_DIV			1	// 1...8
+#define DCLK_DIV			1	// 1...32	DRAM clock
+#define OCLK_DIV			1	// 1...128  Output clock
+
+#define VCO_CLK_MHz 		(CLKIN_MHz*PLL_MUL/CLKIN_DIV)
+#define CCLK_MHz			VCO_CLK_MHz/CCLK_DIV
+#define SCLK_MHz			VCO_CLK_MHz/SCLK_DIV
+
+#if (VCO_CLK_MHz < 250) || (VCO_CLK_MHz > 1000)
+#error VCO_CLK_MHz must be 250...1000
+#endif
+
+#if (CCLK_MHz > 500)
+#error CCLK_MHz must be <= 500
+#endif
+
+#if (SCLK_MHz > 250)
+#error SCLK_MHz must be <= 250
+#endif
+
+//#define VRCTL_VALUE         0x0000
+
+#if CLKIN_DIV == 2
+#define CGUCTL_VALUE        (CGU_CTL_MSEL(PLL_MUL)|CGU_CTL_DF)
+#else
+#define CGUCTL_VALUE        (CGU_CTL_MSEL(PLL_MUL))
+#endif
+
+#define CGUDIV_VALUE        (CGU_DIV_OSEL(OCLK_DIV) | CGU_DIV_DSEL(DCLK_DIV) | CGU_DIV_S1SEL(SCLK1_DIV) | CGU_DIV_S0SEL(SCLK0_DIV) | CGU_DIV_SYSSEL(SCLK_DIV) | CGU_DIV_CSEL(CCLK_DIV))
+
+//#define PLLDIV_VALUE        (SET_SSEL(SCLK_DIV))
+//#define PLLLOCKCNT_VALUE    0x0000
+//#define PLLSTAT_VALUE       0x0000
+
+#define BAUD_RATE_DIVISOR 	5
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#pragma retain_name /* retain resolved initcode entry */
+section ("L1_code")
+
+void initcode(STRUCT_ROM_BOOT_CONFIG* pBS)
+{
+	REG_CGU0_CTL;
+
+	STRUCT_ROM_SYSCTRL ConfigValues;
+
+	ConfigValues.ulCGU_CTL = CGUCTL_VALUE;
+
+	ConfigValues.ulCGU_DIV = CGUDIV_VALUE;
+
+	/** CLKOUTSEL OPTIONS:
+	**   ENUM_CGU_CLKOUTSEL_CLKIN        CLKIN
+	**   ENUM_CGU_CLKOUTSEL_CCLKDIV4     CCLKn/4
+	**   ENUM_CGU_CLKOUTSEL_DISABLE      Disable OUTCLK
+	**   ENUM_CGU_CLKOUTSEL_SYSCLKDIV2   SYSCLK/2
+	**   ENUM_CGU_CLKOUTSEL_SCLK0        SCLK0
+	**   ENUM_CGU_CLKOUTSEL_SCLK1        SCLK1
+	**   ENUM_CGU_CLKOUTSEL_DCLKDIV2     DCLK/2
+	**   ENUM_CGU_CLKOUTSEL_USBPLL       USB PLL
+	**   ENUM_CGU_CLKOUTSEL_OUTCLK       OUTCLK
+	**   ENUM_CGU_CLKOUTSEL_USBCLKIN     USB CLKIN
+	**/
+
+	ConfigValues.ulCGU_CLKOUTSEL =  CGU_CLKOUTSEL_CCLKDIV4;
+
+	rom_SysControl(	BITM_ROM_SYSCTRL_CGU_WRITE		|
+					BITM_ROM_SYSCTRL_CGU_CTL		|
+					BITM_ROM_SYSCTRL_CGU_DIV		|
+					BITM_ROM_SYSCTRL_CGU_CLKOUTSEL,	&ConfigValues, NULL);
+
+#if WA_ROM_CLKOUTSEL_ANOM_16000023
+	*pREG_CGU0_CLKOUTSEL = ENUM_CGU_CLKOUTSEL_CCLKDIV4;
+#endif /* WA_ROM_CLKOUTSEL_ANOM_16000023 */ 
+
+
+	if ( (*pREG_RCU0_STAT & BITM_RCU_STAT_BMODE) == (3uL << BITP_RCU_STAT_BMODE)  )
+	{
+		*pREG_SPI0_CLK = BAUD_RATE_DIVISOR;
+	};
+
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 #endif

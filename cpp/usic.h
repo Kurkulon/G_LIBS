@@ -67,6 +67,12 @@
 
 	typedef T_HW::S_UART *USICHWT;
 
+#elif defined(__ADSPBF60x__)
+
+	#define USIC_NUM 2
+
+	typedef T_HW::S_UART *USICHWT;
+
 #endif 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

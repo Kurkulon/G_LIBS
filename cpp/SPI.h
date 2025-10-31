@@ -29,6 +29,13 @@ typedef T_HW::S_SPI *SPIHWT;
 
 typedef T_HW::S_SPI *SPIHWT;
 
+#elif defined(__ADSPBF60x__)
+
+#define SPI_NUM 3
+#define SPIMODE_MASK (SPI_FMODE|SPI_MIO_DUAL|SPI_MIO_QUAD|SPI_CPOL|SPI_CPHA|SPI_LSBF)
+
+typedef T_HW::S_SPI *SPIHWT;
+
 #endif 
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -178,6 +185,8 @@ protected:
 		const u16				_MASK_SCK_MOSI_MISO;
 	#elif defined __ADSPBF70x__
 		const u16				_MASK_SCK_MOSI_MISO_D2_D3;
+	#elif defined __ADSPBF60x__
+		const u16				_MASK_SCK_MOSI_MISO_D2_D3;
 	#endif
 
 	const byte				_num;
@@ -192,6 +201,9 @@ protected:
 	#ifdef __ADSPBF59x__
 		DMA_CH					_DMA;
 	#elif defined __ADSPBF70x__
+		DMA_CH					_DMATX;
+		DMA_CH					_DMARX;
+	#elif defined __ADSPBF60x__
 		DMA_CH					_DMATX;
 		DMA_CH					_DMARX;
 	#endif
@@ -210,6 +222,8 @@ protected:
 	#ifdef __ADSPBF59x__
 		u16		_spimode;
 	#elif defined __ADSPBF70x__
+		u32		_spimode;
+	#elif defined __ADSPBF60x__
 		u32		_spimode;
 	#endif
 
@@ -280,6 +294,32 @@ public:
 			void ReadByteStart(u16 count);
 			byte ReadByteAsync() { while(_hw->STAT & SPI_RFE); return _hw->RFIFO.W; }
 			byte ReadByteSync(u16 count) { ReadByteStart(count); return ReadByteAsync(); }
+
+#elif defined(__ADSPBF60x__)
+
+	S_SPIM(byte num, T_HW::S_PIO* piocs, u16* mcs, byte mcslen, u32 gen_clk, u16 mask_sck_mosi_miso_d2_d3 = ~0)
+		: _num(num), _PIO_CS(piocs), _MASK_CS(mcs), _MASK_CS_LEN(mcslen), _GEN_CLK(gen_clk),
+		_MASK_SCK_MOSI_MISO_D2_D3(mask_sck_mosi_miso_d2_d3), _DMATX(4+num*2), _DMARX(5+num*2), _dsc(0), _state(ST_WAIT), _spimode(0) {}
+
+	bool CheckWriteComplete()	{ return /*_DMATX.CheckComplete() &&*/ (_hw->STAT & (SPI_TF|SPI_SPIF)) == (SPI_TF|SPI_SPIF); }
+	bool CheckReadComplete()	{ if (_hw->STAT & SPI_RF) { _hw->CTL = 0; _DMARX.Disable(); return true;} else return false; }
+
+	void ChipSelect(byte num, u32 spimode, u16 baud)	{ _hw->CLK = baud; _hw->CTL = _spimode = SPI_EN|SPI_MSTR|(spimode & SPIMODE_MASK); _PIO_CS->CLR(_MASK_CS[num]); }
+	void ChipDisable()									{ _PIO_CS->SET(_MASK_CS_ALL); _hw->TXCTL = 0; _hw->RXCTL = 0; _hw->CTL = 0; }
+
+	void SetMode(u16 mode) { _spimode = SPI_EN|SPI_MSTR|(mode & SPIMODE_MASK); }
+
+	void Disable()	 { _hw->CTL = 0; _hw->TXCTL = 0; _hw->RXCTL = 0; _DMATX.Disable(); _DMARX.Disable();}
+	void DisableTX() { /*_hw->CTL = 0;*/ _hw->TXCTL = 0; _DMATX.Disable(); }
+	void DisableRX() { /*_hw->CTL = 0;*/ _hw->RXCTL = 0; _DMARX.Disable(); }
+
+	void WriteByteSync(byte v)		{ WriteReadByte(v); }
+	void WriteByteAsync(byte v);
+	void WaitWriteByte()			{ while((_hw->STAT & (SPI_SPIF|SPI_TFS_MASK)) != (SPI_SPIF|SPI_TFS_EMPTY)); }
+
+	void ReadByteStart(u16 count);
+	byte ReadByteAsync() { while(_hw->STAT & SPI_RFE); return _hw->RFIFO.W; }
+	byte ReadByteSync(u16 count) { ReadByteStart(count); return ReadByteAsync(); }
 
 #elif defined(CPU_SAME53)
 

@@ -9,6 +9,14 @@
       <Configuration>BF592_Release</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="BF607_Debug|Win32">
+      <Configuration>BF607_Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="BF607_Release|Win32">
+      <Configuration>BF607_Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="BF706_Debug|Win32">
       <Configuration>BF706_Debug</Configuration>
       <Platform>Win32</Platform>
@@ -75,11 +83,19 @@
     <ConfigurationType>Makefile</ConfigurationType>
     <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='BF607_Release|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='BF592_Debug|Win32'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='BF706_Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='BF607_Debug|Win32'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
@@ -136,10 +152,16 @@
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='BF706_Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='BF607_Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='BF592_Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='BF706_Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='BF607_Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='LPC812_Release|Win32'" Label="PropertySheets">
@@ -413,6 +435,24 @@
     <SourcePath />
     <ExcludePath />
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='BF607_Debug|Win32'">
+    <OutDir>$(ProjectDir)build\$(Configuration)\</OutDir>
+    <IntDir>$(OutDir)</IntDir>
+    <NMakeBuildCommandLine>wmake -h version=Debug targetcpu=BF607</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>wmake -h -a version=Debug targetcpu=BF607</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
+    <NMakeOutput>$(ProjectDir)\BF607_d.a</NMakeOutput>
+    <NMakePreprocessorDefinitions>_DEBUG;CPU_BF607;_ADI_COMPILER;</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>.\cpp;$(ADI_CCES)\Blackfin\include;</NMakeIncludeSearchPath>
+    <ExecutablePath />
+    <IncludePath />
+    <ExternalIncludePath />
+    <ReferencePath />
+    <LibraryPath />
+    <LibraryWPath />
+    <SourcePath />
+    <ExcludePath />
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='BF592_Release|Win32'">
     <OutDir>$(ProjectDir)build\$(Configuration)\</OutDir>
     <IntDir>$(OutDir)</IntDir>
@@ -449,12 +489,31 @@
     <SourcePath />
     <ExcludePath />
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='BF607_Release|Win32'">
+    <OutDir>$(ProjectDir)build\$(Configuration)\</OutDir>
+    <IntDir>$(OutDir)</IntDir>
+    <NMakeBuildCommandLine>wmake -h version=Release targetcpu=BF607</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>wmake -h -a version=Release targetcpu=BF607</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
+    <NMakeOutput>$(ProjectDir)\BF607_d.a</NMakeOutput>
+    <NMakePreprocessorDefinitions>CPU_BF607;_ADI_COMPILER;</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>.\cpp;$(ADI_CCES)\Blackfin\include;</NMakeIncludeSearchPath>
+    <ExecutablePath />
+    <IncludePath />
+    <ExternalIncludePath />
+    <ReferencePath />
+    <LibraryPath />
+    <LibraryWPath />
+    <SourcePath />
+    <ExcludePath />
+  </PropertyGroup>
   <ItemDefinitionGroup>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="cpp\ADSP\AFP_imp.h" />
     <ClInclude Include="cpp\ADSP\AFP_imp_v2.h" />
     <ClInclude Include="cpp\ADSP\BF592.h" />
+    <ClInclude Include="cpp\ADSP\BF607.h" />
     <ClInclude Include="cpp\ADSP\BF706.h" />
     <ClInclude Include="cpp\ADSP\system_imp.h" />
     <ClInclude Include="cpp\ARM\cm0.h" />
@@ -564,12 +623,15 @@
     <None Include="cpp\ARM\startup_CM4.s" />
     <None Include="LDF\BF592A.ldf">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='BF706_Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='BF607_Debug|Win32'">true</ExcludedFromBuild>
     </None>
     <None Include="LDF\BF706.ldf">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='BF706_Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='BF607_Debug|Win32'">true</ExcludedFromBuild>
     </None>
     <None Include="LDF\initcode.ldf">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='BF706_Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='BF607_Debug|Win32'">true</ExcludedFromBuild>
     </None>
     <None Include="makeobj" />
     <None Include="Scatter\LPC812.sct" />

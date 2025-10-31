@@ -110,6 +110,11 @@ adsp_cpu_options = -proc ADSP-BF592-A -si-revision 0.2 -DCPU_$(targetcpu)
 buildtool = ADSP
 adsp_cpu_options = -proc ADSP-BF706 -si-revision 1.1 -DCPU_$(targetcpu) 
 
+!else ifeq targetcpu BF607
+
+buildtool = ADSP
+adsp_cpu_options = -proc ADSP-BF607 -si-revision 0.2 -DCPU_$(targetcpu) 
+
 !else
 
 cpu_compiler_options = 

@@ -86,7 +86,7 @@
 
 	#include "ARM\lpc81x.h"
 
-#elif defined(CPU_BF592) || defined(CPU_BF706)
+#elif defined(CPU_BF592) || defined(CPU_BF706) || defined(CPU_BF607)
 
 	#ifndef _ADI_COMPILER
 	#define _ADI_COMPILER
@@ -102,10 +102,6 @@
 
 	#ifndef _LANGUAGE_C
 	#define _LANGUAGE_C
-	#endif
-
-	#ifndef __NUM_CORES__
-	#define __NUM_CORES__ 1
 	#endif
 
 	#ifdef CPU_BF592
@@ -155,6 +151,41 @@
 
 		#include "ADSP\bf706.h"
 
+	#elif defined(CPU_BF607)
+
+		#define	CORETYPE_BF607
+		#define ADSP_BLACKFIN
+
+		#ifndef __ADSPBF607__
+		#define __ADSPBF607__
+		#endif
+
+		#ifndef __ADSPBF60x__
+		#define __ADSPBF60x__
+		#endif
+
+		#ifndef __ADSPBF6xx__
+		#define __ADSPBF6xx__
+		#endif
+
+		#ifndef __ADSPLPBLACKFIN__
+		#define __ADSPLPBLACKFIN__ 0x110
+		#endif
+
+		#ifndef __SILICON_REVISION__
+		#define __SILICON_REVISION__ 2
+		#endif
+
+		#ifndef __NUM_CORES__
+		#define __NUM_CORES__ 2
+		#endif
+
+		#include "ADSP\BF607.h"
+
+	#endif
+
+	#ifndef __NUM_CORES__
+	#define __NUM_CORES__ 1
 	#endif
 
 #elif defined(WIN32)
