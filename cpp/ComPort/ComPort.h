@@ -72,7 +72,7 @@ class ComPort : public USIC
 #ifdef __ADSPBF59x__
 		word			_BaudRateRegister;
 		void		SetBoudRate(word presc);
-#elif defined(__ADSPBF70x__)
+#elif defined(__ADSPBF70x__) || defined(__ADSPBF60x__)
 		dword			_BaudRateRegister;
 #endif
 
@@ -87,7 +87,7 @@ class ComPort : public USIC
 		//bool IsTransmited() {return *pUART0_LSR & TEMT; }
 		//bool IsRecieved()	{  }
 
-		#ifdef __ADSPBF70x__
+		#if defined(__ADSPBF70x__) || defined(__ADSPBF60x__)
 
 			T_HW::S_PORT* const _PIO_RTS;
 			const u32	_MASK_RTS;
@@ -308,7 +308,7 @@ class ComPort : public USIC
 
 	CTM32			_rtm;
 
-#if defined(CPU_SAME53) || defined(CPU_SAM4SA) || defined(CPU_XMC48) || defined(__ADSPBF70x__)
+#if defined(CPU_SAME53) || defined(CPU_SAM4SA) || defined(CPU_XMC48) || defined(__ADSPBF70x__) || defined(__ADSPBF60x__)
 
 	void		Set_RTS() { if (_PIO_RTS != 0) _PIO_RTS->SET(_MASK_RTS); }
 	void		Clr_RTS() { if (_PIO_RTS != 0) _PIO_RTS->CLR(_MASK_RTS); }
@@ -329,6 +329,10 @@ class ComPort : public USIC
 #elif defined(__ADSPBF70x__)
 
 	  ComPort(byte num, T_HW::S_PORT *prts, byte pinrts) : USIC(num), _PIO_RTS(prts), _PIN_RTS(pinrts), _MASK_RTS(1UL<<pinrts), _DMATX(UART0_TX_DMA+num*2), _DMARX(UART0_RX_DMA+num*2), _connected(false), _status485(READ_END) {}
+
+#elif defined(__ADSPBF60x__)
+
+	  ComPort(byte num, T_HW::S_PORT* prts, byte pinrts) : USIC(num), _PIO_RTS(prts), _PIN_RTS(pinrts), _MASK_RTS(1UL << pinrts), _DMATX(UART0_TX_DMA + num * 2), _DMARX(UART0_RX_DMA + num * 2), _connected(false), _status485(READ_END) {}
 
 #elif defined(CPU_SAME53)
 

@@ -31,7 +31,7 @@ typedef T_HW::S_SPI *SPIHWT;
 
 #elif defined(__ADSPBF60x__)
 
-#define SPI_NUM 3
+#define SPI_NUM 2
 #define SPIMODE_MASK (SPI_FMODE|SPI_MIO_DUAL|SPI_MIO_QUAD|SPI_CPOL|SPI_CPHA|SPI_LSBF)
 
 typedef T_HW::S_SPI *SPIHWT;
@@ -72,6 +72,19 @@ struct DSCSPI
 
 	#define US2SPI(v) ((v)*MCK_MHz)
 	#define NS2SPI(v) (((v)*MCK_MHz+MCK_MHz/2)/1000)
+
+#elif defined(__ADSPBF60x__)
+
+	struct SPI_DSC_CS
+	{
+		T_HW::S_PORT*	_PIO;
+		u16				_MASK;
+		u16				_BAUD;
+		byte			_MODE; // SPIM Mode [0...3]: bit0 - CPOL, bit1 - CPHA
+	};
+
+	#define US2SPI(v) ((v)*SCLK_MHz)
+	#define NS2SPI(v) (((v)*SCLK_MHz+SCLK_MHz/2)/1000)
 
 #endif
 
@@ -176,10 +189,18 @@ protected:
 
 	static	SPIHWT	const	_spi_hw[SPI_NUM];
 
-	//T_HW::S_PORT * const	_PORT_CS;
-	T_HW::S_PIO * const		_PIO_CS;
-	const u16 * const		_MASK_CS;
-	const u32 				_GEN_CLK;
+	#ifdef __ADSPBF60x__
+		const SPI_DSC_CS* const _DSC_CS;
+		const u32			_DSC_CS_LEN;
+		const u32 			_GEN_CLK;
+		u32					_csnum;
+#else
+		//T_HW::S_PORT * const	_PORT_CS;
+		T_HW::S_PIO * const		_PIO_CS;
+		const u16 * const		_MASK_CS;
+		const u32 				_GEN_CLK;
+		const byte				_MASK_CS_LEN;
+	#endif
 
 	#ifdef __ADSPBF59x__
 		const u16				_MASK_SCK_MOSI_MISO;
@@ -196,7 +217,6 @@ protected:
 	
 	SPIHWT					_hw;
 
-	const byte				_MASK_CS_LEN;
 
 	#ifdef __ADSPBF59x__
 		DMA_CH					_DMA;
@@ -297,17 +317,28 @@ public:
 
 #elif defined(__ADSPBF60x__)
 
-	S_SPIM(byte num, T_HW::S_PIO* piocs, u16* mcs, byte mcslen, u32 gen_clk, u16 mask_sck_mosi_miso_d2_d3 = ~0)
-		: _num(num), _PIO_CS(piocs), _MASK_CS(mcs), _MASK_CS_LEN(mcslen), _GEN_CLK(gen_clk),
+	S_SPIM(byte num, const SPI_DSC_CS* dcs, u32 dcslen, u32 gen_clk, u16 mask_sck_mosi_miso_d2_d3 = ~0)
+		: _num(num), _DSC_CS(dcs), _DSC_CS_LEN(dcslen), _GEN_CLK(gen_clk),
 		_MASK_SCK_MOSI_MISO_D2_D3(mask_sck_mosi_miso_d2_d3), _DMATX(4+num*2), _DMARX(5+num*2), _dsc(0), _state(ST_WAIT), _spimode(0) {}
 
 	bool CheckWriteComplete()	{ return /*_DMATX.CheckComplete() &&*/ (_hw->STAT & (SPI_TF|SPI_SPIF)) == (SPI_TF|SPI_SPIF); }
 	bool CheckReadComplete()	{ if (_hw->STAT & SPI_RF) { _hw->CTL = 0; _DMARX.Disable(); return true;} else return false; }
 
-	void ChipSelect(byte num, u32 spimode, u16 baud)	{ _hw->CLK = baud; _hw->CTL = _spimode = SPI_EN|SPI_MSTR|(spimode & SPIMODE_MASK); _PIO_CS->CLR(_MASK_CS[num]); }
-	void ChipDisable()									{ _PIO_CS->SET(_MASK_CS_ALL); _hw->TXCTL = 0; _hw->RXCTL = 0; _hw->CTL = 0; }
+	//void ChipSelect(byte num, u32 spimode, u16 baud)	{ _hw->CLK = baud; _hw->CTL = _spimode = SPI_EN|SPI_MSTR|(spimode & SPIMODE_MASK); _PIO_CS->CLR(_MASK_CS[num]); }
 
-	void SetMode(u16 mode) { _spimode = SPI_EN|SPI_MSTR|(mode & SPIMODE_MASK); }
+	void ChipSelect(byte num)
+	{
+		const SPI_DSC_CS& dsc = _DSC_CS[_csnum = num];
+		_hw->CLK = dsc._BAUD; 
+		_hw->CTL = _spimode = SPI_EN | SPI_MSTR | (dsc._MODE & SPIMODE_MASK);
+		if (dsc._PIO != 0) dsc._PIO->CLR(dsc._MASK);
+	}
+
+	void ChipDisable() { const SPI_DSC_CS& dsc = _DSC_CS[_csnum]; if (dsc._PIO != 0) dsc._PIO->SET(dsc._MASK); _hw->TXCTL = 0; _hw->RXCTL = 0; _hw->CTL = 0; }
+
+	//void ChipDisable()									{ _PIO_CS->SET(_MASK_CS_ALL);  }
+
+	//void SetMode(u16 mode) { _spimode = SPI_EN|SPI_MSTR|(mode & SPIMODE_MASK); }
 
 	void Disable()	 { _hw->CTL = 0; _hw->TXCTL = 0; _hw->RXCTL = 0; _DMATX.Disable(); _DMARX.Disable();}
 	void DisableTX() { /*_hw->CTL = 0;*/ _hw->TXCTL = 0; _DMATX.Disable(); }

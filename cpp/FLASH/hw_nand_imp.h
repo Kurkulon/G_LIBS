@@ -191,6 +191,8 @@ inline byte NAND_READ()
 		return v; 
 	#elif defined(CPU_XMC48)
 		return *FLD;
+	#elif defined(CPU_BF607)
+		return *FLD;
 	#elif defined(WIN32)
 		return 0;
 	#endif
@@ -269,6 +271,8 @@ inline byte NAND_ADR_READ()
 	PIO_WE_RE->SET(RE);
 	PIO_CLE->CLR(CLE | ALE);
 	return v;
+#elif defined(CPU_BF607)
+	return *FLA;
 #elif defined(CPU_XMC48)
 	return *FLA;
 #endif
@@ -360,6 +364,8 @@ inline bool NAND_BUSY()
 	#ifdef CPU_SAME53	
 		return PIO_FLREADY->TBCLR(PIN_FLREADY); 
 	#elif defined(CPU_XMC48)
+		return PIO_FLREADY->TBCLR(PIN_FLREADY);
+	#elif defined(CPU_BF607)
 		return PIO_FLREADY->TBCLR(PIN_FLREADY);
 	#elif defined(WIN32)
 		return !HasOverlappedIoCompleted(&_overlapped);
@@ -498,6 +504,10 @@ static byte NAND_CheckDataComplete()
 
 		return NAND_DMA.CheckMemCopyComplete();
 
+	#elif defined(CPU_BF607)
+
+		return NAND_DMA.CheckComplete();
+	
 	#elif defined(WIN32)
 
 		return true; //HasOverlappedIoCompleted(&_overlapped);
@@ -600,6 +610,7 @@ static void NAND_Read_Unique_ID(byte* p)
 bool NAND_Read_ID(NandID *id)
 {
 #ifndef WIN32
+
 	__disable_irq();
 
 	NAND_DIR_OUT();

@@ -235,7 +235,7 @@ bool I2C_AddRequest(DSCI2C *d)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#elif defined(__ADSPBF70x__)
+#elif defined(__ADSPBF70x__) || defined(__ADSPBF60x__)
 
 static volatile u16 twiWriteCount = 0;
 static volatile u16 twiReadCount = 0;

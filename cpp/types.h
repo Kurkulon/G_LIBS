@@ -31,7 +31,8 @@
 		#define __nop __builtin_NOP
 		#define __packed /*__attribute__((packed))*/
 
-		#define __disable_irq cli
+		#define __disable_irq() u32 irqeirutyieurtu = cli()
+		#define __enable_irq()  sti(irqeirutyieurtu)
 
 	#endif
 

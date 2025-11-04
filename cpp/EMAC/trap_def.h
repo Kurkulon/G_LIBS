@@ -3,6 +3,10 @@
 
 #pragma once
 
+#ifdef _ADI_COMPILER
+#pragma diag(suppress:2954)
+#endif
+
 #include "types.h"
 #include "time.h"
 #include "emac.h"

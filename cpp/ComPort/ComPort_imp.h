@@ -619,7 +619,7 @@ word ComPort::BoudToPresc(dword speed)
 		
 		return 0;
 
-	#elif defined(__ADSPBF70x__)
+	#elif defined(__ADSPBF70x__) || defined(__ADSPBF60x__)
 
 		speed = (SCLK0 + (speed>>1)) / speed;
 

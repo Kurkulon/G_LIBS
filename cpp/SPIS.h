@@ -68,6 +68,11 @@ protected:
 	DMA_CH				_DMARX;
 	DMA_CH				_DMATX;
 
+#elif defined(__ADSPBF70x__) || defined(__ADSPBF60x__)
+
+	DMA_CH				_DMARX;
+	DMA_CH				_DMATX;
+
 #endif
 
 	u32					__CTRLA;
@@ -113,6 +118,8 @@ public:
 	bool CheckWriteComplete()	{ return _DMATX.CheckComplete() /*&& (_uhw.spi->INTFLAG & SPI_TXC)*/; }
 	bool CheckReadComplete()	{ return _DMARX.CheckComplete(); }
 	void ChipDisable()			{  }
+
+#elif defined(__ADSPBF70x__) || defined(__ADSPBF60x__)
 
 #elif defined(WIN32)
 

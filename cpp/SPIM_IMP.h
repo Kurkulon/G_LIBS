@@ -255,10 +255,18 @@ bool S_SPIM::Connect(u32 baudrate)
 
 	using namespace HW;
 
-	if ((_alloc_mask & (1UL<<_num)) || _MASK_CS == 0 || _MASK_CS_LEN == 0)
-	{
-		return false;
-	};
+	#ifdef __ADSPBF60x__
+		if ((_alloc_mask & (1UL << _num)) || _DSC_CS == 0 || _DSC_CS_LEN == 0)
+		{
+			return false;
+		};
+	#else
+		if ((_alloc_mask & (1UL<<_num)) || _MASK_CS == 0 || _MASK_CS_LEN == 0)
+		{
+			return false;
+		};
+
+	#endif
 
 	_alloc_mask |= (1UL<<_num);
 	
@@ -266,9 +274,15 @@ bool S_SPIM::Connect(u32 baudrate)
 
 	if (baudrate == 0) baudrate = 1;
 
-	_MASK_CS_ALL = 0;
+	#ifdef __ADSPBF60x__
 
-	for (u32 i = 0; i < _MASK_CS_LEN; i++) _MASK_CS_ALL |= _MASK_CS[i];
+	#else
+
+		_MASK_CS_ALL = 0;
+
+		for (u32 i = 0; i < _MASK_CS_LEN; i++) _MASK_CS_ALL |= _MASK_CS[i];
+
+	#endif
 
 	u16 baud = (_GEN_CLK + baudrate) / (baudrate*2);
 
@@ -921,7 +935,10 @@ bool S_SPIM::AddRequest(DSCSPI *d)
 
 	if (d == 0) { return false; };
 
-	#ifdef ADSP_BLACKFIN
+	#ifdef __ADSPBF60x__
+		if (d->csnum >= _DSC_CS_LEN) return false;
+		if (d->baud < 2) d->baud = 2;
+	#elif defined(ADSP_BLACKFIN)
 		if (d->csnum >= _MASK_CS_LEN) return false;
 		if (d->baud < 2) d->baud = 2;
 	#elif defined(CPU_SAME53)	
@@ -958,7 +975,11 @@ bool S_SPIM::Update()
 			{
 				Disable(); //_hw->Ctl = 0;
 
-				ChipSelect(_dsc->csnum, _dsc->mode, _dsc->baud);  //_PIO_CS->CLR(_MASK_CS[_dsc->csnum]);
+				#ifdef __ADSPBF60x__
+					ChipSelect(_dsc->csnum);  //_PIO_CS->CLR(_MASK_CS[_dsc->csnum]);
+				#else
+					ChipSelect(_dsc->csnum, _dsc->mode, _dsc->baud);  //_PIO_CS->CLR(_MASK_CS[_dsc->csnum]);
+				#endif
 
 				if (_dsc->alen == 0)
 				{

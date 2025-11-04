@@ -102,7 +102,7 @@ u16	nand_dma_CopyErr = 0;
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#ifndef WIN32
+#ifdef __CC_ARM
 
 #pragma push
 #pragma O3
@@ -130,7 +130,7 @@ static bool __memcmp(ConstDataPointer s, ConstDataPointer d, u32 len)
 	return true;
 }
 
-#ifndef WIN32
+#ifdef __CC_ARM
 
 #pragma pop
 

@@ -418,6 +418,14 @@ bool ClockStartConvTemp(DSCI2C &dsc, byte buf[8])
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#ifdef CPU_BF607
+SEC_INTERRUPT_HANDLER(Clock_IRQ)
+{
+
+
+}
+
+#else
 static __irq void Clock_IRQ()
 {
 #ifdef CPU_SAME53
@@ -441,7 +449,7 @@ static __irq void Clock_IRQ()
 
 #endif
 }
-
+#endif
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #ifndef WIN32
 
@@ -458,9 +466,11 @@ static void InitClock()
 
 	SEGGER_RTT_WriteString(0, RTT_CTRL_TEXT_BRIGHT_WHITE "Clock Init ... ");
 
-	VectorTableExt[CLOCK_IRQ] = Clock_IRQ;
+#ifdef __CC_ARM
+   	VectorTableExt[CLOCK_IRQ] = Clock_IRQ;
 	CM4::NVIC->CLR_PR(CLOCK_IRQ);
 	CM4::NVIC->SET_ER(CLOCK_IRQ);	
+#endif
 
 #ifdef CPU_SAME53
 
@@ -484,6 +494,10 @@ static void InitClock()
 
 	HW::RTC->MSKSR = RTC_MSKSR_MPSE_Msk;
 	HW::SCU_GCU->SRMSK = SCU_INTERRUPT_SRMSK_PI_Msk;
+
+#elif defined(CPU_BF607)
+
+	InitSEC(0, Clock_IRQ);
 
 #endif
 

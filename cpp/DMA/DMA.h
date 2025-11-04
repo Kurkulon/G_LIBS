@@ -120,7 +120,11 @@ public:
 
 	//void Write(const volatile void *src1, u16 len1, const volatile void *src2, u16 len2, u16 ctrl);
 	//void Read(volatile void *dst, u16 len, u16 ctrl);
-	
+
+	void MemCopy(volatile void* src, volatile void* dst, u16 len) { }
+	byte CheckMemCopyComplete() { return CheckComplete(); }
+	void Reset() {  }
+
 	DMA_CH(byte chnum) : _dmach(&HW::DMA->CH[chnum]), _chnum(chnum) { }
 
 	//void Enable() {  }
