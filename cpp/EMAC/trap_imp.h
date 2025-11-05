@@ -5,7 +5,7 @@
 
 #include "core.h"
 
-#if !defined(CORETYPE_LPC8XX) && !defined(_ADI_COMPILER) && !defined(CPU_SAM4SA)
+#if !defined(CORETYPE_LPC8XX) && !defined(CPU_SAM4SA)
 
 //#define _CRT_SECURE_NO_WARNINGS
 
@@ -21,7 +21,7 @@
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#ifndef WIN32
+#ifdef __CC_ARM
 	#pragma O3
 	#pragma Otime
 #endif

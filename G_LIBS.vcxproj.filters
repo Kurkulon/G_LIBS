@@ -436,5 +436,11 @@
     <None Include="Scatter\SAM4SA_BOOT.sct">
       <Filter>Scatter</Filter>
     </None>
+    <None Include="LDF\BF607.ldf">
+      <Filter>LDF</Filter>
+    </None>
+    <None Include="cpp\ADSP\startup_BF607.s">
+      <Filter>CPP\ADSP</Filter>
+    </None>
   </ItemGroup>
 </Project>

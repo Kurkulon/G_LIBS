@@ -25,6 +25,15 @@
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#define IVG_EMULATION		0
+#define IVG_RESET			1
+#define IVG_NMI				2
+#define IVG_EXEPTIONS		3
+#define IVG_HW_ERROR		5
+#define IVG_CORETIMER		6
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 extern void InitIVG(u32 IVG, void (*EVT)());
 extern void InitSEC(u32 PID, void (*EVT)(), byte prio = 0);
 
@@ -905,12 +914,38 @@ namespace T_HW
 
 	struct S_PADS
 	{
-    												BF_RO8                  z__RESERVED0[4];
-		BF_RW32 PCFG0;                         /*!< Peripheral Configuration0 Register */
+		BF_RW32 EMAC_PTP_CLKSEL;			//	0xFFC03404			/* PADS0 EMAC and PTP Clock Select Register */
+		BF_RW32 TWI_VSEL;					//	0xFFC03408			/* PADS0 TWI Voltage Selection */
+		BF_RW32 PORTS_HYST;					//	0xFFC03440			/* PADS0 GPIO Pin Hysteresis Enable Register */
 	};
 
-	#define PADS_PUE                  (1UL<<12)		/* Pull-Up Enable */
-	#define PADS_TWI0VSEL             (1UL<<9)      /* Drive/tolerate for TWI0 Pins SCL & SDA */
+	#define PADS_EMAC1_PTP_CLKSEL_RMIICLK		(0UL<<2)			/* PTP Clock Source 1 */
+	#define PADS_EMAC1_PTP_CLKSEL_SCLK			(1UL<<2)			/* PTP Clock Source 1 */
+	#define PADS_EMAC1_PTP_CLKSEL_EXTCLK		(2UL<<2)			/* PTP Clock Source 1 */
+	//#define PADS_EMAC1_PTP_CLKSEL_SCLK			(3UL<<2)			/* PTP Clock Source 1 */
+
+	#define PADS_EMAC0_PTP_CLKSEL_RMIICLK		(0UL<<0)			/* PTP Clock Source 0 */
+	#define PADS_EMAC0_PTP_CLKSEL_SCLK			(1UL<<0)			/* PTP Clock Source 0 */
+	#define PADS_EMAC0_PTP_CLKSEL_EXTCLK		(2UL<<0)			/* PTP Clock Source 0 */
+	//#define PADS_EMAC0_PTP_CLKSEL_SCLK			(3UL<<0)			/* PTP Clock Source 0 */
+
+	#define PADS_TWI1_VDD3V3_VBUS3V3			(0UL<<4)			/* TWI Voltage Select 1 */
+	#define PADS_TWI1_VDD1V8_VBUS1V8			(1UL<<4)			/* TWI Voltage Select 1 */
+	#define PADS_TWI1_VDD1V8_VBUS3V3			(3UL<<4)			/* TWI Voltage Select 1 */
+	#define PADS_TWI1_VDD3V3_VBUS5V				(4UL<<4)			/* TWI Voltage Select 1 */
+
+	#define PADS_TWI0_VDD3V3_VBUS3V3			(0UL<<0)			/* TWI Voltage Select 0 */
+	#define PADS_TWI0_VDD1V8_VBUS1V8			(1UL<<0)			/* TWI Voltage Select 0 */
+	#define PADS_TWI0_VDD1V8_VBUS3V3			(3UL<<0)			/* TWI Voltage Select 0 */
+	#define PADS_TWI0_VDD3V3_VBUS5V				(4UL<<0)			/* TWI Voltage Select 0 */
+
+	#define PADS_PORTS_HYST_G                (1UL<<6)                               /* Port G Hysteresis */
+	#define PADS_PORTS_HYST_F                (1UL<<5)                               /* Port F Hysteresis */
+	#define PADS_PORTS_HYST_E                (1UL<<4)                               /* Port E Hysteresis */
+	#define PADS_PORTS_HYST_D                (1UL<<3)                               /* Port D Hysteresis */
+	#define PADS_PORTS_HYST_C                (1UL<<2)                               /* Port C Hysteresis */
+	#define PADS_PORTS_HYST_B                (1UL<<1)                               /* Port B Hysteresis */
+	#define PADS_PORTS_HYST_A                (1UL<<0)                               /* Port A Hysteresis */
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -933,7 +968,7 @@ namespace T_HW
 		BF_RW32 LATCH;                         /*!< Pint Latch Register */
 	};
 
-	typedef S_PINT S_PINT0, S_PINT1, S_PINT2;
+	typedef S_PINT S_PINT0, S_PINT1, S_PINT2, S_PINT3, S_PINT4, S_PINT5;
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -1311,8 +1346,7 @@ namespace T_HW
 
 	struct S_UART
 	{
-    												BF_RO8                  z__RESERVED0[4];
-		BF_RW32 CTL;                           /*!< Control Register */
+ 		BF_RW32 CTL;                           /*!< Control Register */
 		BF_RW32 STAT;                          /*!< Status Register */
 		BF_RW32 SCR;                           /*!< Scratch Register */
 		BF_RW32 CLK;                           /*!< Clock Rate Register */
@@ -1839,7 +1873,6 @@ namespace T_HW
 
 	struct S_SPI
 	{
-							BF_RO32                  z__RESERVED0;
 		BF_RW32 CTL;                           /*!< Control Register */
 		BF_RW32 RXCTL;                         /*!< Receive Control Register */
 		BF_RW32 TXCTL;                         /*!< Transmit Control Register */
@@ -1873,7 +1906,7 @@ namespace T_HW
 		BF_RW32 MMTOP;                         /*!< SPI Memory Top Address */ 	
 	};
 
-	typedef S_SPI S_SPI0, S_SPI1, S_SPI2;
+	typedef S_SPI S_SPI0, S_SPI1;
 
 	#define SPI_MMSE			(1UL<<31)       /* Memory-Mapped SPI Enable */
 	#define SPI_MM_DIS 			(0UL<<31)       /* Memory-Mapped SPI Enable MMSE: Hardware automated access of memory-mapped SPI memory disabled. */
@@ -2498,13 +2531,13 @@ namespace HW
 	//MK_PTR(BP   	,	ADI_BP_BASE         ); /*!<  Pointer to Branch Predictor (BP) */
 	//MK_PTR(RCU  	,	ADI_RCU0_BASE       ); /*!<  Pointer to Reset Control Unit (RCU0) */
 	//MK_PTR(TRU  	,	ADI_TRU0_BASE       ); /*!<  Pointer to Trigger Routing Unit (TRU0) */
-	//MK_PTR(CGU  	,	ADI_CGU0_BASE       ); /*!<  Pointer to Clock Generation Unit (CGU0) */
+	MK_PTR(CGU  	,	REG_CGU0_CTL		); /*!<  Pointer to Clock Generation Unit (CGU0) */
 	//MK_PTR(DPM  	,	ADI_DPM0_BASE       ); /*!<  Pointer to Dynamic Power Management (DPM0) */
 	MK_PTR(SEC  	,	REG_SEC0_GCTL); /*!<  Pointer to System Event Controller (SEC0) */
 	//MK_PTR(SPU  	,	ADI_SPU0_BASE       ); /*!<  Pointer to System Protection Unit (SPU0) */
 	//MK_PTR(SMPU0	,	ADI_SMPU0_BASE      ); /*!<  Pointer to System Memory Protection Unit (SMPU0) */
 	//MK_PTR(SMPU1	,	ADI_SMPU1_BASE      ); /*!<  Pointer to System Memory Protection Unit (SMPU1) */
-	//MK_PTR(L2CTL	,	ADI_L2CTL0_BASE     ); /*!<  Pointer to L2 Memory Controller (L2CTL0) */
+	MK_PTR(L2CTL	,	REG_L2CTL0_CTL		); /*!<  Pointer to L2 Memory Controller (L2CTL0) */
 	//MK_PTR(SWU0		,	ADI_SWU0_BASE       ); /*!<  Pointer to System WatchPoint Unit (SWU0) */
 	//MK_PTR(SWU1		,	ADI_SWU1_BASE       ); /*!<  Pointer to System WatchPoint Unit (SWU1) */
 	//MK_PTR(SWU2		,	ADI_SWU2_BASE       ); /*!<  Pointer to System Watchpoint Unit (SWU2) */
@@ -2513,30 +2546,32 @@ namespace HW
 	//MK_PTR(SWU5		,	ADI_SWU5_BASE       ); /*!<  Pointer to System WatchPoint Unit (SWU5) */
 	//MK_PTR(SWU6		,	ADI_SWU6_BASE       ); /*!<  Pointer to System WatchPoint Unit (SWU6) */
 	//MK_PTR(SWU7		,	ADI_SWU7_BASE       ); /*!<  Pointer to System WatchPoint Unit (SWU7) */
-	//MK_PTR(PADS 	,	ADI_PADS0_BASE      ); /*!<  Pointer to Pads Controller (PADS0) */
-	//MK_PTR(PINT0	,	ADI_PINT0_BASE      ); /*!<  Pointer to PINT (PINT0) */
-	//MK_PTR(PINT1	,	ADI_PINT1_BASE      ); /*!<  Pointer to PINT (PINT1) */
-	//MK_PTR(PINT2	,	ADI_PINT2_BASE      ); /*!<  Pointer to PINT (PINT2) */
-	MK_PTR(TIMER	,	REG_TIMER0_RUN		); /*!<  Pointer to General-Purpose Timer Block (TIMER0) */
-	MK_PTR(WDOG		,	REG_WDOG0_CTL		); /*!<  Pointer to Watch Dog Timer Unit (WDOG0) */
-	MK_PTR(WDT		,	REG_WDOG0_CTL		); /*!<  Pointer to Watch Dog Timer Unit (WDOG0) */
-	MK_PTR(WDOG0	,	REG_WDOG0_CTL		); /*!<  Pointer to Watch Dog Timer Unit (WDOG0) */
-	MK_PTR(WDT0		,	REG_WDOG0_CTL		); /*!<  Pointer to Watch Dog Timer Unit (WDOG0) */
-	MK_PTR(WDOG1	,	REG_WDOG1_CTL		); /*!<  Pointer to Watch Dog Timer Unit (WDOG0) */
-	MK_PTR(WDT1		,	REG_WDOG1_CTL		); /*!<  Pointer to Watch Dog Timer Unit (WDOG0) */
+	MK_PTR(PADS 	,	REG_PADS0_EMAC_PTP_CLKSEL   ); /*!<  Pointer to Pads Controller (PADS0) */
+	MK_PTR(PINT0	,	REG_PINT0_MSK_SET			); /*!<  Pointer to PINT (PINT0) */
+	MK_PTR(PINT1	,	REG_PINT1_MSK_SET			); /*!<  Pointer to PINT (PINT1) */
+	MK_PTR(PINT2	,	REG_PINT2_MSK_SET			); /*!<  Pointer to PINT (PINT2) */
+	MK_PTR(PINT3	,	REG_PINT3_MSK_SET			); /*!<  Pointer to PINT (PINT3) */
+	MK_PTR(PINT4	,	REG_PINT4_MSK_SET			); /*!<  Pointer to PINT (PINT4) */
+	MK_PTR(PINT5	,	REG_PINT5_MSK_SET			); /*!<  Pointer to PINT (PINT5) */
+	MK_PTR(TIMER	,	REG_TIMER0_RUN				); /*!<  Pointer to General-Purpose Timer Block (TIMER0) */
+	MK_PTR(WDOG		,	REG_WDOG0_CTL				); /*!<  Pointer to Watch Dog Timer Unit (WDOG0) */
+	MK_PTR(WDT		,	REG_WDOG0_CTL				); /*!<  Pointer to Watch Dog Timer Unit (WDOG0) */
+	MK_PTR(WDOG0	,	REG_WDOG0_CTL				); /*!<  Pointer to Watch Dog Timer Unit (WDOG0) */
+	MK_PTR(WDT0		,	REG_WDOG0_CTL				); /*!<  Pointer to Watch Dog Timer Unit (WDOG0) */
+	MK_PTR(WDOG1	,	REG_WDOG1_CTL				); /*!<  Pointer to Watch Dog Timer Unit (WDOG0) */
+	MK_PTR(WDT1		,	REG_WDOG1_CTL				); /*!<  Pointer to Watch Dog Timer Unit (WDOG0) */
 											  //MK_PTR(TAPC		,	ADI_TAPC0_BASE      ); /*!<  Pointer to Test Access Port Controller (TAPC0) */
-	MK_PTR(TWI		, REG_TWI0_CLKDIV); /*!<  Pointer to 2-Wire Interface (TWI0) */
-	MK_PTR(TWI0		, REG_TWI0_CLKDIV); /*!<  Pointer to 2-Wire Interface (TWI0) */
-	MK_PTR(TWI1		, REG_TWI1_CLKDIV); /*!<  Pointer to 2-Wire Interface (TWI0) */
+	MK_PTR(TWI		,	REG_TWI0_CLKDIV				); /*!<  Pointer to 2-Wire Interface (TWI0) */
+	MK_PTR(TWI0		,	REG_TWI0_CLKDIV				); /*!<  Pointer to 2-Wire Interface (TWI0) */
+	MK_PTR(TWI1		,	REG_TWI1_CLKDIV				); /*!<  Pointer to 2-Wire Interface (TWI0) */
 	//MK_PTR(SPORT0	,	ADI_SPORT0_BASE     ); /*!<  Pointer to Serial Port (SPORT0) */
 	//MK_PTR(SPORT1	,	ADI_SPORT1_BASE     ); /*!<  Pointer to Serial Port (SPORT1) */
-	//MK_PTR(SPI0  	,	ADI_SPI0_BASE       ); /*!<  Pointer to Serial Peripheral Interface (SPI0) */
-	//MK_PTR(SPI1  	,	ADI_SPI1_BASE       ); /*!<  Pointer to Serial Peripheral Interface (SPI1) */
-	//MK_PTR(SPI2  	,	ADI_SPI2_BASE       ); /*!<  Pointer to Serial Peripheral Interface (SPI2) */
+	MK_PTR(SPI0  	,	REG_SPI0_CTL       ); /*!<  Pointer to Serial Peripheral Interface (SPI0) */
+	MK_PTR(SPI1  	,	REG_SPI1_CTL       ); /*!<  Pointer to Serial Peripheral Interface (SPI1) */
 	//MK_PTR(SPIHP	,	ADI_SPIHP0_BASE     ); /*!<  Pointer to SPI Host Port (SPIHP0) */
 	//MK_PTR(SMC		,	ADI_SMC0_BASE       ); /*!<  Pointer to Static Memory Controller (SMC0) */
-	//MK_PTR(UART0  	,	ADI_UART0_BASE      ); /*!<  Pointer to UART (UART0) */
-	//MK_PTR(UART1  	,	ADI_UART1_BASE      ); /*!<  Pointer to UART (UART1) */
+	MK_PTR(UART0  	,	REG_UART0_CTL      ); /*!<  Pointer to UART (UART0) */
+	MK_PTR(UART1  	,	REG_UART1_CTL      ); /*!<  Pointer to UART (UART1) */
 	//MK_PTR(EPPI	  	,	ADI_EPPI0_BASE      ); /*!<  Pointer to Parallel Peripheral Interface (EPPI0) */
 	//MK_PTR(CNT		,	ADI_CNT0_BASE       ); /*!<  Pointer to CNT (CNT0) */
 	//MK_PTR(MSI		,	ADI_MSI0_BASE       ); /*!<  Pointer to Media Services Interface (MSI0) */
@@ -2573,6 +2608,13 @@ namespace HW
 		return ((v&~0x107FFF) == 0x11800000 || (v&~0xFFFFF) == 0x8000000);
 
 	};
+
+	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	inline void SystemReset()
+	{
+		//CM4::SCB->AIRCR = 0x05FA0000|SCB_AIRCR_SYSRESETREQ_Msk;
+	}
 
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

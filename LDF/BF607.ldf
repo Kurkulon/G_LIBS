@@ -1,0 +1,611 @@
+/*
+** ADSP-BF706 linker description file generated on Jul 18, 2024 at 22:32:50.
+*/
+/*
+** Copyright (C) 2000-2022 Analog Devices Inc., All Rights Reserved.
+**
+** This file is generated automatically based upon the options selected
+** in the System Configuration utility. Changes to the LDF configuration
+** should be made by modifying the appropriate options rather than editing
+** this file. To access the System Configuration utility, double-click the
+** system.svc file from a navigation view.
+**
+** Custom additions can be inserted within the user-modifiable sections. These
+** sections are bounded by comments that start with "$VDSG". Only changes
+** placed within these sections are preserved when this file is re-generated.
+**
+** Product      : CrossCore Embedded Studio
+** Tool Version : 6.2.3.4
+*/
+
+ARCHITECTURE(ADSP-BF607)
+
+
+#if !defined(NO_UTILITY_ROM)
+# if !defined(__SILICON_REVISION__) || (__SILICON_REVISION__==0xffff)
+#   warning \
+    The Utility ROM will not be used to link this application because \
+the silicon revision does not specify a specific revision number. This message \
+may be suppressed by defining the LDF macro NO_UTILITY_ROM.
+#   define NO_UTILITY_ROM
+# endif
+#endif
+
+
+/* The boot-code in revision 1.0 ADSP-BF70x parts enables the instruction cache
+** for improved booting performance. A consequence of cache being enabled
+** during booting is that the L1 instruction cache memory cannot be used as
+** SRAM for applications that disable instruction caching (instruction caching
+** being enabled is the default). If your application must disable the
+** instruction cache, you must also use an elfloader initialization code
+** provided in CCES to disable instruction caching while booting.
+**
+** An initialization code is specified using the -init <dxe> elfloader switch.
+** The initialization code dxe to use if booting an application that uses the
+** instruction cache memory as SRAM is either of the following found in
+** <cces install folder>/Blackfin/ldr/:
+**
+**   BF707_init_only_icache_disable_v00.dxe
+**     - Only disables instruction caching.
+**   BF707_init_icache_disable_v00.dxe
+**     - Disables instruction caching. Also initializes CGU and L3 for
+**       configurations matching the ADSP-BF707 Ez-board.
+**
+** Suppress the warning below by defining linker preprocessor macro
+** USING_ICACHE_DISABLE_INIT_CODE.
+*/
+#if !defined(USING_ICACHE_DISABLE_INIT_CODE)
+  #warning \
+    A loader initialization code to disable instruction cache during booting is required. This message may be suppressed by defining the LDF macro USING_ICACHE_DISABLE_INIT_CODE.
+#endif
+
+#ifdef USE_L1_CODE_DA_DB
+#define USE_L1_CODE
+#define USE_L1_DATA_A
+#define USE_L1_DATA_B
+#elif defined(USE_L1_DA)
+#define USE_L1_DATA_A
+#elif defined(USE_L1_DB)
+#define USE_L1_DATA_B
+#elif defined(USE_L1_CODE_DA)
+#define USE_L1_CODE
+#define USE_L1_DATA_A
+#elif defined(USE_L1_CODE_DB)
+#define USE_L1_CODE
+#define USE_L1_DATA_B
+#elif defined(USE_L1_DA_DB)
+#define USE_L1_DATA_A
+#define USE_L1_DATA_B
+#endif
+
+#undef USE_CACHE_CODE
+#undef USE_CACHE_DA
+#undef USE_CACHE_DB
+
+#ifdef USE_CACHE_C_A_B
+	#define USE_CACHE_CODE
+	#define USE_CACHE_DA
+	#define USE_CACHE_DB
+#elif defined(USE_CACHE_C_A)
+	#define USE_CACHE_CODE
+	#define USE_CACHE_DA
+#elif defined(USE_CACHE_A_B)
+	#define USE_CACHE_DA
+	#define USE_CACHE_DB
+#elif defined(USE_CACHE_A)
+	#define USE_CACHE_DA
+#elif defined(USE_CACHE_C)
+	#define USE_CACHE_CODE
+#endif
+
+/*
+** Define a linked objects list.
+*/
+$OBJECTS = 
+
+   $COMMAND_LINE_OBJECTS
+//   ,crtn.doj
+   ;
+
+/*
+** Define a linked library list.
+*/
+$LIBRARIES = 
+
+    libcc.dlb
+   ,libio.dlb
+   ,libc.dlb
+   ,librt.dlb
+   ,libcpp.dlb
+   ,libdsp.dlb
+   ,libetsi.dlb
+   ,libssl.dlb
+   ,libdrv.dlb
+   ,libldr.dlb
+   ,libdyn.dlb
+   ,libsmall.dlb
+   ,libevent.dlb
+   ,libprofile.dlb
+   ,libosal_noos.dlb
+
+   ;
+
+/*
+** List of all objects and libraries.
+*/
+$OBJS_LIBS = $OBJECTS, $LIBRARIES;
+
+/*
+** List of objects and libraries which prefer internal memory as
+** specified by prefersMem attribute.
+*/
+$OBJS_LIBS_INTERNAL = 
+
+    $OBJS_LIBS{prefersMem("internal")}
+
+   ;
+
+/*
+** List of objects and libraries which don't have a preference for
+** external memory as specified by prefersMem attribute.
+*/
+$OBJS_LIBS_NOT_EXTERNAL = 
+
+    $OBJS_LIBS{!prefersMem("external")}
+
+   ;
+
+/*
+** Determine which start label to use and its location
+*/
+
+#if !defined(START_ADDR)
+#define START_ADDR  0xFFA00000 /* reset address */
+#endif
+#if !defined(START_SYM)
+  #define START_SYM start
+#endif
+
+//#ifndef STACK_SIZE
+//#define STACK_SIZE 0x1FF0
+//#endif
+
+MEMORY
+{
+	/*
+	** Memory map.
+	**
+	** Core 0:
+	** 0xFF800000 - 0xFF803FFF  L1 Data Bank A SRAM (16 KB)
+	** 0xFF804000 - 0xFF807FFF  L1 Data Bank A SRAM/Cache  (16 KB)
+	** 
+	** 0xFF900000 - 0xFF903FFF  L1 Data Bank B SRAM (16 KB)
+	** 0xFF904000 - 0xFF907FFF  L1 Data Bank B SRAM/Cache (16 KB)
+	** 
+	** 0xFFA00000 - 0xFFA0FFFF  L1 Instruction SRAM (64 KB)
+	** 0xFFA10000 - 0xFFA13FFF  L1 Instruction SRAM/Cache (16 KB)
+	** 
+	** 0xFFB00000 - 0xFFB00FFF  L1 Scratchpad SRAM (4 KB)
+	** 
+	** 0xFFE00000 - 0xFFFFFFFF  Core MMR Registers
+	** 
+	** Core 1:
+	** 0xFF400000 - 0xFF403FFF  L1 Data Bank A SRAM (16 KB)
+	** 0xFF404000 - 0xFF407FFF  L1 Data Bank A SRAM/Cache (16 KB)
+	** 
+	** 0xFF500000 - 0xFF503FFF  L1 Data Bank B SRAM (16 KB)
+	** 0xFF504000 - 0xFF507FFF  L1 Data Bank B SRAM/Cache (16 KB)
+	** 
+	** 0xFF600000 - 0xFF60FFFF  L1 Instruction SRAM
+	** 0xFF610000 - 0xFF613FFF  L1 Instruction SRAM/Cache
+	** 
+	** 0xFF700000 - 0xFF700FFF  L1 Scratchpad SRAM
+	** 
+	** 0xFFE00000 - 0xFFFFFFFF  Core MMR Registers
+	**
+	** Shared mem:
+	** 
+	** 0xC8000000 - 0xC807FFFF  L2 ROM
+	** 0xC8080000 - 0xC80BFFFF  L2 SRAM (256 KB)
+	** 
+	** 
+	** 0x00000000 - 0x0FFFFFFF  DDR Memory
+	** 
+	** 0xB0000000 - 0xB3FFFFFF  Async Memory Bank 0
+	** 0xB4000000 - 0xB7FFFFFF  Async Memory Bank 1
+	** 0xB8000000 - 0xBBFFFFFF  Async Memory Bank 2
+	** 0xBC000000 - 0xBFFFFFFF  Async Memory Bank 3
+	*/ 
+
+	/*
+	** L1 memory.
+	*/
+	//MEM_L1_DATA_C_STACK     { TYPE(RAM) START(0x11B00000) END(0x11B01FFF) WIDTH(8) }
+	// MEM_L1_CODE_CACHE       { TYPE(RAM) START(0x11A0C000) END(0x11A0FFFF) WIDTH(8) }
+
+//+++++ CORE0 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#ifdef USE_CORE0_CACHE_CODE
+
+	#define CORE0_L1_CODE_CACHE	    1
+	MEM_CORE0_L1_CODE               { TYPE(RAM) START(0xFFA00000) END(0xFFA0FFFF) WIDTH(8) }
+
+#else
+
+	#define CORE0_L1_CODE_CACHE	    0
+	MEM_CORE0_L1_CODE               { TYPE(RAM) START(0xFFA00000) END(0xFFA13FFF) WIDTH(8) }
+
+#endif
+
+#ifdef USE_CORE0_CACHE_DB
+
+	#define CORE0_L1_DATA_CACHE_B	1
+	MEM_CORE0_L1_DATA_B             { TYPE(RAM) START(0xFF900000) END(0xFF903FFF) WIDTH(8) }
+
+#else
+
+	#define CORE0_L1_DATA_CACHE_B	0
+	MEM_CORE0_L1_DATA_B             { TYPE(RAM) START(0xFF900000) END(0xFF907FFF) WIDTH(8) }
+
+#endif
+
+#ifdef USE_CORE0_CACHE_DA
+
+	#define CORE0_L1_DATA_CACHE_A	1
+	MEM_CORE0_L1_DATA_A             { TYPE(RAM) START(0xFF800000) END(0xFF803FFF) WIDTH(8) }
+
+#else
+
+	#define CORE0_L1_DATA_CACHE_A   0
+	MEM_CORE0_L1_DATA_A             { TYPE(RAM) START(0xFF800000) END(0xFF807FFF) WIDTH(8) }
+
+#endif
+
+	MEM_CORE0_L1_SCRATCHPAD         { TYPE(RAM) START(0xFFB00000) END(0xFFB00FFF) WIDTH(8) }
+
+//+++++ CORE1 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#ifdef USE_CORE1_CACHE_CODE
+
+	#define CORE1_L1_CODE_CACHE	    1
+	MEM_CORE1_L1_CODE               { TYPE(RAM) START(0xFF600000) END(0xFF60FFFF) WIDTH(8) }
+
+#else
+
+	#define CORE1_L1_CODE_CACHE	    0
+	MEM_CORE1_L1_CODE               { TYPE(RAM) START(0xFF600000) END(0xFF613FFF) WIDTH(8) }
+
+#endif
+
+#ifdef USE_CORE1_CACHE_DB
+
+	#define CORE1_L1_DATA_CACHE_B	1
+	MEM_CORE1_L1_DATA_B             { TYPE(RAM) START(0xFF500000) END(0xFF503FFF) WIDTH(8) }
+
+#else
+
+	#define CORE1_L1_DATA_CACHE_B	0
+	MEM_CORE1_L1_DATA_B             { TYPE(RAM) START(0xFF500000) END(0xFF507FFF) WIDTH(8) }
+
+#endif
+
+#ifdef USE_CORE1_CACHE_DA
+
+	#define CORE1_L1_DATA_CACHE_A	1
+	MEM_CORE1_L1_DATA_A             { TYPE(RAM) START(0xFF400000) END(0xFF403FFF) WIDTH(8) }
+
+#else
+
+	#define CORE1_L1_DATA_CACHE_A   0
+	MEM_CORE1_L1_DATA_A             { TYPE(RAM) START(0xFF400000) END(0xFF407FFF) WIDTH(8) }
+
+#endif
+
+	MEM_CORE1_L1_SCRATCHPAD         { TYPE(RAM) START(0xFF700000) END(0xFF700FFF) WIDTH(8) }
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+	/*
+	** L2 memory.
+	*/
+//#define L2_SRAM_START	0x08000000
+//#define L2_SRAM_END		0x080FFFFF
+
+	MEM_L2_SRAM_UNCACHED	{ TYPE(RAM) START(0xC8080000) END(0xC8083FFF) WIDTH(8) } 
+	MEM_L2_SRAM_WT          { TYPE(RAM) START(0xC8084000) END(0xC8087FFF) WIDTH(8) }
+	MEM_L2_SRAM				{ TYPE(RAM) START(0xC8088000) END(0xC80BFFFF) WIDTH(8) }
+	//MEM_L2_ROM              { TYPE(ROM) START(0x04010000) END(0x0407FFFF) WIDTH(8) }
+	//MEM_SPI_FLASH           { TYPE(ROM) START(0x40000000) END(0x47FFFFFF) WIDTH(8) }
+
+	/*
+	** Static Memory Controller (SMC) memory.
+	**
+	** The SMC can be programmed to control up to two blocks of external
+	** memories or memory-mapped devices. Each block is a 8K byte segment.
+	*/
+	//MEM_SMC_0               { TYPE(RAM) START(0x70000000) END(0x70001FFF) WIDTH(8) }
+	//MEM_SMC_1               { TYPE(RAM) START(0x74000000) END(0x74001FFF) WIDTH(8) }
+ 
+} /* MEMORY */
+
+PROCESSOR P0
+{
+	OUTPUT($COMMAND_LINE_OUTPUT_FILE)
+	RESOLVE(START_SYM, START_ADDR)
+	KEEP(START_SYM, _main)
+   
+  
+	SECTIONS
+	{
+		#define DEF_SECTION_QUAL /* None, rely on load-time initialization. */
+		/*
+		** Input sections to the L1 instruction memory.
+		*/
+
+		L1_code DEF_SECTION_QUAL
+		{
+			INPUT_SECTION_ALIGN(4)
+
+			___l1_code_cache = CORE0_L1_CODE_CACHE;  /* 0 - Instruction cache is not enabled, 1 - enabled */
+
+			INPUT_SECTIONS( $OBJS_LIBS(L1_code) )
+		
+		#ifdef USE_L1_CODE
+
+			INPUT_SECTIONS( $OBJS_LIBS(cplb_code cplb noncache_code) )
+			INPUT_SECTIONS( $OBJS_LIBS_INTERNAL(program) )
+			INPUT_SECTIONS( $OBJS_LIBS_NOT_EXTERNAL(program) )
+			INPUT_SECTIONS( $OBJS_LIBS(program) )
+
+		#endif
+
+		} > MEM_CORE0_L1_CODE
+      
+		//L1_data_c_stack NO_INIT
+		//{
+		//	INPUT_SECTION_ALIGN(4)
+
+		//	RESERVE(stack_in_L1_data_c, stack_in_L1_data_c_length, 0, 4)
+		//	RESERVE_EXPAND(stack_in_L1_data_c, stack_in_L1_data_c_length, 0, 4)
+		//	ldf_stack_space = stack_in_L1_data_c;
+		//	ldf_stack_end = (ldf_stack_space + stack_in_L1_data_c_length) & 0XFFFFFFFC;
+
+		//} > MEM_L1_DATA_C_STACK
+
+		L1_core0_stack NO_INIT
+		{
+			INPUT_SECTION_ALIGN(4)
+
+			RESERVE(stack_in_L1_data_a, stack_in_L1_data_a_length, 0, 4)
+			ldf_stack_space = stack_in_L1_data_a;
+			ldf_stack_end = (ldf_stack_space + stack_in_L1_data_a_length) & 0XFFFFFFFC;
+
+		} > MEM_CORE0_L1_SCRATCHPAD
+
+		//L1_data_b_SEC_VecTable NO_INIT
+		//{
+		//	INPUT_SECTION_ALIGN(4)
+		//	INPUT_SECTIONS( $OBJS_LIBS(SEC_VecTable) )   
+
+		//} > MEM_L1_DATA_B
+			
+		L1_data_b DEF_SECTION_QUAL
+		{
+			___l1_data_cache_b = CORE0_L1_DATA_CACHE_B; /* DATA B cache is not enabled */
+			
+			INPUT_SECTION_ALIGN(4)
+			INPUT_SECTIONS( $OBJS_LIBS(L1_data_b L1_data) )
+
+		#ifdef USE_L1_DATA_B
+
+			INPUT_SECTIONS( $OBJS_LIBS(ctor) )   /* global C++ constructors list */
+			INPUT_SECTIONS( $OBJS_LIBS(ctorl) )  /* NULL terminator for ctor     */
+			INPUT_SECTIONS( $OBJS_LIBS(.gdt) )   /* C++ exceptions data          */
+			INPUT_SECTIONS( $OBJS_LIBS(.gdtl) )  /* NULL terminator for .gdt     */
+			INPUT_SECTIONS( $OBJS_LIBS_INTERNAL(data1 voldata vtbl constdata) )
+			INPUT_SECTIONS( $OBJS_LIBS_NOT_EXTERNAL(data1 voldata vtbl constdata) )
+			INPUT_SECTIONS( $OBJS_LIBS(data1 voldata cplb_data vtbl constdata .edt .cht .rtti) )
+		
+		#endif
+
+		} > MEM_CORE0_L1_DATA_B
+      
+		/* Next input sections that have initialization qualifiers and are only
+		** mapped to internal memory.
+		*/
+
+		L1_data_b_bsz ZERO_INIT
+		{
+			INPUT_SECTION_ALIGN(4)
+			INPUT_SECTIONS( $OBJS_LIBS(L1_bsz_b L1_bsz) )
+	
+		#ifdef USE_L1_DATA_B
+
+			INPUT_SECTIONS( $OBJS_LIBS_INTERNAL(bsz) )
+			INPUT_SECTIONS( $OBJS_LIBS_NOT_EXTERNAL(bsz) )
+			INPUT_SECTIONS( $OBJS_LIBS(bsz) )
+
+		#endif	
+
+		} > MEM_CORE0_L1_DATA_B
+
+		L1_data_b_no_init NO_INIT
+		{
+			INPUT_SECTION_ALIGN(4)
+			INPUT_SECTIONS( $OBJS_LIBS(L1_noinit_data_b L1_noinit_data) )
+
+		#ifdef USE_L1_DATA_B
+
+			INPUT_SECTIONS( $OBJS_LIBS_INTERNAL(noinit_data) )
+			INPUT_SECTIONS( $OBJS_LIBS_NOT_EXTERNAL(noinit_data) )
+			INPUT_SECTIONS( $OBJS_LIBS(noinit_data) )
+
+		#endif
+
+			RESERVE(heap_L1_dataB, heap_L1_dataB_len, 0, 4)
+			RESERVE_EXPAND(heap_L1_dataB, heap_L1_dataB_len, 0, 4)
+
+			ldf_heap_L1_DataB_adr	= heap_L1_dataB;
+			ldf_heap_L1_DataB_len	= heap_L1_dataB_len /*& 0xfffffffc*/;
+			ldf_heap_L1_DataB_end	= ldf_heap_L1_DataB_adr + ldf_heap_L1_DataB_len;
+
+		} > MEM_CORE0_L1_DATA_B
+      
+		L1_data_a_SEC_VecTable NO_INIT
+		{
+			INPUT_SECTION_ALIGN(4)
+			INPUT_SECTIONS( $OBJS_LIBS(SEC_VecTable) )   
+
+		} > MEM_CORE0_L1_DATA_A
+				
+		L1_data_a DEF_SECTION_QUAL
+		{
+			INPUT_SECTION_ALIGN(4)
+
+			___l1_data_cache_a = CORE0_L1_DATA_CACHE_A; /* DATA A cache is not enabled */
+
+			INPUT_SECTIONS( $OBJS_LIBS(L1_data_a L1_data) )
+
+#ifdef USE_L1_DATA_A
+
+			INPUT_SECTIONS( $OBJS_LIBS_INTERNAL(data1 voldata vtbl constdata) )
+			INPUT_SECTIONS( $OBJS_LIBS_NOT_EXTERNAL(data1 voldata vtbl constdata) )
+			INPUT_SECTIONS( $OBJS_LIBS(data1 voldata cplb_data vtbl constdata .edt .cht .rtti) )
+#endif
+		} > MEM_CORE0_L1_DATA_A
+
+		L1_data_a_bsz ZERO_INIT
+		{
+			INPUT_SECTION_ALIGN(4)
+			INPUT_SECTIONS( $OBJS_LIBS(L1_bsz_a L1_bsz) )
+
+#ifdef USE_L1_DATA_A
+
+			INPUT_SECTIONS( $OBJS_LIBS_INTERNAL(bsz) )
+			INPUT_SECTIONS( $OBJS_LIBS_NOT_EXTERNAL(bsz) )
+			INPUT_SECTIONS( $OBJS_LIBS(bsz) )
+#endif
+
+		} > MEM_CORE0_L1_DATA_A
+
+		L1_data_a_no_init NO_INIT
+		{
+			INPUT_SECTION_ALIGN(4)
+			INPUT_SECTIONS( $OBJS_LIBS(L1_noinit_data_a L1_noinit_data) )
+
+#ifdef USE_L1_DATA_A
+
+			INPUT_SECTIONS( $OBJS_LIBS_INTERNAL(noinit_data) )
+			INPUT_SECTIONS( $OBJS_LIBS_NOT_EXTERNAL(noinit_data) )
+			INPUT_SECTIONS( $OBJS_LIBS(noinit_data) )
+#endif
+			RESERVE(heap_L1_dataA, heap_L1_dataA_len, 0, 4)
+			RESERVE_EXPAND(heap_L1_dataA, heap_L1_dataA_len, 0, 4)
+
+			ldf_heap_L1_DataA_adr	= heap_L1_dataA;
+			ldf_heap_L1_DataA_len	= heap_L1_dataA_len /*& 0xfffffffc*/;
+			ldf_heap_L1_DataA_end	= ldf_heap_L1_DataA_adr + ldf_heap_L1_DataA_len;
+
+		} > MEM_CORE0_L1_DATA_A
+      
+
+		/*
+		** Input sections to the L2 SRAM memory.
+		*/
+		/* First input the lists for C++ support that must be mapped
+		** contiguously into memory.
+		*/
+
+		L2_code DEF_SECTION_QUAL
+		{
+			INPUT_SECTION_ALIGN(4)
+
+			INPUT_SECTIONS( $OBJS_LIBS(L2_code cplb_code cplb noncache_code) )
+			INPUT_SECTIONS( $OBJS_LIBS_INTERNAL(program) )
+			INPUT_SECTIONS( $OBJS_LIBS_NOT_EXTERNAL(program) )
+			INPUT_SECTIONS( $OBJS_LIBS(program) )
+
+		} > MEM_L2_SRAM
+
+		L2_tables DEF_SECTION_QUAL
+		{
+			INPUT_SECTION_ALIGN(4)
+			FORCE_CONTIGUITY
+			INPUT_SECTIONS( $OBJS_LIBS(ctor) )   /* global C++ constructors list */
+			INPUT_SECTIONS( $OBJS_LIBS(ctorl) )  /* NULL terminator for ctor     */
+			INPUT_SECTIONS( $OBJS_LIBS(.gdt) )   /* C++ exceptions data          */
+			INPUT_SECTIONS( $OBJS_LIBS(.gdtl) )  /* NULL terminator for .gdt     */
+
+		} > MEM_L2_SRAM
+      
+		L2_uncached DEF_SECTION_QUAL
+		{
+			INPUT_SECTION_ALIGN(4)
+
+			INPUT_SECTIONS( $OBJS_LIBS(L2_sram_uncached L2_sram_uncached) )
+
+			RESERVE(heap_L2_NoCache, heap_L2_NoCache_len, 0, 4)
+			RESERVE_EXPAND(heap_L2_NoCache, heap_L2_NoCache_len, 0, 4)
+
+			ldf_heap_L2_NoCache_adr	= heap_L2_NoCache;
+			ldf_heap_L2_NoCache_len	= heap_L2_NoCache_len /*& 0xfffffffc*/;
+			ldf_heap_L2_NoCache_end	= ldf_heap_L2_NoCache_adr + ldf_heap_L2_NoCache_len;
+
+		} > MEM_L2_SRAM_UNCACHED
+
+		L2_Cache_WT DEF_SECTION_QUAL // Cached write thrue
+		{
+			INPUT_SECTION_ALIGN(4)
+
+			INPUT_SECTIONS( $OBJS_LIBS(L2_SRAM_WT l2_sram_wt) )
+
+			RESERVE(heap_L2_CacheWT, heap_L2_CacheWT_len, 0, 4)
+			RESERVE_EXPAND(heap_L2_CacheWT, heap_L2_CacheWT_len, 0, 4)
+
+			ldf_heap_L2_CacheWT_adr	= heap_L2_CacheWT;
+			ldf_heap_L2_CacheWT_len	= heap_L2_CacheWT_len /*& 0xfffffffc*/;
+			ldf_heap_L2_CacheWT_end	= ldf_heap_L2_CacheWT_adr + ldf_heap_L2_CacheWT_len;
+
+		} > MEM_L2_SRAM_WT
+
+		L2_data DEF_SECTION_QUAL // Cached Write Back
+		{
+			INPUT_SECTION_ALIGN(4)
+
+			INPUT_SECTIONS( $OBJS_LIBS(L2_sram l2_sram L2_data l2_data) )
+			INPUT_SECTIONS( $OBJS_LIBS(program noncache_code data1 voldata cplb_data vtbl constdata .edt .cht .rtti) )
+
+		} > MEM_L2_SRAM
+
+		L2_data_bsz ZERO_INIT
+		{
+			INPUT_SECTION_ALIGN(4)
+
+			INPUT_SECTIONS( $OBJS_LIBS(L2_bsz) )
+			INPUT_SECTIONS( $OBJS_LIBS(bsz) )
+
+		} > MEM_L2_SRAM
+      
+		L2_data_no_init NO_INIT
+		{
+			INPUT_SECTION_ALIGN(4)
+
+			INPUT_SECTIONS( $OBJS_LIBS(L2_noinit_data) )
+			INPUT_SECTIONS( $OBJS_LIBS(noinit_data) )
+
+			INPUT_SECTION_ALIGN(4)
+
+			RESERVE(heap_L2_data1, heap_L2_data1_len, 0, 4)
+			
+			ldf_heap_space = heap_L2_data1;
+			ldf_heap_length = heap_L2_data1_len & 0xfffffffc;
+			ldf_heap_end = ldf_heap_space + ldf_heap_length;
+			//ldf_heap_length = ldf_heap_end - ldf_heap_space;
+
+		} > MEM_L2_SRAM
+
+	} /* SECTIONS */
+
+} /* P0 */
+

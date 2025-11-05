@@ -9,7 +9,23 @@
 #include "core.h"
 #endif
 
-#if defined(CPU_SAME53) || defined(CPU_XMC48) || defined(CPU_BF607) || defined(WIN32)
+#if !defined(REAL_TIME_CLOCK_ENABLE) && !defined(REAL_TIME_CLOCK_DISABLE)
+#error  Must defined REAL_TIME_CLOCK_ENABLE or REAL_TIME_CLOCK_DISABLE
+#endif
+
+#ifdef REAL_TIME_CLOCK_ENABLE
+	#undef REAL_TIME_CLOCK_DISABLE
+	#undef SYSTEM_TICK_TIMER_DISABLE
+	#ifndef SYSTEM_TICK_TIMER_ENABLE
+		#define SYSTEM_TICK_TIMER_ENABLE
+	#endif
+#endif
+
+#if !defined(SYSTEM_TICK_TIMER_ENABLE) && !defined(SYSTEM_TICK_TIMER_DISABLE)
+#error  Must defined SYSTEM_TICK_TIMER_ENABLE or SYSTEM_TICK_TIMER_DISABLE
+#endif
+
+#ifdef REAL_TIME_CLOCK_ENABLE // defined(CPU_SAME53) || defined(CPU_XMC48) || defined(CPU_BF607) || defined(WIN32)
 
 #define RTC_type RTC
 
@@ -51,18 +67,11 @@ extern void GetTime(RTC *t);
 
 extern RTC timeBDC;
 
-#endif // #if defined(CPU_SAME53) || defined(CPU_XMC48)
+#endif // #ifdef REAL_TIME_CLOCK_ENABLE
 
-#ifndef ADSP_BLACKFIN
 
 extern void Init_time(u32 mck);
-//extern void RTT_Init();
-#else
 
-#define Init_time(v)
-#define RTT_Init()
-
-#endif
 
 #ifdef WIN32	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

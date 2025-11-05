@@ -1,8 +1,6 @@
 #ifndef SEGGER_RTT_H__13_03_2023__17_37
 #define SEGGER_RTT_H__13_03_2023__17_37
 
-#if !defined(CORETYPE_LPC8XX) && !defined(_ADI_COMPILER234234)
-
 /*********************************************************************
 *              SEGGER MICROCONTROLLER SYSTEME GmbH                   *
 *        Solutions for real time microcontroller applications        *
@@ -75,6 +73,8 @@ Purpose : Implementation of SEGGER real-time terminal which allows
 #define RTT_CTRL_BG_BRIGHT_WHITE      "[4;47m"
 
 
+#if !defined(CORETYPE_LPC8XX) && !defined(_ADI_COMPILER)
+
 /*********************************************************************
 *
 *       RTT API functions
@@ -119,7 +119,7 @@ int SEGGER_RTT_printf(unsigned BufferIndex, const char * sFormat, ...);
 #define SEGGER_RTT_Init()
 #define SEGGER_RTT_Read(v1,v2,v3)
 #define SEGGER_RTT_Write(v1,v2,v3)
-#define SEGGER_RTT_printf(v1,v2,v3)
+#define SEGGER_RTT_printf(v1,v2, ...)
 #define SEGGER_RTT_WriteString(v1,v2)
 
 #endif // #if !defined(CPU_LPC812)

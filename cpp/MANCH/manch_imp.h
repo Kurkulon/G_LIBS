@@ -408,80 +408,24 @@
 
 #elif defined(CPU_BF607) //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	#if defined(MAN_TRANSMIT_V1) || defined(MAN_TRANSMIT_V2)
+	#if defined(MAN_TRANSMIT_V1)
 
-		#if defined(MANT_TC) && defined(MAN_TRANSMIT_V1)
+		#if defined(MANT_TMR)
 
-			#define MNTTC						HW::MANT_TC
-			#define MANT_GEN					CONCAT2(GEN_,MANT_TC)
-			#define MANT_GEN_CLK				CONCAT2(CLK_,MANT_TC) 
-			#define MANT_IRQ					CONCAT2(MANT_TC,_IRQ)
-			#define GCLK_MANT					CONCAT2(GCLK_,MANT_TC)
-			#define PID_MANT					CONCAT2(PID_,MANT_TC)
-
-			#if (MANT_GEN_CLK > 100000000)
-					#define MANT_PRESC_NUM		64
-			#elif (MANT_GEN_CLK > 50000000)
-					#define MANT_PRESC_NUM		16
-			#elif (MANT_GEN_CLK > 20000000)
-					#define MANT_PRESC_NUM		8
-			#elif (MANT_GEN_CLK > 10000000)
-					#define MANT_PRESC_NUM		4
-			#elif (MANT_GEN_CLK > 5000000)
-					#define MANT_PRESC_NUM		2
-			#else
-					#define MANT_PRESC_NUM		1
-			#endif
-
-			#define MANT_PRESC_DIV				CONCAT2(TC_PRESCALER_DIV,MANT_PRESC_NUM)
+			#define MANTT						HW::TIMER->TMR[MANT_TMR]
+			#define MANT_GEN_CLK				SCLK0 
+			#define MANT_IRQ					CONCAT2(PID_TIMER0_TMR,MANT_TMR)
 
 			#define ManResetTransmit()			{ MNTTC->CTRLA = TC_SWRST; while(MNTTC->SYNCBUSY); }
 			#define ManDisableTransmit()		{ MNTTC->CTRLA = 0; MNTTC->INTENCLR = ~0; }
-			#define ManEndIRQ()					{ MNTTC->INTFLAG = ~0; }
-
-		#elif defined(MANT_TCC)
-
-			#define MNTTCC						HW::MANT_TCC
-			#define MANT_GEN					CONCAT2(GEN_,MANT_TCC)
-			#define MANT_GEN_CLK				CONCAT2(CLK_,MANT_TCC) 
-			#define MANT_IRQ					CONCAT2(MANT_TCC,_0_IRQ)
-			#define GCLK_MANT					CONCAT2(GCLK_,MANT_TCC)
-			#define PID_MANT					CONCAT2(PID_,MANT_TCC)
-		
-			#if (MANT_GEN_CLK > 100000000)
-					#define MANT_PRESC_NUM		64
-			#elif (MANT_GEN_CLK > 50000000)
-					#define MANT_PRESC_NUM		16
-			#elif (MANT_GEN_CLK > 20000000)
-					#define MANT_PRESC_NUM		8
-			#elif (MANT_GEN_CLK > 10000000)
-					#define MANT_PRESC_NUM		4
-			#elif (MANT_GEN_CLK > 5000000)
-					#define MANT_PRESC_NUM		2
-			#else
-					#define MANT_PRESC_NUM		1
-			#endif
-
-			#define MANT_PRESC_DIV				CONCAT2(TCC_PRESCALER_DIV,MANT_PRESC_NUM)
-			#define US2MT(v)					(((v)*(MANT_GEN_CLK/MANT_PRESC_NUM)+500000)/1000000)
-
-			#define ManResetTransmit()			{ MNTTCC->CTRLA = TC_SWRST; while(MNTTCC->SYNCBUSY); }
-			#define ManDisableTransmit()		{ MNTTCC->CTRLA = 0; MNTTCC->INTENCLR = ~0; }
-			#define ManEndIRQ()					{ MNTTCC->INTFLAG = ~0; }
-
-			#define MANT_CC_NUM					CONCAT2(MANT_TCC,_CC_NUM)
-
-			#define L1_CC_NUM					(L1_WO_NUM % MANT_CC_NUM)
-			#define L2_CC_NUM					(L2_WO_NUM % MANT_CC_NUM)
+			#define ManEndIRQ()					{ HW::TIMER->DATA_ILAT = 1<<MANT_TMR; }
 
 		#else
-			#error  Must defined MANT_TC or MANT_TCC
+			#error  Must defined MANT_TMR
 		#endif
 		
-		#define BAUD2CLK(x)						((u32)(MANT_GEN_CLK/MANT_PRESC_NUM/(x)+0.5))
+		#define BAUD2CLK(x)						((u32)(MANT_GEN_CLK/(x)+0.5))
 
-		inline void MANTT_ClockEnable()			{ HW::GCLK->PCHCTRL[GCLK_MANT] = MANT_GEN|GCLK_CHEN; HW::MCLK->ClockEnable(PID_MANT); }
-	
 	#endif // #if defined(MAN_TRANSMIT_V1) || defined(MAN_TRANSMIT_V2)
 
 
@@ -600,11 +544,17 @@ inline u16 CheckParity(u16 x)
 
 #ifndef WIN32
 
+#ifdef __CC_ARM
 #pragma push
 #pragma O3
 #pragma Otime
+#endif
 
+#ifdef CPU_BF607
+SEC_INTERRUPT_HANDLER(ManTrmIRQ)
+#elif defined(__CC_ARM)  
 static __irq void ManTrmIRQ()
+#endif
 {
 	static u32 tw = 0;
 	static u16 count = 0;
@@ -750,7 +700,9 @@ static __irq void ManTrmIRQ()
 	Pin_ManTrmIRQ_Clr();
 }
 
+#ifdef __CC_ARM
 #pragma pop
+#endif
 
 #endif
 
@@ -852,9 +804,11 @@ void InitManTransmit()
 
 	SEGGER_RTT_WriteString(0, RTT_CTRL_TEXT_BRIGHT_WHITE "Manchester Transmiter Init ... ");
 
+#ifdef __CC_ARM
 	VectorTableExt[MANT_IRQ] = ManTrmIRQ;
 	CM4::NVIC->CLR_PR(MANT_IRQ);
 	CM4::NVIC->SET_ER(MANT_IRQ);
+#endif
 
 #ifdef CPU_SAME53	
 
@@ -893,6 +847,10 @@ void InitManTransmit()
 
 	MANTCC->SWR = ~0;
 	MANTCC->INTE = CC4_PME;
+
+#elif defined(CPU_BF607)
+
+
 
 #endif
 
@@ -1346,6 +1304,13 @@ void InitManTransmit()
 //	inline void MANRT_ClockEnable()  { HW::GCLK->PCHCTRL[CONCAT2(GCLK_,MANR_TCC)]	= MANR_GEN|GCLK_CHEN; HW::MCLK->ClockEnable(CONCAT2(PID_,MANR_TCC)); }
 //	inline void MANIT_ClockEnable()  { HW::GCLK->PCHCTRL[CONCAT2(GCLK_,MANI_TC)]	= MANI_GEN|GCLK_CHEN; HW::MCLK->ClockEnable(CONCAT2(PID_,MANI_TC)); }
 
+#elif defined(CPU_BF607)	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	#define MANR_IRQ			CONCAT2(PIO_RXD,_IRQ)
+	#define US2MR(v)			(US2CCLK(v))
+
+	#define ManR_EndIRQ()		{ ReadMem32(HW::PIO_RXD->ISR); }
+
 #elif defined(WIN32)	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 	#define US2MR(v)			(v)
@@ -1409,11 +1374,17 @@ static void ManRcvEnd(bool ok)
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #ifndef WIN32
 
+#ifdef __CC_ARM
 #pragma push
 #pragma O3
 #pragma Otime
+#endif
 
+#ifdef CPU_BF607
+SEC_INTERRUPT_HANDLER(ManRcvIRQ2)
+#elif defined(__CC_ARM)  
 static __irq void ManRcvIRQ2()
+#endif
 {
 	using namespace HW;
 
@@ -1434,7 +1405,7 @@ static __irq void ManRcvIRQ2()
 
 		MNRTCC->CTRLBSET = TCC_CMD_RETRIGGER;
 
-	#elif defined(CPU_SAM4SA)
+	#elif defined(CPU_SAM4SA) || defined(CPU_BF607)
 		
 		static u32 prevT = 0;
 
@@ -1563,7 +1534,9 @@ static __irq void ManRcvIRQ2()
 	Pin_ManRcvIRQ_Clr();
 }
 
+#ifdef __CC_ARM
 #pragma pop
+#endif
 
 #endif
 
@@ -1597,9 +1570,11 @@ void InitManRecieve()
 
 	SEGGER_RTT_WriteString(0, RTT_CTRL_TEXT_BRIGHT_GREEN "Manchester Reciever Init ... ");
 
+#ifdef __CC_ARM
 	VectorTableExt[MANR_IRQ] = ManRcvIRQ2;
 	CM4::NVIC->CLR_PR(MANR_IRQ);
 	CM4::NVIC->SET_ER(MANR_IRQ);	
+#endif
 
 #ifdef CPU_SAME53	
 
@@ -1711,6 +1686,11 @@ void InitManRecieve()
 	MANRCC->TCSET = CC4_TRB;
 
 	MANRCC->INTE = 0;//CC4_PME;
+
+#elif defined(CPU_BF607)
+
+	PIO_RXD->DIR_CLR = RXD;
+	PIO_RXD->FER_CLR = RXD;
 
 #endif
 

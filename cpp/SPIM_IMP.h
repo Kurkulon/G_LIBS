@@ -27,6 +27,11 @@ SPIHWT const	S_SPIM::_spi_hw[SPI_NUM]	= { HW::SPI0,				HW::SPI1			};
 //const byte		S_SPIM::_spi_pid[SPI_NUM]	= {	PID_DMA5_SPI0_RX_TX,	PID_DMA6_SPI1_RX_TX };
 SPIHWT const	S_SPIM::_spi_hw[SPI_NUM]	= { HW::SPI0, HW::SPI1, HW::SPI2			};
 
+#elif defined(__ADSPBF60x__)
+
+//const byte		S_SPIM::_spi_pid[SPI_NUM]	= {	PID_DMA5_SPI0_RX_TX,	PID_DMA6_SPI1_RX_TX };
+SPIHWT const	S_SPIM::_spi_hw[SPI_NUM]	= { HW::SPI0, HW::SPI1 			};
+
 #endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

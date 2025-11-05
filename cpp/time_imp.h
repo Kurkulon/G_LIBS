@@ -1,4 +1,4 @@
-#if !defined(TIME_IMP_H__25_09_2025__19_20) && !defined(_ADI_COMPILER)
+#if !defined(TIME_IMP_H__25_09_2025__19_20) //&& !defined(_ADI_COMPILER)
 #define TIME_IMP_H__25_09_2025__19_20
 
 #pragma once
@@ -19,11 +19,13 @@ static LARGE_INTEGER queryPerformanceFrequency = { 0, 0 };
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#ifdef SYSTEM_TICK_TIMER_ENABLE
 volatile u32 msec = 0;
+#endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#if defined(CPU_SAME53) || defined(CPU_XMC48) || defined(WIN32)
+#ifdef REAL_TIME_CLOCK_ENABLE
 
 RTC timeBDC;
 
@@ -132,17 +134,22 @@ bool SetTime(const RTC &t)
 #endif
 }
 
-#endif // #if defined(CPU_SAME53) || defined(CPU_XMC48)
+#endif // #ifdef REAL_TIME_CLOCK_ENABLE
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#ifndef WIN32
+#if defined(SYSTEM_TICK_TIMER_ENABLE) && !defined(WIN32)
 
+#ifdef __ADSPLPBLACKFIN__
+#pragma diag(suppress:1970)
+EX_INTERRUPT_HANDLER(Timer_Handler)
+#elif defined(__CC_ARM)
 static __irq void Timer_Handler (void)
+#endif
 {
 	msec++;
 
-	#if defined(CPU_SAME53) || defined(CPU_XMC48)
+	#ifdef REAL_TIME_CLOCK_ENABLE	//defined(CPU_SAME53) || defined(CPU_XMC48)
 
 		if (timeBDC.msec < 999)
 		{
@@ -204,50 +211,63 @@ static __irq void Timer_Handler (void)
 			};
 		};
 
-	#endif
+	#endif // #ifdef REAL_TIME_CLOCK_ENABLE
 }
 
-#endif
+#endif // #if defined(SYSTEM_TICK_TIMER_ENABLE) && !defined(WIN32)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static void InitTimer(u32 cpuclk)
-{
-#ifndef WIN32
+#if (defined(SYSTEM_TICK_TIMER_ENABLE) || defined(REAL_TIME_CLOCK_ENABLE)) && !defined(WIN32)
 
-	SEGGER_RTT_printf(0, RTT_CTRL_TEXT_BRIGHT_CYAN "System Timer Init CPUCLK = %u MHz ... ", (cpuclk+500000)/1000000);
+static void InitTimer(/*u32 cpuclk*/)
+{
+	SEGGER_RTT_printf(0, RTT_CTRL_TEXT_BRIGHT_CYAN "System Timer Init CPUCLK = %u MHz ... ", MCK_MHz);
 
 	enum { freq = 1000 };
 
-#if defined(CPU_SAME53) || defined(CPU_XMC48)
-	timeBDC.day = 1;
-	timeBDC.mon = 1;
-	timeBDC.year = 2000;
-	timeBDC.time = 0;
-#endif
+	#ifdef REAL_TIME_CLOCK_ENABLE
+		timeBDC.day = 1;
+		timeBDC.mon = 1;
+		timeBDC.year = 2000;
+		timeBDC.time = 0;
+	#endif
 
-	VectorTableInt[15] = Timer_Handler;
+	#ifdef __CC_ARM
+		VectorTableInt[15] = Timer_Handler;
+	#elif defined(__ADSPLPBLACKFIN__) 
+		InitIVG(IVG_CORETIMER, Timer_Handler);
+	#endif
 
-#ifdef CORTEX_M4
+	#ifdef CORTEX_M4
 
-	CM4::SysTick->LOAD = (cpuclk+freq/2)/freq;
-	CM4::SysTick->VAL = 0;
-	CM4::SysTick->CTRL = 7;
+		CM4::SysTick->LOAD = (MCK+freq/2)/freq;
+		CM4::SysTick->VAL = 0;
+		CM4::SysTick->CTRL = 7;
 
-#elif defined(CORTEX_M0)
+	#elif defined(CORTEX_M0)
 
-	CM0::SysTick->LOAD = (cpuclk+freq/2)/freq;
-	CM0::SysTick->VAL = 0;
-	CM0::SysTick->CTRL = 7;
+		CM0::SysTick->LOAD = (MCK+freq/2)/freq;
+		CM0::SysTick->VAL = 0;
+		CM0::SysTick->CTRL = 7;
 
-#endif
+	#elif defined(__ADSPLPBLACKFIN__)
 
-	__enable_irq();
+		HW::TMR->CNTL	= TMR_PWR;
+		HW::TMR->PERIOD = (CCLK+freq/2)/freq;
+		HW::TMR->SCALE	= 0;
+		HW::TMR->CNTL	= TMR_AUTORLD|TMR_EN|TMR_PWR;
 
-#endif
+	#endif
+
+	#ifdef __CC_ARM
+		__enable_irq();
+	#endif
 
 	SEGGER_RTT_WriteString(0, RTT_CTRL_TEXT_BRIGHT_GREEN "OK\n");
 }
+
+#endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -298,15 +318,20 @@ static void InitCycleCountTimer()
 	HW::WKT->CTRL = WKT_CLKSEL_IRC_750kHz;
 	HW::WKT->COUNT = 750000;
 
+#elif defined(__ADSPLPBLACKFIN__)
+
+	sysreg_write(reg_SYSCFG, sysreg_read(reg_SYSCFG)|BITM_SYSCFG_CCEN);
 
 #endif
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void Init_time(u32 cpuclk)
+void Init_time(/*u32 cpuclk*/)
 {
-	InitTimer(cpuclk);
+#if (defined(SYSTEM_TICK_TIMER_ENABLE) || defined(REAL_TIME_CLOCK_ENABLE)) && !defined(WIN32)
+	InitTimer(/*cpuclk*/);
+#endif
 	InitCycleCountTimer();
 }
 

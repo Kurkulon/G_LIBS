@@ -618,6 +618,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp\ADSP\startup_BF592A.s" />
+    <None Include="cpp\ADSP\startup_BF607.s" />
     <None Include="cpp\ADSP\startup_BF706.s" />
     <None Include="cpp\ARM\startup_CM0.s" />
     <None Include="cpp\ARM\startup_CM4.s" />
@@ -625,6 +626,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='BF706_Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='BF607_Debug|Win32'">true</ExcludedFromBuild>
     </None>
+    <None Include="LDF\BF607.ldf" />
     <None Include="LDF\BF706.ldf">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='BF706_Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='BF607_Debug|Win32'">true</ExcludedFromBuild>

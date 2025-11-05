@@ -48,6 +48,11 @@ USICHWT	const USIC::_usic_hw[USIC_NUM] = { 0 };
 const byte	USIC::_usic_pid[USIC_NUM]		= {	PID_UART0_STAT, PID_UART1_STAT };
 USICHWT		const USIC::_usic_hw[USIC_NUM]	= {	HW::UART0, HW::UART1 };
 
+#elif defined(__ADSPBF60x__)
+
+const byte	USIC::_usic_pid[USIC_NUM]		= {	PID_UART0_STAT, PID_UART1_STAT };
+USICHWT		const USIC::_usic_hw[USIC_NUM]	= {	HW::UART0, HW::UART1 };
+
 #endif 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
