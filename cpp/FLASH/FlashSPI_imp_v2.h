@@ -70,7 +70,7 @@
 
 #ifdef __ADSPBF59x__
 #define SPIMODE	(CPOL|CPHA)
-#elif defined(__ADSPBF70x__)
+#elif defined(__ADSPBF70x__) || defined(__ADSPBF60x__)
 #define SPIMODE	(SPI_CPOL|SPI_CPHA)
 #endif
 
@@ -356,7 +356,7 @@ protected:
 		inline void SetModeDual()		{ }
 		inline void SetModeQuad()		{ }
 
-	#elif defined(__ADSPBF70x__)
+	#elif defined(__ADSPBF70x__) || defined(__ADSPBF60x__)
 
 		u32 _spimode;
 
@@ -476,7 +476,7 @@ public:
 	ERROR_CODE WriteSync(const byte *data, u32 stAdr, u32 count, bool verify);
 #endif
 
-#ifdef __ADSPBF70x__
+#if defined(__ADSPBF70x__) || defined(__ADSPBF60x__)
 	FlashSPI(S_SPIM &sp, byte csnum = 0) : FlashMem(FLASH_PAGE_SIZE, FLASH_START_ADR), spi(sp), _csnum(csnum), _spimode(SPIMODE) {}
 #else
 	FlashSPI(S_SPIM &sp, byte csnum = 0) : FlashMem(FLASH_PAGE_SIZE, FLASH_START_ADR), spi(sp), _csnum(csnum) {}
@@ -519,7 +519,7 @@ void FlashSPI::Init()
 
 	_QPI_mode = false;
 
-#ifdef __ADSPBF70x__
+#if defined(__ADSPBF70x__) || defined(__ADSPBF60x__)
 
 	SetModeStandart();
 

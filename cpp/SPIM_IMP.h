@@ -113,6 +113,46 @@ void S_SPIM::InitHW()
 	_hw->CTL = _ctl;
 	_hw->STAT = ~0;
 
+#elif defined(__ADSPBF60x__)
+
+	for (u32 i = 0; i < _DSC_CS_LEN; i++)
+	{
+		const SPI_DSC_CS &dsc = _DSC_CS[i]; 
+
+		if (dsc._PIO != 0)
+		{
+			dsc._PIO->DirSet(dsc._MASK); 
+			dsc._PIO->ClrFER(dsc._MASK); 
+			dsc._PIO->SET(dsc._MASK); 
+		};
+	};
+
+	if (_num == 0)
+	{
+		HW::PIOD->SetFER((PD0|PD1|PD2|PD3|PD4) & _MASK_SCK_MOSI_MISO_D2_D3);
+
+		if (_MASK_SCK_MOSI_MISO_D2_D3 & PD0) HW::PIOD->SetMUX(0, 0);
+		if (_MASK_SCK_MOSI_MISO_D2_D3 & PD1) HW::PIOD->SetMUX(1, 0);
+		if (_MASK_SCK_MOSI_MISO_D2_D3 & PD2) HW::PIOD->SetMUX(2, 0);
+		if (_MASK_SCK_MOSI_MISO_D2_D3 & PD3) HW::PIOD->SetMUX(3, 0);
+		if (_MASK_SCK_MOSI_MISO_D2_D3 & PD4) HW::PIOD->SetMUX(4, 0);
+
+	}
+	else
+	{
+		HW::PIOD->SetFER((PD5|PD14|PD13)	& _MASK_SCK_MOSI_MISO_D2_D3);
+		HW::PIOE->SetFER((PE1|PE0)			& _MASK_SCK_MOSI_MISO_D2_D3);
+
+		if (_MASK_SCK_MOSI_MISO_D2_D3 & PD5)	HW::PIOD->SetMUX(5,	0);
+		if (_MASK_SCK_MOSI_MISO_D2_D3 & PD14)	HW::PIOD->SetMUX(14,0);
+		if (_MASK_SCK_MOSI_MISO_D2_D3 & PD13)	HW::PIOD->SetMUX(13,0);
+		if (_MASK_SCK_MOSI_MISO_D2_D3 & PE1)	HW::PIOE->SetMUX(1,	0);
+		if (_MASK_SCK_MOSI_MISO_D2_D3 & PE0)	HW::PIOE->SetMUX(0,	0);
+	};
+
+	_hw->CLK = _baud;
+	_hw->CTL = _ctl;
+	_hw->STAT = ~0;
 
 #elif defined(CPU_SAME53)
 
@@ -422,6 +462,27 @@ void S_SPIM::WritePIO(const void *data, u16 count)
 	_hw->TXCTL	= 0;
 	_hw->RXCTL	= 0;
 
+#elif defined(__ADSPBF60x__)
+
+	_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&SPIMODE_MASK);	
+	_hw->TXCTL	= 0;
+	_hw->RXCTL	= 0;//RXCTL_REN/*|RXCTL_RTI*/;
+	_hw->TWC	= count;
+	_hw->TWCR	= 0;
+	_hw->TXCTL	= TXCTL_TEN|TXCTL_TTI|TXCTL_TWCEN;
+
+	while (count != 0)
+	{
+		_hw->TFIFO = *(p++); count--;
+
+		while (_hw->STAT & SPI_TFF) HW::ResetWDT();
+};
+
+	while((_hw->STAT & (SPI_TF|SPI_SPIF)) != (SPI_TF|SPI_SPIF));
+
+	_hw->TXCTL	= 0;
+	_hw->RXCTL	= 0;
+
 #elif defined(CPU_SAME53)
 
 	while (count != 0)
@@ -477,6 +538,17 @@ void S_SPIM::WriteAsyncDMA(const void *data, u16 count)
 	_DMATX.Write8((volatile void*)data, count);
 
 	//_hw->TXCTL |= TXCTL_TEN;
+
+#elif defined(__ADSPBF60x__)
+
+	_hw->STAT	= ~0;
+	_hw->TXCTL	= TXCTL_TEN|TXCTL_TTI|TXCTL_TWCEN|TXCTL_TDR_EMPTY;
+	_hw->RXCTL	= 0;
+	_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&SPIMODE_MASK);	
+	_hw->TWC	= count;
+	_hw->TWCR	= 0;
+
+	_DMATX.Write8((volatile void*)data, count);
 
 #elif defined(CPU_SAME53)	
 
@@ -564,6 +636,17 @@ void S_SPIM::WriteAsyncDMA(const void *data1, u16 count1, const void *data2, u16
 	_hw->Ctl |= SPE;
 
 #elif defined(__ADSPBF70x__)
+
+	_hw->STAT	= ~0;
+	_hw->TXCTL	= TXCTL_TEN|TXCTL_TTI|TXCTL_TWCEN|TXCTL_TDR_EMPTY;
+	_hw->RXCTL	= 0;
+	_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&SPIMODE_MASK);	
+	_hw->TWC	= count1+count2;
+	_hw->TWCR	= 0;
+
+	_DMATX.Write8((volatile void*)data1, count1, (volatile void*)data2, count2);
+
+#elif defined(__ADSPBF60x__)
 
 	_hw->STAT	= ~0;
 	_hw->TXCTL	= TXCTL_TEN|TXCTL_TTI|TXCTL_TWCEN|TXCTL_TDR_EMPTY;
@@ -669,6 +752,36 @@ void S_SPIM::ReadPIO(void *data, u16 count)
 	_hw->TXCTL	= 0;
 	_hw->RXCTL	= 0;
 
+#elif defined(__ADSPBF60x__)
+
+	_DMATX.Disable();
+	_DMARX.Disable();
+
+	_hw->TXCTL	= 0;
+	_hw->RXCTL	= 0;
+	_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&SPIMODE_MASK);	
+	_hw->RWC	= count;
+	_hw->RWCR	= 0;
+
+	while((_hw->STAT & SPI_RFE) == 0)
+	{
+		__builtin_mmr_read16(&(_hw->RFIFO));
+		//asm("%0 = W[%1];" : "=D" (t) : "p" (&(_hw->RFIFO)));
+		//asm(".align 8\n NOP;\n .align 2\n MNOP;\n %0 = W[%1];\n NOP;\n NOP;\n NOP;\n" : "=D" (t) : "p" (&(_hw->RFIFO))); 
+};
+
+	_hw->RXCTL = RXCTL_REN|RXCTL_RTI|RXCTL_RWCEN;
+
+	while (count != 0)
+	{
+		while ((_hw->STAT & SPI_RFE) != 0);
+
+		*(p++) = _hw->RFIFO.W; count--;
+	};
+
+	_hw->TXCTL	= 0;
+	_hw->RXCTL	= 0;
+
 #elif defined(CPU_SAME53)
 
 	_uhw.spi->CTRLB |= SPI_RXEN; while(_uhw.spi->SYNCBUSY);
@@ -723,6 +836,19 @@ void S_SPIM::ReadAsyncDMA(void *data, u16 count)
 	_hw->Ctl |= SPE;
 
 #elif defined(__ADSPBF70x__)
+
+	_hw->STAT	= ~0;
+	_hw->TXCTL	= 0;
+	_hw->RXCTL	= 0;
+	_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&SPIMODE_MASK);	
+	_hw->RWC	= count;
+	_hw->RWCR	= 0;
+
+	_DMARX.Read8(data, count);
+
+	_hw->RXCTL	= RXCTL_REN|RXCTL_RTI|RXCTL_RWCEN|RXCTL_RDR_NE;
+
+#elif defined(__ADSPBF60x__)
 
 	_hw->STAT	= ~0;
 	_hw->TXCTL	= 0;
@@ -851,6 +977,18 @@ byte S_SPIM::WriteReadByte(byte v)
 
 	return _hw->RFIFO.W; 
 
+#elif defined(__ADSPBF60x__)
+
+	_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&SPIMODE_MASK);	
+	_hw->RXCTL	= RXCTL_REN;
+	_hw->TXCTL	= TXCTL_TEN|TXCTL_TTI;
+
+	_hw->TFIFO = v;
+
+	while((_hw->STAT & (SPI_SPIF|SPI_RFE)) != SPI_SPIF);
+
+	return _hw->RFIFO.W; 
+
 #elif defined(CPU_SAME53)	
 
 	_uhw.spi->CTRLB |= SPI_RXEN; while(_uhw.spi->SYNCBUSY);
@@ -918,6 +1056,20 @@ byte S_SPIM::WriteReadByte(byte v)
 //}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void S_SPIM::ReadByteStart(u16 count)
+{
+	//u32 temp; while((_hw->STAT & SPI_RFE) == 0)	{ asm("%0 = W[%1];" : "=D" (temp) : "p" (&(_hw->RFIFO))); };
+
+	while((_hw->STAT & SPI_RFE) == 0) __builtin_mmr_read16(&(_hw->RFIFO));
+
+	//_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&SPIMODE_MASK);	
+	_hw->TXCTL	= 0;
+	_hw->RWC	= count;
+	_hw->RXCTL	= RXCTL_REN|RXCTL_RTI|RXCTL_RWCEN;
+}
+
+#elif defined(__ADSPBF60x__) //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 void S_SPIM::ReadByteStart(u16 count)
 {

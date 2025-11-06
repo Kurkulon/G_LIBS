@@ -1924,11 +1924,11 @@ namespace T_HW
 	#define SPI_TFS_75			(3UL<<16)       /* TFS: 75% empty TFIFO */
 	#define SPI_TFS_EMPTY		(4UL<<16)       /* TFS: Empty TFIFO */
 	#define SPI_RFS_MASK		(7UL<<12)       /* SPI_RFIFO Status */
-	#define SPI_RFS_EMPTY		(0UL<<16)       /* RFS: Empty RFIFO */
-	#define SPI_RFS_25			(1UL<<16)       /* RFS: 25% full RFIFO */
-	#define SPI_RFS_50			(2UL<<16)       /* RFS: 50% full RFIFO */
-	#define SPI_RFS_75			(3UL<<16)       /* RFS: 75% full RFIFO */
-	#define SPI_RFS_FULL		(4UL<<16)       /* RFS: Full RFIFO */
+	#define SPI_RFS_EMPTY		(0UL<<12)       /* RFS: Empty RFIFO */
+	#define SPI_RFS_25			(1UL<<12)       /* RFS: 25% full RFIFO */
+	#define SPI_RFS_50			(2UL<<12)       /* RFS: 50% full RFIFO */
+	#define SPI_RFS_75			(3UL<<12)       /* RFS: 75% full RFIFO */
+	#define SPI_RFS_FULL		(4UL<<12)       /* RFS: Full RFIFO */
 	#define SPI_TF 				(1UL<<11)       /* Transmit Finish Indication */
 	#define SPI_RF 				(1UL<<10)       /* Receive Finish Indication */
 	#define SPI_TS  			(1UL<<9)		/* Transmit Start */
@@ -2030,7 +2030,7 @@ namespace T_HW
 		inline void 	SET(u16 m) 			{ DATA_SET = m;					}
 		inline void 	CLR(u16 m) 			{ DATA_CLR = m;					}
 		inline void 	NOT(u16 m) 			{ DATA_TGL = m;					}
-		inline void 	WBIT(u16 m, bool c) { if (c) SET(m); else CLR(m);	}
+		inline void 	WBIT(u16 m, bool c)	{ if (c) SET(m); else CLR(m);	}
 		inline void 	BSET(u16 b) 		{ SET(1UL<< b);					}
 		inline void 	BCLR(u16 b) 		{ CLR(1UL << b);				}
 		inline void 	BTGL(u16 b) 		{ NOT(1UL << b);				}
@@ -2044,7 +2044,7 @@ namespace T_HW
 		inline void	SetFER(u16 m)		{ FER_SET = m; }
 		inline void	ClrFER(u16 m)		{ FER_CLR = m; }
 
-		inline void	SetMUX(byte pin, byte v) { MUX = (MUX & ~(3UL<<pin)) | ((v&3)<<pin); }
+		inline void	SetMUX(byte pin, byte v) { pin<<=1; MUX = (MUX & ~(3UL<<pin)) | ((v&3)<<pin); }
 
 		inline void	ClearTriggerIRQ(u32 m)	{ ((S_PINT*)(((u32)this & ~0x1FF)|(((u32)this & 0x1FF)<<1)|0x1000))->LATCH = m; }
 	};

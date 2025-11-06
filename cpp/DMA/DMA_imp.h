@@ -66,6 +66,14 @@
 
 	__align(512) T_HW::DMADESC _DmaTable[18] = {0};
 
+#elif defined(__ADSPBF60x__)
+
+const DMA_CH::HWPTR_DMACH DMA_CH::DMACH_TBL[35] = {	HW::DMA0,	HW::DMA1,	HW::DMA2,	HW::DMA3,	HW::DMA4,	HW::DMA5,	HW::DMA6,	HW::DMA7,	HW::DMA8,	HW::DMA9,
+													HW::DMA10,	HW::DMA11,	HW::DMA12,	HW::DMA13,	HW::DMA14,	HW::DMA15,	HW::DMA16,	HW::DMA17,	HW::DMA18,	HW::DMA19,
+													HW::DMA20,	HW::DMA21,	HW::DMA22,	HW::DMA23,	HW::DMA24,	HW::DMA25,	HW::DMA26,	HW::DMA27,	HW::DMA28,	HW::DMA29,
+													HW::DMA30,	HW::DMA31,	HW::DMA32,	HW::DMA33,	HW::DMA34
+};
+
 #endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -159,7 +167,7 @@ void DMA_CH::Trans2D(volatile void *stadr1, u16 xcount1, u16 xmdfy1, u16 ycount1
 	_dmach->CONFIG = FLOW_LARGE|NDSIZE_9|DMAEN;
 }
 
-#elif defined(__ADSPBF70x__) //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#elif defined(__ADSPBF70x__) || defined(__ADSPBF60x__) //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 void DMA_CH::Trans(volatile void *src, u16 len, u16 ctrl)
 {
@@ -366,7 +374,7 @@ void DMA_CH::WritePeripheral(const volatile void *src, volatile void *dst, u16 l
 
 	_InitLLI(src, dst, len, ctrl1);
 
-	_dmach->CFGL = HS_SEL_SRC;
+	_dmach->CFGL = H HW::SEL_SRC;
 	_dmach->CFGH = PROTCTL(1)|DEST_PER(_drl&7);
 
 	Enable();
@@ -429,7 +437,7 @@ void DMA_CH::ReadPeripheral(const volatile void *src, volatile void *dst, u16 le
 
 	_InitLLI(src, dst, len, ctrl1);
 
-	_dmach->CFGL = HS_SEL_DST;
+	_dmach->CFGL = H HW::SEL_DST;
 	_dmach->CFGH = PROTCTL(1)|SRC_PER(_drl&7);
 
 	Enable();

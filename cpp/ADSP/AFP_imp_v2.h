@@ -28,6 +28,16 @@
 
 #define SPI_CS	PB15
 
+#elif defined(__ADSPBF60x__)
+
+#ifndef BAUD_RATE_DIVISOR 
+#define BAUD_RATE_DIVISOR 	2
+#endif
+
+#define COMMON_SPI_SETTINGS (SPI_EN|SPI_MSTR|SPI_CPOL|SPI_CPHA)  /* settings to the SPI_CTL */
+
+//#define SPI_CS	PB15
+
 #endif
 
 /* Get-Codes data type */
@@ -440,7 +450,9 @@ extern ERROR_CODE SetupForFlash(void);
 
 int main(void)
 {
-	//Init_PLL();
+	#ifdef INIT_PLL
+		INIT_PLL();
+	#endif
 
 	PIO_MAINLOOP->DirSet(MAINLOOP);
 	PIO_TST->DirSet(TST);

@@ -29,6 +29,10 @@ protected:
 
 #elif defined(__ADSPBF60x__)
 
+	typedef T_HW::S_DMACH* HWPTR_DMACH;
+
+	static const HWPTR_DMACH DMACH_TBL[35];
+
 	T_HW::S_DMACH*				const _dmach;
 
 	T_HW::DMADSC_LM				_dsc1;
@@ -98,7 +102,7 @@ protected:
 
 #endif
 
-#ifndef CPU_SAM4SA
+#if defined(CPU_SAME53) || defined(CPU_XMC48)
 
 	const byte		_chnum;
 
@@ -125,7 +129,11 @@ public:
 	byte CheckMemCopyComplete() { return CheckComplete(); }
 	void Reset() {  }
 
-	DMA_CH(byte chnum) : _dmach(&HW::DMA->CH[chnum]), _chnum(chnum) { }
+	#ifdef __ADSPBF60x__
+		DMA_CH(byte chnum) : _dmach(DMACH_TBL[chnum]) { }
+	#else
+		DMA_CH(byte chnum) : _dmach(&HW::DMA->CH[chnum]) { }
+	#endif
 
 	//void Enable() {  }
 	
@@ -299,7 +307,7 @@ public:
 
 #elif defined(CPU_LPC824)	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	DMA_CH(byte chnum) : _dmach(HW::DMA->CH+chnum), _dmadsc(_DmaTable+chnum), _act_mask(1UL<<chnum), _chnum(chnum) {}
+	DMA_CH(byte chnum) : _dmach(HW::DMA->CH+chnum), _dmadsc(_DmaTable+chnum), _act_mask(1UL<<chnum) /*, _chnum(chnum)*/ {}
 
 	void Enable() {  }
 	void Disable() { HW::DMA->ENABLECLR0 = _act_mask; HW::DMA->ABORT0 = _act_mask; HW::DMA->ERRINT0 = _act_mask; }
@@ -311,7 +319,7 @@ public:
 
 #else
 
-	DMA_CH() : _chnum(0) {}
+	DMA_CH() /*: _chnum(0)*/ {}
 
 #endif
 

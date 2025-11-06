@@ -83,8 +83,9 @@ struct DSCSPI
 		byte			_MODE; // SPIM Mode [0...3]: bit0 - CPOL, bit1 - CPHA
 	};
 
-	#define US2SPI(v) ((v)*SCLK_MHz)
-	#define NS2SPI(v) (((v)*SCLK_MHz+SCLK_MHz/2)/1000)
+	#define US2SPI(v)	((v)*SCLK_MHz)
+	#define NS2SPI(v)	(((v)*SCLK_MHz+SCLK_MHz/2)/1000)
+	#define BAUD2SPI(v) ((SCLK+(v))/((v)*2))
 
 #endif
 
@@ -319,12 +320,12 @@ public:
 
 	S_SPIM(byte num, const SPI_DSC_CS* dcs, u32 dcslen, u32 gen_clk, u16 mask_sck_mosi_miso_d2_d3 = ~0)
 		: _num(num), _DSC_CS(dcs), _DSC_CS_LEN(dcslen), _GEN_CLK(gen_clk),
-		_MASK_SCK_MOSI_MISO_D2_D3(mask_sck_mosi_miso_d2_d3), _DMATX(4+num*2), _DMARX(5+num*2), _dsc(0), _state(ST_WAIT), _spimode(0) {}
+		_MASK_SCK_MOSI_MISO_D2_D3(mask_sck_mosi_miso_d2_d3), _DMATX(SPI0_TXDMA+num*2), _DMARX(SPI0_RXDMA+num*2), _dsc(0), _state(ST_WAIT), _spimode(0) {}
 
 	bool CheckWriteComplete()	{ return /*_DMATX.CheckComplete() &&*/ (_hw->STAT & (SPI_TF|SPI_SPIF)) == (SPI_TF|SPI_SPIF); }
 	bool CheckReadComplete()	{ if (_hw->STAT & SPI_RF) { _hw->CTL = 0; _DMARX.Disable(); return true;} else return false; }
 
-	//void ChipSelect(byte num, u32 spimode, u16 baud)	{ _hw->CLK = baud; _hw->CTL = _spimode = SPI_EN|SPI_MSTR|(spimode & SPIMODE_MASK); _PIO_CS->CLR(_MASK_CS[num]); }
+	void ChipSelect(byte num, u32 spimode, u16 baud) { const SPI_DSC_CS& dsc = _DSC_CS[_csnum = num];	_hw->CLK = baud; _hw->CTL = _spimode = SPI_EN|SPI_MSTR|(spimode & SPIMODE_MASK); if (dsc._PIO != 0) dsc._PIO->CLR(dsc._MASK); }
 
 	void ChipSelect(byte num)
 	{

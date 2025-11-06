@@ -1535,27 +1535,25 @@ namespace T_HW
 
 	struct S_DMACH
 	{
-		BF_PTR	DSCPTR_NXT;                    /*!< Pointer to Next Initial Descriptor */
-		BF_PTR	ADDRSTART;                     /*!< Start Address of Current Buffer */
-		BF_RW32	CFG;                           /*!< Configuration Register */
-		BF_RW32	XCNT;                          /*!< Inner Loop Count Start Value */
-		BF_RW32	XMOD;                          /*!< Inner Loop Address Increment */
-		BF_RW32	YCNT;                          /*!< Outer Loop Count Start Value (2D only) */
-		BF_RW32	YMOD;                          /*!< Outer Loop Address Increment (2D only) */
-    												BF_RO8                  z__RESERVED0[8];
-		BF_PTR	DSCPTR_CUR;                    /*!< Current Descriptor Pointer */
-		BF_RO32	DSCPTR_PRV;                    /*!< Previous Initial Descriptor Pointer */
-		BF_PTR	ADDR_CUR;                      /*!< Current Address */
-		BF_RW32	STAT;                          /*!< Status Register */
-		BF_RO32	XCNT_CUR;                      /*!< Current Count(1D) or intra-row XCNT (2D) */
-		BF_RO32	YCNT_CUR;                      /*!< Current Row Count (2D only) */
-    												BF_RO8                  z__RESERVED1[4];
-		BF_RW32	BWLCNT;                        /*!< Bandwidth Limit Count */
-		BF_RO32	BWLCNT_CUR;                    /*!< Bandwidth Limit Count Current */
-		BF_RW32	BWMCNT;                        /*!< Bandwidth Monitor Count */
-		BF_RO32	BWMCNT_CUR;                    /*!< Bandwidth Monitor Count Current */
-
-		BF_RO32	z__RESERVED2[1004];
+		BF_PTR	DSCPTR_NXT;    //	0xFFC41000	/*!< Pointer to Next Initial Descriptor */
+		BF_PTR	ADDRSTART;     //	0xFFC41004	/*!< Start Address of Current Buffer */
+		BF_RW32	CFG;           //	0xFFC41008	/*!< Configuration Register */
+		BF_RW32	XCNT;          //	0xFFC4100C	/*!< Inner Loop Count Start Value */
+		BF_RW32	XMOD;          //	0xFFC41010	/*!< Inner Loop Address Increment */
+		BF_RW32	YCNT;          //	0xFFC41014	/*!< Outer Loop Count Start Value (2D only) */
+		BF_RW32	YMOD;          //	0xFFC41018	/*!< Outer Loop Address Increment (2D only) */
+    												BF_RO32                  z__RESERVED0[2];
+		BF_PTR	DSCPTR_CUR;    //	0xFFC41024	/*!< Current Descriptor Pointer */
+		BF_RO32	DSCPTR_PRV;    //	0xFFC41028	/*!< Previous Initial Descriptor Pointer */
+		BF_PTR	ADDR_CUR;      //	0xFFC4102C	/*!< Current Address */
+		BF_RW32	STAT;          //	0xFFC41030	/*!< Status Register */
+		BF_RO32	XCNT_CUR;      //	0xFFC41034	/*!< Current Count(1D) or intra-row XCNT (2D) */
+		BF_RO32	YCNT_CUR;      //	0xFFC41038	/*!< Current Row Count (2D only) */
+    												BF_RO32                  z__RESERVED1;
+		BF_RW32	BWLCNT;        //	0xFFC41040	/*!< Bandwidth Limit Count */
+		BF_RO32	BWLCNT_CUR;    //	0xFFC41044	/*!< Bandwidth Limit Count Current */
+		BF_RW32	BWMCNT;        //	0xFFC41048	/*!< Bandwidth Monitor Count */
+		BF_RO32	BWMCNT_CUR;    //	0xFFC4104C	/*!< Bandwidth Monitor Count Current */
 	};
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1585,23 +1583,26 @@ namespace T_HW
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	struct S_DMA
-	{
-		S_DMACH	CH[16];
-		
-		S_DMACH	 SRC0;
-		S_DMACH	 DST0;
+	//struct S_DMA
+	//{
+	//	S_DMACH	CH[16];
+	//	
+	//	S_DMACH	 SRC0;
+	//	S_DMACH	 DST0;
 
-		S_DMACH	z__Reserved1[18];
+	//	S_DMACH	z__Reserved1[18];
 
-		S_DMACH	 SRC1;
-		S_DMACH	 DST1;
-		S_DMACH	 SRC2;
-		S_DMACH	 DST2;
+	//	S_DMACH	 SRC1;
+	//	S_DMACH	 DST1;
+	//	S_DMACH	 SRC2;
+	//	S_DMACH	 DST2;
 
-	};
+	//};
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	typedef S_DMACH		S_DMA0,S_DMA1,S_DMA2,S_DMA3,S_DMA4,S_DMA5,S_DMA6,S_DMA7,S_DMA8,S_DMA9,S_DMA10,S_DMA11,S_DMA12,S_DMA13,S_DMA14,S_DMA15,S_DMA16,
+						S_DMA17,S_DMA18,S_DMA19,S_DMA20,S_DMA21,S_DMA22,S_DMA23,S_DMA24,S_DMA25,S_DMA26,S_DMA27,S_DMA28,S_DMA29,S_DMA30,S_DMA31,S_DMA32,S_DMA33,S_DMA34;
 
 	#define DMA_HSDA                (1UL<<31)       					/* High Speed Descriptor Array Mode */
 	#define DMA_DBURST              (1UL<<30)       					/* Descriptor Bursting (HSDA Mode) */
@@ -1873,48 +1874,38 @@ namespace T_HW
 
 	struct S_SPI
 	{
-		BF_RW32 CTL;                           /*!< Control Register */
-		BF_RW32 RXCTL;                         /*!< Receive Control Register */
-		BF_RW32 TXCTL;                         /*!< Transmit Control Register */
-		BF_RW32 CLK;                           /*!< Clock Rate Register */
-		BF_RW32 DLY;                           /*!< Delay Register */
-		BF_RW32 SLVSEL;                        /*!< Slave Select Register */
-		BF_RW32 RWC;                           /*!< Received Word Count Register */
-		BF_RW32 RWCR;                          /*!< Received Word Count Reload Register */
-		BF_RW32 TWC;                           /*!< Transmitted Word Count Register */
-		BF_RW32 TWCR;                          /*!< Transmitted Word Count Reload Register */
-							BF_RO32                  z__RESERVED1;
-		BF_RW32 IMSK;                          /*!< Interrupt Mask Register */
-		BF_RW32 IMSK_CLR;                      /*!< Interrupt Mask Clear Register */
-		BF_RW32 IMSK_SET;                      /*!< Interrupt Mask Set Register */
-							BF_RO32                  z__RESERVED2;
-		BF_RW32 STAT;                       /*!< Status Register */
-		BF_RW32 _ILAT;                      /*!< Masked Interrupt Condition Register (_ILAT to avoid conflict with legacy macro) */
-		BF_RW32 ILAT_CLR;                   /*!< Masked Interrupt Clear Register */
+		BF_RW32 CTL;		// 0xFFC40404	/*!< Control Register */
+		BF_RW32 RXCTL;		// 0xFFC40408	/*!< Receive Control Register */
+		BF_RW32 TXCTL;		// 0xFFC4040C	/*!< Transmit Control Register */
+		BF_RW32 CLK;		// 0xFFC40410	/*!< Clock Rate Register */
+		BF_RW32 DLY;		// 0xFFC40414	/*!< Delay Register */
+		BF_RW32 SLVSEL;		// 0xFFC40418	/*!< Slave Select Register */
+		BF_RW32 RWC;		// 0xFFC4041C	/*!< Received Word Count Register */
+		BF_RW32 RWCR;		// 0xFFC40420	/*!< Received Word Count Reload Register */
+		BF_RW32 TWC;		// 0xFFC40424	/*!< Transmitted Word Count Register */
+		BF_RW32 TWCR;		// 0xFFC40428	/*!< Transmitted Word Count Reload Register */
+							BF_RO32			      z__RESERVED1;
+		BF_RW32 IMSK;		// 0xFFC40430	/*!< Interrupt Mask Register */
+		BF_RW32 IMSK_CLR;	// 0xFFC40434	/*!< Interrupt Mask Clear Register */
+		BF_RW32 IMSK_SET;	// 0xFFC40438	/*!< Interrupt Mask Set Register */
+							BF_RO32			         z__RESERVED2;
+		BF_RW32 STAT;		// 0xFFC40440	/*!< Status Register */
+		BF_RW32 _ILAT;		// 0xFFC40444	/*!< Masked Interrupt Condition Register (_ILAT to avoid conflict with legacy macro) */
+		BF_RW32 ILAT_CLR;	// 0xFFC40448	/*!< Masked Interrupt Clear Register */
 							BF_RO32                  z__RESERVED3;
 		union
 		{
-			BF_RW32	D;                      /*!< Receive FIFO Data Register */
+			BF_RW32	D;      // 0xFFC40450   /*!< Receive FIFO Data Register */
 			BF_RW16	W;
 			//BF_RW8	B;
 		}
 		RFIFO;
 							BF_RO32                  z__RESERVED4;
-		BF_RW32 TFIFO;                      /*!< Transmit FIFO Data Register */
-							BF_RO32                  z__RESERVED5;
-		BF_RW32 MMRDH;                         /*!< Memory Mapped Read Header */
-		BF_RW32 MMTOP;                         /*!< SPI Memory Top Address */ 	
+		BF_RW32 TFIFO;      // 0xFFC40458   /*!< Transmit FIFO Data Register */
 	};
 
 	typedef S_SPI S_SPI0, S_SPI1;
 
-	#define SPI_MMSE			(1UL<<31)       /* Memory-Mapped SPI Enable */
-	#define SPI_MM_DIS 			(0UL<<31)       /* Memory-Mapped SPI Enable MMSE: Hardware automated access of memory-mapped SPI memory disabled. */
-	#define SPI_MM_EN  			(1UL<<31)       /* Memory-Mapped SPI Enable MMSE: Hardware-automated access of memory-mapped SPI memory enabled. */
-	#define SPI_MMWEM			(1UL<<30)       /* Memory Mapped Write Error Mask */
-	#define SPI_WEM_UNMSK 		(0UL<<30)       /* Memory Mapped Write Error Mask MMWEM: Write error response returned upon write attempts to memory-mapped SPI memory */
-	#define SPI_WEM_MSK   		(1UL<<30)       /* Memory Mapped Write Error Mask MMWEM: Write error response masked (not returned) upon write attempts to memory-mapped SPI memory */
-	#define SPI_SOSI			(1UL<<22)       /* Start on MOSI */
 	#define SPI_STMISO 			(0UL<<22)       /* Start on MOSI SOSI: Start on MISO (DIOM) or start on SPIQ3 (QSPI) */
 	#define SPI_STMOSI 			(1UL<<22)       /* Start on MOSI SOSI: Start on MOSI */
 	#define SPI_MIO_DIS 		(0UL<<20)       /* Multiple I/O Mode: No MIOM (disabled) */
@@ -1972,11 +1963,11 @@ namespace T_HW
 	#define SPI_TFS_75			(3UL<<16)       /* TFS: 75% empty TFIFO */
 	#define SPI_TFS_EMPTY		(4UL<<16)       /* TFS: Empty TFIFO */
 	#define SPI_RFS_MASK		(7UL<<12)       /* SPI_RFIFO Status */
-	#define SPI_RFS_EMPTY		(0UL<<16)       /* RFS: Empty RFIFO */
-	#define SPI_RFS_25			(1UL<<16)       /* RFS: 25% full RFIFO */
-	#define SPI_RFS_50			(2UL<<16)       /* RFS: 50% full RFIFO */
-	#define SPI_RFS_75			(3UL<<16)       /* RFS: 75% full RFIFO */
-	#define SPI_RFS_FULL		(4UL<<16)       /* RFS: Full RFIFO */
+	#define SPI_RFS_EMPTY		(0UL<<12)       /* RFS: Empty RFIFO */
+	#define SPI_RFS_25			(1UL<<12)       /* RFS: 25% full RFIFO */
+	#define SPI_RFS_50			(2UL<<12)       /* RFS: 50% full RFIFO */
+	#define SPI_RFS_75			(3UL<<12)       /* RFS: 75% full RFIFO */
+	#define SPI_RFS_FULL		(4UL<<12)       /* RFS: Full RFIFO */
 	#define SPI_TF 				(1UL<<11)       /* Transmit Finish Indication */
 	#define SPI_RF 				(1UL<<10)       /* Receive Finish Indication */
 	#define SPI_TS  			(1UL<<9)		/* Transmit Start */
@@ -2035,22 +2026,6 @@ namespace T_HW
 	#define SPI_SSE2			(1UL<<2)		/* Slave Select 2 Enable */
 	#define SPI_SSE1			(1UL<<1)		/* Slave Select 1 Enable */
 
-	#define SPI_CMDPINS			(1UL<<29)       /* Pins Used for Command: 0 - Use only one pin: MOSI (overrides SPI_CTL.MIOM bits); 1 - Use pins specified by SPI_CTL.MIOM bits */
-	#define SPI_CMDSKIP			(1UL<<28)       /* Command Skip Enable */
-	#define SPI_WRAP			(1UL<<27)       /* SPI Memory Wrap Indicator */
-	#define SPI_MERGE			(1UL<<26)       /* Merge Enable */
-	#define SPI_TRIDMY(v)		(((v)&3)<<24)   /* Tristate Dummy Timing */
-	#define SPI_TRIDMY_IMMED	(0UL<<24)		/* Tristate Dummy Timing: Tristate outputs immediately */
-	#define SPI_TRIDMY_4BITS	(1UL<<24)		/* Tristate Dummy Timing: Tristate outputs after 4 bits of dummy/mode are transmitted */
-	#define SPI_TRIDMY_8BITS	(2UL<<24)		/* Tristate Dummy Timing: Tristate outputs after 8 bits of dummy/mode are transmitted */
-	#define SPI_TRIDMY_NEVER	(3UL<<24)		/* Tristate Dummy Timing: Never tristate outputs (previously specified output state is held) */
-	#define SPI_MODE(v)			(((v)&0xFF)<<16)/* Mode Field */
-	#define SPI_DMYSIZE(v)		(((v)&7)<<12)   /* Bytes of Dummy/Mode */
-	#define SPI_ADRPINS			(1UL<<11)       /* Pins Used for Address: 0 - Use only one pin: MOSI (overrides SPI_CTL.MIOM bits); 1 - Use pins specified by SPI_CTL.MIOM bits */
-	#define SPI_ADRSIZE(v)		(((v)&7)<<8)    /* Bytes of Read Address */
-	#define SPI_OPCODE(v)		(((v)&0xFF)<<0) /* Read Opcode */
-
-
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 	struct S_PORT
@@ -2078,7 +2053,7 @@ namespace T_HW
 		inline void 	SET(u16 m) 			{ DATA_SET = m;					}
 		inline void 	CLR(u16 m) 			{ DATA_CLR = m;					}
 		inline void 	NOT(u16 m) 			{ DATA_TGL = m;					}
-		inline void 	WBIT(u16 m, bool c) { if (c) SET(m); else CLR(m);	}
+		inline void 	WBIT(u16 m, bool c)	{ if (c) SET(m); else CLR(m);	}
 		inline void 	BSET(u16 b) 		{ SET(1UL<< b);					}
 		inline void 	BCLR(u16 b) 		{ CLR(1UL << b);				}
 		inline void 	BTGL(u16 b) 		{ NOT(1UL << b);				}
@@ -2092,7 +2067,7 @@ namespace T_HW
 		inline void	SetFER(u16 m)		{ FER_SET = m; }
 		inline void	ClrFER(u16 m)		{ FER_CLR = m; }
 
-		inline void	SetMUX(byte pin, byte v) { MUX = (MUX & ~(3UL<<pin)) | ((v&3)<<pin); }
+		inline void	SetMUX(byte pin, byte v) { pin<<=1; MUX = (MUX & ~(3UL<<pin)) | ((v&3)<<pin); }
 
 		inline void	ClearTriggerIRQ(u32 m)	{ ((S_PINT*)(((u32)this & ~0x1FF)|(((u32)this & 0x1FF)<<1)|0x1000))->LATCH = m; }
 	};
@@ -2575,7 +2550,6 @@ namespace HW
 	//MK_PTR(EPPI	  	,	ADI_EPPI0_BASE      ); /*!<  Pointer to Parallel Peripheral Interface (EPPI0) */
 	//MK_PTR(CNT		,	ADI_CNT0_BASE       ); /*!<  Pointer to CNT (CNT0) */
 	//MK_PTR(MSI		,	ADI_MSI0_BASE       ); /*!<  Pointer to Media Services Interface (MSI0) */
-	MK_PTR(DMA		,	REG_DMA0_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
 	//MK_PTR(CRC0   ,	ADI_CRC0_BASE       ); /*!<  Pointer to Cyclic Redundancy Check Unit (CRC0) */
 	//MK_PTR(CRC1   ,	ADI_CRC1_BASE       ); /*!<  Pointer to Cyclic Redundancy Check Unit (CRC1) */
 	//MK_PTR(RTC	  ,	ADI_RTC0_BASE       ); /*!<  Pointer to Real Time Clock (RTC0) */
@@ -2592,6 +2566,42 @@ namespace HW
 
 	MK_PTR(EMAC0,	REG_EMAC0_MACCFG);
 	MK_PTR(EMAC1,	REG_EMAC1_MACCFG);
+	
+	MK_PTR(DMA0	,	REG_DMA0_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA1	,	REG_DMA1_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA2	,	REG_DMA2_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA3	,	REG_DMA3_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA4	,	REG_DMA4_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA5	,	REG_DMA5_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA6	,	REG_DMA6_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA7	,	REG_DMA7_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA8	,	REG_DMA8_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA9	,	REG_DMA9_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA10,	REG_DMA10_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA11,	REG_DMA11_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA12,	REG_DMA12_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA13,	REG_DMA13_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA14,	REG_DMA14_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA15,	REG_DMA15_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA16,	REG_DMA16_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA17,	REG_DMA17_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA18,	REG_DMA18_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA19,	REG_DMA19_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA20,	REG_DMA20_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA21,	REG_DMA21_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA22,	REG_DMA22_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA23,	REG_DMA23_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA24,	REG_DMA24_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA25,	REG_DMA25_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA26,	REG_DMA26_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA27,	REG_DMA27_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA28,	REG_DMA28_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA29,	REG_DMA29_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA30,	REG_DMA30_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA31,	REG_DMA31_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA32,	REG_DMA32_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA33,	REG_DMA33_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
+	MK_PTR(DMA34,	REG_DMA34_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
 
 #pragma diag(pop)
 

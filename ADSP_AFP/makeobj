@@ -51,6 +51,11 @@ loader_opt	=
 cpu_opt		= -proc ADSP-BF706 -si-revision 1.1
 loader_opt	= -bcode 14
 
+!else ifeq targetcpu BF607
+
+cpu_opt		= -proc ADSP-BF607 -si-revision 0.2
+loader_opt	= -bcode 13
+
 !endif
 
 ##################################################################################################
@@ -93,7 +98,7 @@ asm_options = $(cpu_opt) -g -Wno-info -DADI_CCES
 
 ####################################################################################################################################################################################################
 
-compiler_options = $(debug_compiler_options) -c -c++11 -g++ -g -structs-do-not-overlap -no-multiline -save-temps -path-output $(objdir) &
+compiler_options = $(debug_compiler_options) -c -c++11 -g++ -g -absolute-path-dependencies -structs-do-not-overlap -no-multiline -save-temps -path-output $(objdir) &
 	-double-size-32 -decls-strong -warn-protos $(cpu_opt) -DCPU_$(targetcpu) -Wterse -I$(incdir)
 
 ####################################################################################################################################################################################################
@@ -156,9 +161,9 @@ $(target_name).dxe : $(modules_obj) $(libname)
 
 .cpp.doj: .AUTODEPEND		#-absolute-path-dependencies
 	@echo Compiling $[. ...
-	@$(libdir)\ccbl.bat $(compiler_options) -save-temps -path-output $(objdir) -i -gnu-style-dependencies -MD -Mo=$(objdir)\$^&.d -o $^. $[@
+	@$(libdir)\ccbl.bat $(compiler_options) -save-temps -path-output $(objdir) -i  -MD -Mo=$(objdir)\$^&.d -o $^. $[@
 
-####################################################################################################################################################################################################
+##################################################################################-gnu-style-dependencies##################################################################################################################
 
 .s.doj:
 	@echo Assembling $[. ...
