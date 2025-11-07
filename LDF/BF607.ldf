@@ -166,6 +166,13 @@ $OBJS_LIBS_NOT_EXTERNAL =
   #define START_SYM start
 #endif
 
+#if !defined(CORE1_START_ADDR)
+#define CORE1_START_ADDR  0xFF600000 /* reset address */
+#endif
+#if !defined(CORE1_START_SYM)
+  #define CORE1_START_SYM core1_start
+#endif
+
 //#ifndef STACK_SIZE
 //#define STACK_SIZE 0x1FF0
 //#endif
@@ -334,6 +341,9 @@ PROCESSOR P0
 	OUTPUT($COMMAND_LINE_OUTPUT_FILE)
 	RESOLVE(START_SYM, START_ADDR)
 	KEEP(START_SYM, _main)
+
+	RESOLVE(CORE1_START_SYM, CORE1_START_ADDR)
+	KEEP(CORE1_START_SYM, _core1_main)
    
   
 	SECTIONS
@@ -383,13 +393,7 @@ PROCESSOR P0
 
 		} > MEM_CORE0_L1_SCRATCHPAD
 
-		//L1_data_b_SEC_VecTable NO_INIT
-		//{
-		//	INPUT_SECTION_ALIGN(4)
-		//	INPUT_SECTIONS( $OBJS_LIBS(SEC_VecTable) )   
-
-		//} > MEM_L1_DATA_B
-			
+		
 		L1_data_b DEF_SECTION_QUAL
 		{
 			___l1_data_cache_b = CORE0_L1_DATA_CACHE_B; /* DATA B cache is not enabled */
@@ -508,7 +512,49 @@ PROCESSOR P0
 			ldf_heap_L1_DataA_end	= ldf_heap_L1_DataA_adr + ldf_heap_L1_DataA_len;
 
 		} > MEM_CORE0_L1_DATA_A
-      
+
+        //+++++ CORE1 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+		CORE1_L1_code DEF_SECTION_QUAL
+		{
+			INPUT_SECTION_ALIGN(4)
+
+			___core1_l1_code_cache = CORE1_L1_CODE_CACHE;  /* 0 - Instruction cache is not enabled, 1 - enabled */
+
+			INPUT_SECTIONS( $OBJS_LIBS(CORE1_L1_CODE) )
+			INPUT_SECTIONS( $OBJS_LIBS(core1_l1_code) )
+			INPUT_SECTIONS( $OBJS_LIBS(core1_L1_code) )
+		
+		#ifdef USE_CORE1_L1_CODE
+
+			INPUT_SECTIONS( $OBJS_LIBS(cplb_code cplb noncache_code) )
+			INPUT_SECTIONS( $OBJS_LIBS_INTERNAL(program) )
+			INPUT_SECTIONS( $OBJS_LIBS_NOT_EXTERNAL(program) )
+			INPUT_SECTIONS( $OBJS_LIBS(program) )
+
+		#endif
+
+		} > MEM_CORE1_L1_CODE
+
+		CORE1_L1_stack NO_INIT
+		{
+			INPUT_SECTION_ALIGN(4)
+
+			RESERVE(stack_core1_L1_scratchpad, stack_core1_L1_scratchpad_length, 0, 4)
+			ldf_core1_stack_space = stack_core1_L1_scratchpad;
+			ldf_core1_stack_end = (ldf_core1_stack_space + stack_core1_L1_scratchpad_length) & 0XFFFFFFFC;
+
+		} > MEM_CORE1_L1_SCRATCHPAD
+
+		CORE1_L1_data_a_SEC_VecTable NO_INIT
+		{
+			INPUT_SECTION_ALIGN(4)
+			INPUT_SECTIONS( $OBJS_LIBS(core1_SEC_VecTable) )   
+
+		} > MEM_CORE1_L1_DATA_A
+
+
+        //+++++ L2 SRAM +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 		/*
 		** Input sections to the L2 SRAM memory.

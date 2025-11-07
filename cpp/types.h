@@ -27,7 +27,7 @@
 			#define __breakpoint(v)
 		#endif
 
-		#define __forceinline inline
+		#define __forceinline _Pragma("inline") _Pragma("always_inline")
 		#define __nop __builtin_NOP
 		#define __packed /*__attribute__((packed))*/
 

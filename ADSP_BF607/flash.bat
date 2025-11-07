@@ -1,0 +1,2 @@
+@"%ADI_CCES%\cldp" -verbose -log -device flash -proc ADSP-BF607 -emu 1000 -driver ..\BF607_AFP.dxe -cmd info -cmd prog -format bin -file .\BF607_Debug\ADSP_BF607.ldr -cmd compare -format bin -file .\BF607_Debug\ADSP_BF607.ldr
+pause

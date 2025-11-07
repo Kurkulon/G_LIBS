@@ -619,7 +619,7 @@ bool FlashSPI::GetFlashType()
 
 				byte status = ReadStatusRegister();
 
-				byte status_new = status & ~(SR_BP0|SR_BP1|SR_BP2|SR_BP3);
+				byte status_new = (status & ~(SR_BP0|SR_BP1|SR_BP2|SR_BP3)) | SR_QE;
 
 				if (flashStartAdr >= 0x10000) status_new |= SR_BP1|SR_BP2|SR_BP3;
 

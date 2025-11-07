@@ -626,7 +626,9 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='BF706_Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='BF607_Debug|Win32'">true</ExcludedFromBuild>
     </None>
-    <None Include="LDF\BF607.ldf" />
+    <None Include="LDF\BF607.ldf">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='BF607_Debug|Win32'">true</ExcludedFromBuild>
+    </None>
     <None Include="LDF\BF706.ldf">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='BF706_Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='BF607_Debug|Win32'">true</ExcludedFromBuild>

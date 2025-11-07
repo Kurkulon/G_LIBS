@@ -306,17 +306,14 @@ namespace T_HW
 	#define L1DM_DFLT_WT_L1L2		(7)				/* SYSCPROPS: Write through cacheable in L1 and L2 */ 
 
 	#define L1DM_PSIZE(v)			(((v)&15)<<16)  /* Page Size */
-	#define L1DM_PSIZE_1KB			(0UL<<16)		/* PSIZE: 1K byte page size */
-	#define L1DM_PSIZE_4KB			(1UL<<16)		/* PSIZE: 4K byte page size */
-	#define L1DM_PSIZE_16KB			(2UL<<16)		/* PSIZE: 16K byte page size */
-	#define L1DM_PSIZE_64KB			(3UL<<16)		/* PSIZE: 64K byte page size */
-	#define L1DM_PSIZE_256KB		(4UL<<16)		/* PSIZE: 256K byte page size */
-	#define L1DM_PSIZE_1MB			(5UL<<16)		/* PSIZE: 1M byte page size */
-	#define L1DM_PSIZE_4MB			(6UL<<16)		/* PSIZE: 4M byte page size */
-	#define L1DM_PSIZE_16MB			(7UL<<16)		/* PSIZE: 16M byte page size */
-	#define L1DM_PSIZE_64MB			(8UL<<16)		/* PSIZE: 64M byte page size */
-	#define L1DM_PSIZE_256MB		(9UL<<16)		/* PSIZE: 256M byte page size */ 
-	#define L1DM_PSIZE_1GB			(10UL<<16)		/* PSIZE: 1G byte page size */
+	#define L1DM_PSIZE_1KB          (0<<16)			/* PSIZE: 1 KB Page Size */
+	#define L1DM_PSIZE_4KB          (1<<16)			/* PSIZE: 4 KB Page Size */
+	#define L1DM_PSIZE_1MB          (2<<16)			/* PSIZE: 1 MB Page Size */
+	#define L1DM_PSIZE_4MB          (3<<16)			/* PSIZE: 4 MB Page Size */
+	#define L1DM_PSIZE_16KB         (4<<16)			/* PSIZE: 16 KB Page Size */
+	#define L1DM_PSIZE_64KB         (5<<16)			/* PSIZE: 64 KB Page Size */
+	#define L1DM_PSIZE_16MB         (6<<16)			/* PSIZE: 16 MB Page Size */
+	#define L1DM_PSIZE_64MB         (7<<16)			/* PSIZE: 64 MB Page Size */
 
 	#define L1DM_NOCACHE			(0<<12)			/* CPROPS: Non-cacheable memory space */
 	#define L1DM_WB_L1				(1<<12)			/* CPROPS: Non-cacheable in L2; write back cacheable in L1 */
@@ -342,18 +339,62 @@ namespace T_HW
 	 * \brief  Instruction Memory Unit
 	*/ 
 
+
+//#define IMEM_CONTROL                    //	0xFFE01004         /* Instruction memory control */
+//#define ICPLB_STATUS                    //	0xFFE01008         /* Cacheability Protection Lookaside Buffer Status */
+//#define ICPLB_FAULT_ADDR                //	0xFFE0100C         /* Cacheability Protection Lookaside Buffer Fault Address */
+
+//#define ICPLB_ADDR0                     //	0xFFE01100         /* Cacheability Protection Lookaside Buffer Descriptor Address */
+//#define ICPLB_ADDR1                     //	0xFFE01104         /* Cacheability Protection Lookaside Buffer Descriptor Address */
+//#define ICPLB_ADDR2                     //	0xFFE01108         /* Cacheability Protection Lookaside Buffer Descriptor Address */
+//#define ICPLB_ADDR3                     //	0xFFE0110C         /* Cacheability Protection Lookaside Buffer Descriptor Address */
+//#define ICPLB_ADDR4                     //	0xFFE01110         /* Cacheability Protection Lookaside Buffer Descriptor Address */
+//#define ICPLB_ADDR5                     //	0xFFE01114         /* Cacheability Protection Lookaside Buffer Descriptor Address */
+//#define ICPLB_ADDR6                     //	0xFFE01118         /* Cacheability Protection Lookaside Buffer Descriptor Address */
+//#define ICPLB_ADDR7                     //	0xFFE0111C         /* Cacheability Protection Lookaside Buffer Descriptor Address */
+//#define ICPLB_ADDR8                     //	0xFFE01120         /* Cacheability Protection Lookaside Buffer Descriptor Address */
+//#define ICPLB_ADDR9                     //	0xFFE01124         /* Cacheability Protection Lookaside Buffer Descriptor Address */
+//#define ICPLB_ADDR10                    //	0xFFE01128         /* Cacheability Protection Lookaside Buffer Descriptor Address */
+//#define ICPLB_ADDR11                    //	0xFFE0112C         /* Cacheability Protection Lookaside Buffer Descriptor Address */
+//#define ICPLB_ADDR12                    //	0xFFE01130         /* Cacheability Protection Lookaside Buffer Descriptor Address */
+//#define ICPLB_ADDR13                    //	0xFFE01134         /* Cacheability Protection Lookaside Buffer Descriptor Address */
+//#define ICPLB_ADDR14                    //	0xFFE01138         /* Cacheability Protection Lookaside Buffer Descriptor Address */
+//#define ICPLB_ADDR15                    //	0xFFE0113C         /* Cacheability Protection Lookaside Buffer Descriptor Address */
+
+//#define ICPLB_DATA0                     //	0xFFE01200         /* Cacheability Protection Lookaside Buffer Descriptor Status */
+//#define ICPLB_DATA1                     //	0xFFE01204         /* Cacheability Protection Lookaside Buffer Descriptor Status */
+//#define ICPLB_DATA2                     //	0xFFE01208         /* Cacheability Protection Lookaside Buffer Descriptor Status */
+//#define ICPLB_DATA3                     //	0xFFE0120C         /* Cacheability Protection Lookaside Buffer Descriptor Status */
+//#define ICPLB_DATA4                     //	0xFFE01210         /* Cacheability Protection Lookaside Buffer Descriptor Status */
+//#define ICPLB_DATA5                     //	0xFFE01214         /* Cacheability Protection Lookaside Buffer Descriptor Status */
+//#define ICPLB_DATA6                     //	0xFFE01218         /* Cacheability Protection Lookaside Buffer Descriptor Status */
+//#define ICPLB_DATA7                     //	0xFFE0121C         /* Cacheability Protection Lookaside Buffer Descriptor Status */
+//#define ICPLB_DATA8                     //	0xFFE01220         /* Cacheability Protection Lookaside Buffer Descriptor Status */
+//#define ICPLB_DATA9                     //	0xFFE01224         /* Cacheability Protection Lookaside Buffer Descriptor Status */
+//#define ICPLB_DATA10                    //	0xFFE01228         /* Cacheability Protection Lookaside Buffer Descriptor Status */
+//#define ICPLB_DATA11                    //	0xFFE0122C         /* Cacheability Protection Lookaside Buffer Descriptor Status */
+//#define ICPLB_DATA12                    //	0xFFE01230         /* Cacheability Protection Lookaside Buffer Descriptor Status */
+//#define ICPLB_DATA13                    //	0xFFE01234         /* Cacheability Protection Lookaside Buffer Descriptor Status */
+//#define ICPLB_DATA14                    //	0xFFE01238         /* Cacheability Protection Lookaside Buffer Descriptor Status */
+//#define ICPLB_DATA15                    //	0xFFE0123C         /* Cacheability Protection Lookaside Buffer Descriptor Status */
+
+
 	struct S_L1IM
 	{
-    											//	BF_RO8                  z__RESERVED0[4];
-		BF_RW32 CTL;                          /*!< Instruction Memory Control Register */
-		BF_RO32 STAT;                         /*!< Instruction Memory CPLB Status Register */
-		BF_RO32 CPLB_FAULT_ADDR;             /*!< Instruction Memory CPLB Fault Address Register (legacy name) */
-		BF_RW32 CPLB_DFLT;                    /*!< Instruction Memory CPLB Default Settings Register */
-		BF_RW32 PERR_STAT;                    /*!< Instruction Parity Error Status Register */
-    											BF_RO8                  z__RESERVED1[232];
-		BF_RW32 CPLB_ADDR[16];                /*!< Instruction Memory CPLB Address Registers */
-    											BF_RO8                  z__RESERVED2[192];
-		BF_RW32 CPLB_DATA[16];                /*!< Instruction Memory CPLB Data Registers */
+		BF_RW32 CTL;				//	0xFFE01004		/*!< Instruction Memory Control Register */
+		BF_RO32 STAT;				//	0xFFE01008		/*!< Instruction Memory CPLB Status Register */
+		BF_RO32 CPLB_FAULT_ADDR;	//	0xFFE0100C		/*!< Instruction Memory CPLB Fault Address Register (legacy name) */
+    											BF_RO32                  z__RESERVED1[(0x100-0x10)/4];
+		BF_RW32 CPLB_ADDR[16];							/*!< Instruction Memory CPLB Address Registers */
+												BF_RO32                  z__RESERVED2[(0x200-0x140)/4];
+		BF_RW32 CPLB_DATA[16];							/*!< Instruction Memory CPLB Data Registers */
+												BF_RO32					z__RESERVED3[(0x300-0x240)/4];
+		BF_RW32 TEST_COMMAND;		//	0xFFE01300         /* Instruction Test Command Register */
+		BF_RW32 TEST_DATA0;			//	0xFFE01400         /* Instruction Test Data Register */
+		BF_RW32 TEST_DATA1;			//	0xFFE01404         /* Instruction Test Data Register */
+		BF_RW32 BNKA_PELOC;			//	0xFFE01408         /* Instruction Bank A Parity Error Location */
+		BF_RW32 BNKB_PELOC;			//	0xFFE0140C         /* Instruction Bank B Parity Error Location */
+		BF_RW32 BNKC_PELOC;			//	0xFFE01410         /* Instruction Bank C Parity Error Location */
 	};
 
 	#define L1IM_CPRIORST				(1UL<<13)							/* ICTL: Cache Line Priority Reset */
@@ -379,23 +420,21 @@ namespace T_HW
 	//#define L1IM_IPERR_STAT_LOCATION         0							/* Parity Error Location */ 
 
 	#define L1IM_PSIZE(v)				(((v)&15)<<16)                      /* Page Size */
-	#define L1IM_PSIZE_1KB				(0UL<<16)							/* PSIZE: 1K byte page size */
-	#define L1IM_PSIZE_4KB				(1UL<<16)							/* PSIZE: 4K byte page size */
-	#define L1IM_PSIZE_16KB				(2UL<<16)							/* PSIZE: 16K byte page size */
-	#define L1IM_PSIZE_64KB				(3UL<<16)							/* PSIZE: 64K byte page size */
-	#define L1IM_PSIZE_256KB			(4UL<<16)							/* PSIZE: 256K byte page size */
-	#define L1IM_PSIZE_1MB				(5UL<<16)							/* PSIZE: 1M byte page size */
-	#define L1IM_PSIZE_4MB				(6UL<<16)							/* PSIZE: 4M byte page size */
-	#define L1IM_PSIZE_16MB				(7UL<<16)							/* PSIZE: 16M byte page size */
-	#define L1IM_PSIZE_64MB				(8UL<<16)							/* PSIZE: 64M byte page size */
-	#define L1IM_PSIZE_256MB			(9UL<<16)							/* PSIZE: 256M byte page size */ 
-	#define L1IM_PSIZE_1GB				(10UL<<16)							/* PSIZE: 1G byte page size */
+	#define L1IM_PSIZE_1KB              (0<<16)								/* PSIZE: 1 KB Page Size */
+	#define L1IM_PSIZE_4KB              (1<<16)								/* PSIZE: 4 KB Page Size */
+	#define L1IM_PSIZE_1MB              (2<<16)								/* PSIZE: 1 MB Page Size */
+	#define L1IM_PSIZE_4MB              (3<<16)								/* PSIZE: 4 MB Page Size */
+	#define L1IM_PSIZE_16KB             (4<<16)								/* PSIZE: 16 KB Page Size */
+	#define L1IM_PSIZE_64KB             (5<<16)								/* PSIZE: 64 KB Page Size */
+	#define L1IM_PSIZE_16MB             (6<<16)								/* PSIZE: 16 MB Page Size */
+	#define L1IM_PSIZE_64MB             (7<<16)								/* PSIZE: 64 MB Page Size */
 
 	#define L1IM_NOCACHE				(0UL<<12)							/* ICPLB_DATA.CPROPS: Non-cacheable memory space */
 	#define L1IM_L1CACHE				(1UL<<12)							/* ICPLB_DATA.CPROPS: Non-cacheable in L2; cacheable in L1 */
 
 	#define L1IM_CPRIO_LO				(0UL<<8)							/* ICPLB_DATA: Cache Line Priority : Low importance */
 	#define L1IM_CPRIO_HI				(1UL<<8)							/* ICPLB_DATA: Cache Line Priority : High importance */
+	#define L1IM_L1SRAM					(1UL<<5)                            /* CPLB L1SRAM */
 	#define L1IM_UREAD					(1UL<<2)							/* ICPLB_DATA: Allow User Read */
 	#define L1IM_LOCK					(1UL<<1)							/* ICPLB_DATA: CPLB Lock */
 	#define L1IM_VALID					(1UL<<0)							/* ICPLB_DATA: CPLB Valid */ 
@@ -2050,26 +2089,26 @@ namespace T_HW
 		BF_RW32	LOCK;                          /*!< Port x GPIO Lock Register */
 		BF_RW32	TRIG_TGL;                      /*!< Port x GPIO Trigger Toggle Register */ 	
 
-		inline void 	SET(u16 m) 			{ DATA_SET = m;					}
-		inline void 	CLR(u16 m) 			{ DATA_CLR = m;					}
-		inline void 	NOT(u16 m) 			{ DATA_TGL = m;					}
-		inline void 	WBIT(u16 m, bool c)	{ if (c) SET(m); else CLR(m);	}
-		inline void 	BSET(u16 b) 		{ SET(1UL<< b);					}
-		inline void 	BCLR(u16 b) 		{ CLR(1UL << b);				}
-		inline void 	BTGL(u16 b) 		{ NOT(1UL << b);				}
+		__forceinline void 	SET(u16 m) 			{ DATA_SET = m;					}
+		__forceinline void 	CLR(u16 m) 			{ DATA_CLR = m;					}
+		__forceinline void 	NOT(u16 m) 			{ DATA_TGL = m;					}
+		__forceinline void 	WBIT(u16 m, bool c)	{ if (c) SET(m); else CLR(m);	}
+		__forceinline void 	BSET(u16 b) 		{ SET(1UL<< b);					}
+		__forceinline void 	BCLR(u16 b) 		{ CLR(1UL << b);				}
+		__forceinline void 	BTGL(u16 b) 		{ NOT(1UL << b);				}
 
-		inline bool 	TBSET(u16 b) 		{ return DATA & (1<<b); }
-		inline bool 	TBCLR(u16 b) 		{ return (DATA & (1<<b)) == 0; }
+		__forceinline bool 	TBSET(u16 b) 		{ return DATA & (1<<b); }
+		__forceinline bool 	TBCLR(u16 b) 		{ return (DATA & (1<<b)) == 0; }
 
-		inline void 	DirSet(u16 m) 		{ DIR_SET = m; }
-		inline void 	DirClr(u16 m) 		{ DIR_CLR = m; }
+		__forceinline void 	DirSet(u16 m) 		{ DIR_SET = m; }
+		__forceinline void 	DirClr(u16 m) 		{ DIR_CLR = m; }
 
-		inline void	SetFER(u16 m)		{ FER_SET = m; }
-		inline void	ClrFER(u16 m)		{ FER_CLR = m; }
+		__forceinline void	SetFER(u16 m)		{ FER_SET = m; }
+		__forceinline void	ClrFER(u16 m)		{ FER_CLR = m; }
 
-		inline void	SetMUX(byte pin, byte v) { pin<<=1; MUX = (MUX & ~(3UL<<pin)) | ((v&3)<<pin); }
+		__forceinline void	SetMUX(byte pin, byte v) { pin<<=1; MUX = (MUX & ~(3UL<<pin)) | ((v&3)<<pin); }
 
-		inline void	ClearTriggerIRQ(u32 m)	{ ((S_PINT*)(((u32)this & ~0x1FF)|(((u32)this & 0x1FF)<<1)|0x1000))->LATCH = m; }
+		__forceinline void	ClearTriggerIRQ(u32 m)	{ ((S_PINT*)(((u32)this & ~0x1FF)|(((u32)this & 0x1FF)<<1)|0x1000))->LATCH = m; }
 	};
 
 	typedef S_PORT S_PORTA, S_PORTB, S_PORTC, S_PORTD, S_PORTE, S_PORTF, S_PORTG, S_PIO, S_PIOA, S_PIOB, S_PIOC, S_PIOD, S_PIOE, S_PIOF, S_PIOG;
