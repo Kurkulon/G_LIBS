@@ -244,7 +244,7 @@ void main()
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 //#pragma section("CORE1_L1_CODE")
-#pragma default_section(CODE, "CORE1_L1_CODE")
+#pragma default_section(CODE, "CORE1_CODE")
 
 extern "C" void core1_main()
 {

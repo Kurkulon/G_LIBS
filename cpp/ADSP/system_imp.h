@@ -737,19 +737,19 @@ void* Alloc_UnCached(u32 size)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#pragma section ("L1_code")
+#pragma section ("core0_code")
 
 static void Init_Cache()
 {
-	int l1_code_cache;
-	int l1_data_cache_a;
-	int l1_data_cache_b;
+	int core0_code_cache;
+	int core0_data_cache_a;
+	int core0_data_cache_b;
 
-	asm (	".extern ___l1_code_cache;\n	.type ___l1_code_cache, STT_OBJECT;\n	%0 = ___l1_code_cache (Z);"		: "=d" (l1_code_cache)		: : );						
-	asm (	".extern ___l1_data_cache_a;\n	.type ___l1_data_cache_a, STT_OBJECT;\n	%0 = ___l1_data_cache_a (Z);"	: "=d" (l1_data_cache_a)	: : );
-	asm (	".extern ___l1_data_cache_b;\n	.type ___l1_data_cache_b, STT_OBJECT;\n	%0 = ___l1_data_cache_b (Z);"	: "=d" (l1_data_cache_b)	: : );
+	asm (	".extern ___core0_code_cache;\n		.type ___core0_code_cache, STT_OBJECT;\n	%0 = ___core0_code_cache (Z);"		: "=d" (core0_code_cache)	: : );						
+	asm (	".extern ___core0_data_cache_a;\n	.type ___core0_data_cache_a, STT_OBJECT;\n	%0 = ___core0_data_cache_a (Z);"	: "=d" (core0_data_cache_a)	: : );
+	asm (	".extern ___core0_data_cache_b;\n	.type ___core0_data_cache_b, STT_OBJECT;\n	%0 = ___core0_data_cache_b (Z);"	: "=d" (core0_data_cache_b)	: : );
 
-	if (l1_code_cache != 0)
+	if (core0_code_cache != 0)
 	{
 		ssync();
 
@@ -793,11 +793,11 @@ static void Init_Cache()
 		ssync();
 	};
 
-	if (l1_data_cache_a != 0 || l1_data_cache_b != 0)
+	if (core0_data_cache_a != 0 || core0_data_cache_b != 0)
 	{
 		ssync();
 
-		HW::L1DM->CTL		= (l1_data_cache_b) ? (L1DM_ACACHE_BCACHE) : ((l1_data_cache_a) ? L1DM_ACACHE_BSRAM : L1DM_SRAM_AB);
+		HW::L1DM->CTL		= (core0_data_cache_b) ? (L1DM_ACACHE_BCACHE) : ((core0_data_cache_a) ? L1DM_ACACHE_BSRAM : L1DM_SRAM_AB);
 
 		const u32 DCPLB_L2_ROM				= L1DM_PSIZE_16KB	| L1DM_WB_L1	| L1DM_DIRTY |								L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
 		const u32 DCPLB_L2_ASRAM			= L1DM_PSIZE_64MB	| L1DM_WB_L1	| L1DM_DIRTY | L1DM_SWRITE | L1DM_UWRITE |	L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
@@ -809,9 +809,9 @@ static void Init_Cache()
 		byte n = 0;
 
 									HW::L1DM->CPLB_ADDR[n] = 0xFF800000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L1_SRAM;				// L1 Data Block A SRAM (16 KB)
-		if (l1_data_cache_a == 0)	HW::L1DM->CPLB_ADDR[n] = 0xFF804000, HW::L1DM->CPLB_DATA[n++] = DCPLB_L1_SRAM;				// L1 Data Block A SRAM/Cache (16 KB)
+		if (core0_data_cache_a == 0)	HW::L1DM->CPLB_ADDR[n] = 0xFF804000, HW::L1DM->CPLB_DATA[n++] = DCPLB_L1_SRAM;				// L1 Data Block A SRAM/Cache (16 KB)
 									HW::L1DM->CPLB_ADDR[n] = 0xFF900000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L1_SRAM;				// L1 Data Block B SRAM (16 KB)
-		if (l1_data_cache_b == 0)	HW::L1DM->CPLB_ADDR[n] = 0xFF904000, HW::L1DM->CPLB_DATA[n++] = DCPLB_L1_SRAM;				// L1 Data Block B SRAM/Cache (16 KB)
+		if (core0_data_cache_b == 0)	HW::L1DM->CPLB_ADDR[n] = 0xFF904000, HW::L1DM->CPLB_DATA[n++] = DCPLB_L1_SRAM;				// L1 Data Block B SRAM/Cache (16 KB)
 									
 									HW::L1DM->CPLB_ADDR[n] = 0xB0000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ASRAM;			// Async SRAM Bank 0 (64MB)
 									HW::L1DM->CPLB_ADDR[n] = 0xB4000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ASRAM;			// Async SRAM Bank 1 (64MB)
@@ -924,7 +924,7 @@ bool IsDataCacheB_Enabled()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#pragma section ("core1_L1_code")
+#pragma section ("core1_code")
 
 static void Core1_Init_Cache()
 {
@@ -1065,7 +1065,7 @@ static void Core1_Init_Cache()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#pragma section ("L1_code")
+#pragma section ("core0_code")
 
 extern "C" void SystemInit()
 {
@@ -1142,7 +1142,7 @@ extern "C" void SystemInit()
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#pragma section ("core1_L1_code")
+#pragma section ("core1_code")
 
 extern "C" void Core1_SystemInit()
 {

@@ -69,7 +69,7 @@
 // memory initialization support.
 .FILE_ATTR requiredForROMBoot;
 
-.SECTION/DOUBLEANY L1_code;
+.SECTION/DOUBLEANY core0_code;
 .ALIGN 2;
 
 start:
@@ -118,9 +118,9 @@ start:
       // Initialize the stack.
       // Note: this points just past the end of the stack memory.
       // So the first write must be with [--SP].
-      .EXTERN ldf_stack_end;
-      .TYPE ldf_stack_end,STT_OBJECT;
-      LOADIMM32REG(SP, ldf_stack_end)
+      .EXTERN ldf_core0_stack_end;
+      .TYPE ldf_core0_stack_end,STT_OBJECT;
+      LOADIMM32REG(SP, ldf_core0_stack_end)
       USP = SP;
 
       // Push UNASSIGNED_VAL as RETS and old FP onto the stack to terminate
@@ -431,7 +431,7 @@ core0_dummy_IVG:
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-.SECTION/DOUBLEANY core1_L1_code;
+.SECTION/DOUBLEANY core1_code;
 .ALIGN 2;
 
 core1_start:
