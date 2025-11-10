@@ -331,6 +331,54 @@ supervisor_mode:
 		.TYPE ___ctorloop,STT_FUNC
 		CALL.X ___ctorloop;
 
+ctorloop_start:
+
+        LOADIMM32REG(P4, ___ctor_table)
+        P4 += 4;
+        P1 = [P4];
+        CC = P1 == 0;
+        IF CC JUMP ctorloop_end;
+
+        P5 = 4;
+
+ctorloop_loop:
+
+        CALL(P1);
+        P4 = P4 + P5;
+        P1 = [P4];
+        CC = P1 == 0;
+        IF !CC JUMP ctorloop_loop;
+
+ctorloop_end:
+
+//          ___ctorloop:
+//c8088140:   LINK 0x0 ;
+//c8088144:   [ -- SP ] = ( P5:4 ) ;
+//c8088146:   SP += -12 ;
+//c8088148:   P4.L = 0x30 ;
+//c808814c:   P4.H = 0xff90 ;
+//c8088150:   P1 = [ P4 ] ;
+//c8088152:   R0 = [ P1 + 0x4 ] ;
+//c8088154:   CC = R0 == 0 ;
+//c8088156:   IF CC JUMP .P34L2 ;
+//c8088158:   P5 = 4 ;
+//          .P34L3:
+//c808815a:   P1 = [ P4 ] ;
+//c808815c:   P1 = P1 + P5 ;
+//c808815e:   P1 = [ P1 ] ;
+//c8088160:   P5 += 4 ;
+//c8088162:   CALL ( P1 ) ;
+//c8088164:   P1 = [ P4 ] ;
+//c8088166:   P1 = P1 + P5 ;
+//c8088168:   R0 = [ P1 ] ;
+//c808816a:   CC = R0 == 0 ;
+//c808816c:   IF ! CC JUMP .P34L3 ( BP ) ;
+//          .P34L2:
+//c808816e:   SP += 12 ;
+//c8088170:   ( P5:4 ) = [ SP ++ ] ;
+//c8088172:   UNLINK ;
+//c8088176:   RTS ;
+
 		// Call the application program.
 		.EXTERN _main;
 		.TYPE _main,STT_FUNC;

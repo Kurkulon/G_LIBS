@@ -229,13 +229,49 @@ char build_date[] __attribute__ ((used)) = "\n" "ADSP_AFP" "\n" __DATE__ "\n" __
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#pragma optimize_for_space
+
+extern "C" void __ctorloop()
+{
+	typedef void (*CTR)();
+
+	extern CTR *__ctor_table;
+
+	CTR *p = __ctor_table+1;
+
+	while (p != 0)
+	{
+		if (((u32)p & 0xFFF00000) != 0xFF600000) (*p)();
+
+		p++;
+	};
+}
+
+#pragma optimize_as_cmd_line
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+DataPointer dp(0);
+
 void main()
 {
 	PIO_MAINLOOP->DirSet(MAINLOOP);
+	
+	HW::RCU->CRCTL &= ~RCU_CR1;
 
 	while (1)
 	{
+		dp.b += 1;
 
+		//if (HW::RCU->SIDIS & RCU_SI1)
+		//{
+		//	PIO_MAINLOOP->SET(MAINLOOP);
+		//	PIO_MAINLOOP->CLR(MAINLOOP);
+		//	PIO_MAINLOOP->SET(MAINLOOP);
+		//	PIO_MAINLOOP->CLR(MAINLOOP);
+		//	PIO_MAINLOOP->SET(MAINLOOP);
+		//	PIO_MAINLOOP->CLR(MAINLOOP);
+		//};
 
 		PIO_MAINLOOP->NOT(MAINLOOP);
 	};

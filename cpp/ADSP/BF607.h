@@ -46,16 +46,16 @@ extern u32 Get_SCLK_MHz();
 extern u32 Get_SCLK0_MHz();	
 extern u32 Get_SCLK1_MHz();	
 
-extern void* Alloc_L1_DataA(u32 size);
-extern void* Alloc_L1_DataB(u32 size);
-extern void* Alloc_L2_NoCache(u32 size);
-extern void* Alloc_UnCached(u32 size);
-extern void* Alloc_L2_CacheWT(u32 size);
-
-extern bool IsCodeCacheEnabled();
-extern bool IsDataCacheEnabled();
-extern bool IsDataCacheA_Enabled();
-extern bool IsDataCacheB_Enabled();
+//extern void* Alloc_L1_DataA(u32 size);
+//extern void* Alloc_L1_DataB(u32 size);
+//extern void* Alloc_L2_NoCache(u32 size);
+//extern void* Alloc_UnCached(u32 size);
+//extern void* Alloc_L2_CacheWT(u32 size);
+//
+//extern bool IsCodeCacheEnabled();
+//extern bool IsDataCacheEnabled();
+//extern bool IsDataCacheA_Enabled();
+//extern bool IsDataCacheB_Enabled();
 
 //#pragma always_inline
 //inline void SIC_EnableIRQ(byte pid) { *pSIC_IMASK |= 1UL<<pid; }
@@ -536,7 +536,7 @@ namespace T_HW
 			volatile u32 _SSRST		:1;     /* System Source Reset */
 			volatile u32 _SWRST		:1;		/* Software Reset */ 
 			volatile u32			:1;     
-			volatile u32 _RSTOUT		:1;		/* Reset Out Status */  
+			volatile u32 _RSTOUT	:1;		/* Reset Out Status */  
 			volatile u32			:2;     
 			volatile u32 _BMODE		:4;		/* Boot Mode */  
 			volatile u32			:4;     
@@ -544,10 +544,10 @@ namespace T_HW
 			volatile u32 _LWERR		:1;     /* Lock Write Error */
 			volatile u32 _RSTOUTERR	:1;     /* Reset Out Error */
 
-			operator u32() { return __builtin_mmr_read32(this); }
-			u32 operator=(u32 v) { return *((u32*)this) = v; }
+			__forceinline operator u32()			{ return __builtin_mmr_read32(this); }
+			__forceinline u32 operator=(u32 v)		{ return *((u32*)this) = v; }
 
-			u32 Bits() { return __builtin_mmr_read32(this); } 
+			__forceinline u32 Bits()				{ return __builtin_mmr_read32(this); } 
 
 		} STAT;	//RW16	STATUS;	/**< \brief Offset: 0x1A (R/W 16) I2CM Status */
 
@@ -559,24 +559,44 @@ namespace T_HW
 		BF_RW32 SVECT_LCK;                     /*!< SVECT Lock Register */
 		BF_RW32 BCODE;                         /*!< Boot Code Register */
 		BF_RW32 SVECT0;                        /*!< Software Vector Register 0 */
-    												BF_RO8                  z__RESERVED0[60];
-		BF_RW32 MSG;                           /*!< Message Register */
-		BF_RW32 MSG_SET;                       /*!< Message Set Bits Register */
-		BF_RW32 MSG_CLR;                       /*!< Message Clear Bits Register */
-    												BF_RO8                  z__RESERVED1[4];
-		BF_RO32 REVID;                         /*!< Revision ID Register */
+		BF_RW32 SVECT1;                        /*!< Software Vector Register 1 */
 	};
 
-	#define RCU_STAT_RSTOUTERR              (1UL<<18)                               /* Reset Out Error */
-	#define RCU_STAT_LWERR                  (1UL<<17)                               /* Lock Write Error */
-	#define RCU_STAT_ADDRERR                (1UL<<16)                               /* Address Error */
-	#define RCU_STAT_BMODE(v)                (((v)&0xF)<<8)                         /* Boot Mode */
-	#define RCU_STAT_RSTOUT                  (1UL<<5)                               /* Reset Out Status */
-	#define RCU_STAT_SWRST                   (1UL<<3)                               /* Software Reset */
-	#define RCU_STAT_SSRST                   (1UL<<2)                               /* System Source Reset */
-	#define RCU_STAT_HBRST                   (1UL<<1)                               /* Hibernate Reset */
-	#define RCU_STAT_HWRST                   (1UL<<0)                               /* Hardware Reset */
-											
+	#define RCU_LOCK				(1UL<<31)		/* Lock */
+	#define RCU_RSTOUTDSRT			(1UL<< 2)		/* Reset Out Deassert */
+	#define RCU_RSTOUTASRT			(1UL<< 1)		/* Reset Out Assert */
+	#define RCU_SYSRST				(1UL<< 0)		/* System Reset */
+
+	#define RCU_STAT_RSTOUTERR		(1UL<<18)		/* Reset Out Error */
+	#define RCU_STAT_LWERR			(1UL<<17)		/* Lock Write Error */
+	#define RCU_STAT_ADDRERR		(1UL<<16)		/* Address Error */
+	//#define RCU_STAT_BMODE(v)		(((v)&0xF)<<8)	/* Boot Mode */
+	#define RCU_STAT_RSTOUT			(1UL<<5)		/* Reset Out Status */
+	#define RCU_STAT_SWRST			(1UL<<3)		/* Software Reset */
+	#define RCU_STAT_SSRST			(1UL<<2)		/* System Source Reset */
+	#define RCU_STAT_HBRST			(1UL<<1)		/* Hibernate Reset */
+	#define RCU_STAT_HWRST			(1UL<<0)		/* Hardware Reset */
+
+	#define RCU_CR0					(1UL<<0)		/* Core Reset 0 */
+	#define RCU_CR1					(1UL<<1)		/* Core Reset 1 */
+
+	#define RCU_SI0					(1UL<<0)		/* System Interface n */
+	#define RCU_SI1					(1UL<<1)		/* System Interface n */
+
+	#define RCU_SVECT0				(1UL<<0)		/* Software Vector Register n */
+	#define RCU_SVECT1				(1UL<<1)		/* Software Vector Register n */
+
+	#define RCU_BCODE_NOCORE1      (1UL<<17)		/*!< Skip all Core 1 operations */
+	#define RCU_BCODE_NOHOOK       (1UL<<10)		/*!< Do not execute the hook routine */
+	#define RCU_BCODE_NOPREBOOT    (1UL<<9)			/*!< Do not execute the preboot sequence */
+	#define RCU_BCODE_NOFAULTS     (1UL<<6)			/*!< Do not execute the fault management and configuration */
+	#define RCU_BCODE_NOCACHE      (1UL<<5)			/*!< Do not initialize the cache */
+	#define RCU_BCODE_NOMEMINIT    (1UL<<4)			/*!< Do not perform memory initialization */
+	#define RCU_BCODE_HBTOVW       (1UL<<3)			/*!< Execute the wakeup from hibernate sequence and set the global wakeup flag for the boot stream */
+	#define RCU_BCODE_HALT         (1UL<<2)			/*!< Execute the No Boot mode */
+	#define RCU_BCODE_NOVECTINIT   (1UL<<1)			/*!< Do not initialize the soft reset vector registers */
+	#define RCU_BCODE_NOKERNEL     (1UL<<0)			/*!< Do not call the boot kernel */
+	
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 	/*!
@@ -1111,9 +1131,9 @@ namespace T_HW
 		BF_RW32 CNT;                           /*!< Count Register */
 		BF_RW32 STAT;                          /*!< Watchdog Timer Status Register */
 
-		inline void Update()	{ STAT = 0; }
-		inline void Reset()	{ STAT = 0; }
-		inline void Disable()	{ CTL = WDOG_WDDIS; }
+		__forceinline void Update()	{ STAT = 0; }
+		__forceinline void Reset()		{ STAT = 0; }
+		__forceinline void Disable()	{ CTL = WDOG_WDDIS; }
 	};
 
 	typedef S_WDOG S_WDT, S_WDT0, S_WDT1, S_WDOG0, S_WDOG1 ;
@@ -1165,8 +1185,8 @@ namespace T_HW
 			volatile const u32 _TXSTAT		:2;				/* Rx FIFO Status */
 			volatile const u32 _RXSTAT		:2;				/* Tx FIFO Status */
 
-			operator u32()	{ return __builtin_mmr_read32(this); }
-			u32 Bits()		{ return __builtin_mmr_read32(this); } 
+			__forceinline operator u32()	{ return __builtin_mmr_read32(this); }
+			__forceinline u32 Bits()		{ return __builtin_mmr_read32(this); } 
 
 		} FIFOSTAT; // BF_RO32 FIFOSTAT; /*!< FIFO Status Register */
 		                     
@@ -2543,7 +2563,7 @@ namespace HW
 	//MK_PTR(PF   	,	ADI_PF_BASE         ); /*!<  Pointer to Performance Monitor (PF) */
 	//MK_PTR(OPT  	,	ADI_OPT_BASE        ); /*!<  Pointer to Optional Feature  (OPT) */
 	//MK_PTR(BP   	,	ADI_BP_BASE         ); /*!<  Pointer to Branch Predictor (BP) */
-	//MK_PTR(RCU  	,	ADI_RCU0_BASE       ); /*!<  Pointer to Reset Control Unit (RCU0) */
+	MK_PTR(RCU  	,	REG_RCU0_CTL		); /*!<  Pointer to Reset Control Unit (RCU0) */
 	//MK_PTR(TRU  	,	ADI_TRU0_BASE       ); /*!<  Pointer to Trigger Routing Unit (TRU0) */
 	MK_PTR(CGU  	,	REG_CGU0_CTL		); /*!<  Pointer to Clock Generation Unit (CGU0) */
 	//MK_PTR(DPM  	,	ADI_DPM0_BASE       ); /*!<  Pointer to Dynamic Power Management (DPM0) */

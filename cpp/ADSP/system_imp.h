@@ -629,111 +629,111 @@ static void Init_SEC()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static byte* l1_DataA_adr = 0;
-static byte* l1_DataB_adr = 0;
-static byte* l2_NoCache_adr = 0;
-static byte* l2_CacheWT_adr = 0;
-
-static u32 l1_DataA_len = 0;
-static u32 l1_DataB_len = 0;
-static u32 l2_NoCache_len = 0;
-static u32 l2_CacheWT_len = 0;
-
-static void Init_Heap()
-{
-	asm (	".extern ldf_heap_L1_DataA_adr;\n	.type ldf_heap_L1_DataA_adr, STT_OBJECT;\n		%0L = LO(ldf_heap_L1_DataA_adr	);	%0H = HI(ldf_heap_L1_DataA_adr	);"	: "=d" (l1_DataA_adr)	: : );
-	asm (	".extern ldf_heap_L1_DataA_len;\n	.type ldf_heap_L1_DataA_len, STT_OBJECT;\n		%0L = LO(ldf_heap_L1_DataA_len	);	%0H = HI(ldf_heap_L1_DataA_len	);"	: "=d" (l1_DataA_len)	: : );
-	asm (	".extern ldf_heap_L1_DataB_adr;\n	.type ldf_heap_L1_DataB_adr, STT_OBJECT;\n		%0L = LO(ldf_heap_L1_DataB_adr	);	%0H = HI(ldf_heap_L1_DataB_adr	);"	: "=d" (l1_DataB_adr)	: : );
-	asm (	".extern ldf_heap_L1_DataB_len;\n	.type ldf_heap_L1_DataB_len, STT_OBJECT;\n		%0L = LO(ldf_heap_L1_DataB_len	);	%0H = HI(ldf_heap_L1_DataB_len	);"	: "=d" (l1_DataB_len)	: : );
-	asm (	".extern ldf_heap_L2_NoCache_adr;\n	.type ldf_heap_L2_NoCache_adr, STT_OBJECT;\n	%0L = LO(ldf_heap_L2_NoCache_adr);	%0H = HI(ldf_heap_L2_NoCache_adr);"	: "=d" (l2_NoCache_adr)	: : );
-	asm (	".extern ldf_heap_L2_NoCache_len;\n	.type ldf_heap_L2_NoCache_len, STT_OBJECT;\n	%0L = LO(ldf_heap_L2_NoCache_len);	%0H = HI(ldf_heap_L2_NoCache_len);"	: "=d" (l2_NoCache_len)	: : );
-	asm (	".extern ldf_heap_L2_CacheWT_adr;\n	.type ldf_heap_L2_CacheWT_adr, STT_OBJECT;\n	%0L = LO(ldf_heap_L2_CacheWT_adr);	%0H = HI(ldf_heap_L2_CacheWT_adr);"	: "=d" (l2_CacheWT_adr)	: : );
-	asm (	".extern ldf_heap_L2_CacheWT_len;\n	.type ldf_heap_L2_CacheWT_len, STT_OBJECT;\n	%0L = LO(ldf_heap_L2_CacheWT_len);	%0H = HI(ldf_heap_L2_CacheWT_len);"	: "=d" (l2_CacheWT_len)	: : );
-}
-
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-void* Alloc_L1_DataA(u32 size)
-{
-	size = (size+3) & ~3;
-
-	void *p = 0;
-
-	if (l1_DataA_len >= size)
-	{
-		p = l1_DataA_adr;
-		l1_DataA_adr += size;	
-		l1_DataA_len -= size;
-	};
-
-	return p;
-}
+//static byte* l1_DataA_adr = 0;
+//static byte* l1_DataB_adr = 0;
+//static byte* l2_NoCache_adr = 0;
+//static byte* l2_CacheWT_adr = 0;
+//
+//static u32 l1_DataA_len = 0;
+//static u32 l1_DataB_len = 0;
+//static u32 l2_NoCache_len = 0;
+//static u32 l2_CacheWT_len = 0;
+//
+//static void Init_Heap()
+//{
+//	asm (	".extern ldf_heap_L1_DataA_adr;\n	.type ldf_heap_L1_DataA_adr, STT_OBJECT;\n		%0L = LO(ldf_heap_L1_DataA_adr	);	%0H = HI(ldf_heap_L1_DataA_adr	);"	: "=d" (l1_DataA_adr)	: : );
+//	asm (	".extern ldf_heap_L1_DataA_len;\n	.type ldf_heap_L1_DataA_len, STT_OBJECT;\n		%0L = LO(ldf_heap_L1_DataA_len	);	%0H = HI(ldf_heap_L1_DataA_len	);"	: "=d" (l1_DataA_len)	: : );
+//	asm (	".extern ldf_heap_L1_DataB_adr;\n	.type ldf_heap_L1_DataB_adr, STT_OBJECT;\n		%0L = LO(ldf_heap_L1_DataB_adr	);	%0H = HI(ldf_heap_L1_DataB_adr	);"	: "=d" (l1_DataB_adr)	: : );
+//	asm (	".extern ldf_heap_L1_DataB_len;\n	.type ldf_heap_L1_DataB_len, STT_OBJECT;\n		%0L = LO(ldf_heap_L1_DataB_len	);	%0H = HI(ldf_heap_L1_DataB_len	);"	: "=d" (l1_DataB_len)	: : );
+//	asm (	".extern ldf_heap_L2_NoCache_adr;\n	.type ldf_heap_L2_NoCache_adr, STT_OBJECT;\n	%0L = LO(ldf_heap_L2_NoCache_adr);	%0H = HI(ldf_heap_L2_NoCache_adr);"	: "=d" (l2_NoCache_adr)	: : );
+//	asm (	".extern ldf_heap_L2_NoCache_len;\n	.type ldf_heap_L2_NoCache_len, STT_OBJECT;\n	%0L = LO(ldf_heap_L2_NoCache_len);	%0H = HI(ldf_heap_L2_NoCache_len);"	: "=d" (l2_NoCache_len)	: : );
+//	asm (	".extern ldf_heap_L2_CacheWT_adr;\n	.type ldf_heap_L2_CacheWT_adr, STT_OBJECT;\n	%0L = LO(ldf_heap_L2_CacheWT_adr);	%0H = HI(ldf_heap_L2_CacheWT_adr);"	: "=d" (l2_CacheWT_adr)	: : );
+//	asm (	".extern ldf_heap_L2_CacheWT_len;\n	.type ldf_heap_L2_CacheWT_len, STT_OBJECT;\n	%0L = LO(ldf_heap_L2_CacheWT_len);	%0H = HI(ldf_heap_L2_CacheWT_len);"	: "=d" (l2_CacheWT_len)	: : );
+//}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void* Alloc_L1_DataB(u32 size)
-{
-	size = (size+3) & ~3;
-
-	void *p = 0;
-
-	if (l1_DataB_len >= size)
-	{
-		p = l1_DataB_adr;
-		l1_DataB_adr += size;	
-		l1_DataB_len -= size;
-	};
-
-	return p;
-}
-
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-void* Alloc_L2_NoCache(u32 size)
-{
-	size = (size+3) & ~3;
-
-	void *p = 0;
-
-	if (l2_NoCache_len >= size)
-	{
-		p = l2_NoCache_adr;
-		l2_NoCache_adr += size;	
-		l2_NoCache_len -= size;
-	};
-
-	return p;
-}
+//void* Alloc_L1_DataA(u32 size)
+//{
+//	size = (size+3) & ~3;
+//
+//	void *p = 0;
+//
+//	if (l1_DataA_len >= size)
+//	{
+//		p = l1_DataA_adr;
+//		l1_DataA_adr += size;	
+//		l1_DataA_len -= size;
+//	};
+//
+//	return p;
+//}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void* Alloc_L2_CacheWT(u32 size)
-{
-	size = (size+3) & ~3;
-
-	void *p = 0;
-
-	if (l2_CacheWT_len >= size)
-	{
-		p = l2_CacheWT_adr;
-		l2_CacheWT_adr += size;	
-		l2_CacheWT_len -= size;
-	};
-
-	return p;
-}
+//void* Alloc_L1_DataB(u32 size)
+//{
+//	size = (size+3) & ~3;
+//
+//	void *p = 0;
+//
+//	if (l1_DataB_len >= size)
+//	{
+//		p = l1_DataB_adr;
+//		l1_DataB_adr += size;	
+//		l1_DataB_len -= size;
+//	};
+//
+//	return p;
+//}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void* Alloc_UnCached(u32 size)
-{
-	void *p = Alloc_L1_DataA(size);
+//void* Alloc_L2_NoCache(u32 size)
+//{
+//	size = (size+3) & ~3;
+//
+//	void *p = 0;
+//
+//	if (l2_NoCache_len >= size)
+//	{
+//		p = l2_NoCache_adr;
+//		l2_NoCache_adr += size;	
+//		l2_NoCache_len -= size;
+//	};
+//
+//	return p;
+//}
 
-	if (p == 0) p = Alloc_L1_DataB(size);
-	if (p == 0) p = Alloc_L2_NoCache(size);
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	return p;
-}
+//void* Alloc_L2_CacheWT(u32 size)
+//{
+//	size = (size+3) & ~3;
+//
+//	void *p = 0;
+//
+//	if (l2_CacheWT_len >= size)
+//	{
+//		p = l2_CacheWT_adr;
+//		l2_CacheWT_adr += size;	
+//		l2_CacheWT_len -= size;
+//	};
+//
+//	return p;
+//}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+//void* Alloc_UnCached(u32 size)
+//{
+//	void *p = Alloc_L1_DataA(size);
+//
+//	if (p == 0) p = Alloc_L1_DataB(size);
+//	if (p == 0) p = Alloc_L2_NoCache(size);
+//
+//	return p;
+//}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -878,49 +878,49 @@ static void Init_Cache()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-bool IsCodeCacheEnabled()
-{
-	int l1_code_cache;
-
-	asm (	".extern ___l1_code_cache;\n	.type ___l1_code_cache, STT_OBJECT;\n	%0 = ___l1_code_cache (Z);"		: "=d" (l1_code_cache)		: : );						
-
-	return l1_code_cache;
-}
-
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-bool IsDataCacheEnabled()
-{
-	int l1_data_cache_a;
-	int l1_data_cache_b;
-
-	asm (	".extern ___l1_data_cache_a;\n	.type ___l1_data_cache_a, STT_OBJECT;\n	%0 = ___l1_data_cache_a (Z);"	: "=d" (l1_data_cache_a)	: : );
-	asm (	".extern ___l1_data_cache_b;\n	.type ___l1_data_cache_b, STT_OBJECT;\n	%0 = ___l1_data_cache_b (Z);"	: "=d" (l1_data_cache_b)	: : );
-
-	return l1_data_cache_a || l1_data_cache_b;
-}
+//bool IsCodeCacheEnabled()
+//{
+//	int l1_code_cache;
+//
+//	asm (	".extern ___l1_code_cache;\n	.type ___l1_code_cache, STT_OBJECT;\n	%0 = ___l1_code_cache (Z);"		: "=d" (l1_code_cache)		: : );						
+//
+//	return l1_code_cache;
+//}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-bool IsDataCacheA_Enabled()
-{
-	int l1_data_cache_a;
-
-	asm (	".extern ___l1_data_cache_a;\n	.type ___l1_data_cache_a, STT_OBJECT;\n	%0 = ___l1_data_cache_a (Z);"	: "=d" (l1_data_cache_a)	: : );
-
-	return l1_data_cache_a;
-}
+//bool IsDataCacheEnabled()
+//{
+//	int l1_data_cache_a;
+//	int l1_data_cache_b;
+//
+//	asm (	".extern ___l1_data_cache_a;\n	.type ___l1_data_cache_a, STT_OBJECT;\n	%0 = ___l1_data_cache_a (Z);"	: "=d" (l1_data_cache_a)	: : );
+//	asm (	".extern ___l1_data_cache_b;\n	.type ___l1_data_cache_b, STT_OBJECT;\n	%0 = ___l1_data_cache_b (Z);"	: "=d" (l1_data_cache_b)	: : );
+//
+//	return l1_data_cache_a || l1_data_cache_b;
+//}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-bool IsDataCacheB_Enabled()
-{
-	int l1_data_cache_b;
+//bool IsDataCacheA_Enabled()
+//{
+//	int l1_data_cache_a;
+//
+//	asm (	".extern ___l1_data_cache_a;\n	.type ___l1_data_cache_a, STT_OBJECT;\n	%0 = ___l1_data_cache_a (Z);"	: "=d" (l1_data_cache_a)	: : );
+//
+//	return l1_data_cache_a;
+//}
 
-	asm (	".extern ___l1_data_cache_b;\n	.type ___l1_data_cache_b, STT_OBJECT;\n	%0 = ___l1_data_cache_b (Z);"	: "=d" (l1_data_cache_b)	: : );
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	return l1_data_cache_b;
-}
+//bool IsDataCacheB_Enabled()
+//{
+//	int l1_data_cache_b;
+//
+//	asm (	".extern ___l1_data_cache_b;\n	.type ___l1_data_cache_b, STT_OBJECT;\n	%0 = ___l1_data_cache_b (Z);"	: "=d" (l1_data_cache_b)	: : );
+//
+//	return l1_data_cache_b;
+//}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -928,15 +928,15 @@ bool IsDataCacheB_Enabled()
 
 static void Core1_Init_Cache()
 {
-	int l1_code_cache;
-	int l1_data_cache_a;
-	int l1_data_cache_b;
+	int core1_code_cache;
+	int core1_data_cache_a;
+	int core1_data_cache_b;
 
-	asm (	".extern ___l1_code_cache;\n	.type ___l1_code_cache, STT_OBJECT;\n	%0 = ___l1_code_cache (Z);"		: "=d" (l1_code_cache)		: : );						
-	asm (	".extern ___l1_data_cache_a;\n	.type ___l1_data_cache_a, STT_OBJECT;\n	%0 = ___l1_data_cache_a (Z);"	: "=d" (l1_data_cache_a)	: : );
-	asm (	".extern ___l1_data_cache_b;\n	.type ___l1_data_cache_b, STT_OBJECT;\n	%0 = ___l1_data_cache_b (Z);"	: "=d" (l1_data_cache_b)	: : );
+	asm (	".extern ___core1_code_cache;\n		.type ___core1_code_cache, STT_OBJECT;\n	%0 = ___core1_code_cache (Z);"		: "=d" (core1_code_cache)	: : );						
+	asm (	".extern ___core1_data_cache_a;\n	.type ___core1_data_cache_a, STT_OBJECT;\n	%0 = ___core1_data_cache_a (Z);"	: "=d" (core1_data_cache_a)	: : );
+	asm (	".extern ___core1_data_cache_b;\n	.type ___core1_data_cache_b, STT_OBJECT;\n	%0 = ___core1_data_cache_b (Z);"	: "=d" (core1_data_cache_b)	: : );
 
-	if (l1_code_cache != 0)
+	if (core1_code_cache != 0)
 	{
 		ssync();
 
@@ -980,11 +980,11 @@ static void Core1_Init_Cache()
 		ssync();
 	};
 
-	if (l1_data_cache_a != 0 || l1_data_cache_b != 0)
+	if (core1_data_cache_a != 0 || core1_data_cache_b != 0)
 	{
 		ssync();
 
-		HW::L1DM->CTL		= (l1_data_cache_b) ? (L1DM_ACACHE_BCACHE) : ((l1_data_cache_a) ? L1DM_ACACHE_BSRAM : L1DM_SRAM_AB);
+		HW::L1DM->CTL		= (core1_data_cache_b) ? (L1DM_ACACHE_BCACHE) : ((core1_data_cache_a) ? L1DM_ACACHE_BSRAM : L1DM_SRAM_AB);
 
 		const u32 DCPLB_L2_ROM				= L1DM_PSIZE_16KB	| L1DM_WB_L1	| L1DM_DIRTY |								L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
 		const u32 DCPLB_L2_ASRAM			= L1DM_PSIZE_64MB	| L1DM_WB_L1	| L1DM_DIRTY | L1DM_SWRITE | L1DM_UWRITE |	L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
@@ -995,23 +995,23 @@ static void Core1_Init_Cache()
 
 		byte n = 0;
 
-									HW::L1DM->CPLB_ADDR[n] = 0xFF400000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L1_SRAM;				// L1 Data Block A SRAM (16 KB)
-		if (l1_data_cache_a == 0)	HW::L1DM->CPLB_ADDR[n] = 0xFF404000, HW::L1DM->CPLB_DATA[n++] = DCPLB_L1_SRAM;				// L1 Data Block A SRAM/Cache (16 KB)
-									HW::L1DM->CPLB_ADDR[n] = 0xFF500000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L1_SRAM;				// L1 Data Block B SRAM (16 KB)
-		if (l1_data_cache_b == 0)	HW::L1DM->CPLB_ADDR[n] = 0xFF504000, HW::L1DM->CPLB_DATA[n++] = DCPLB_L1_SRAM;				// L1 Data Block B SRAM/Cache (16 KB)
+										HW::L1DM->CPLB_ADDR[n] = 0xFF400000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L1_SRAM;				// L1 Data Block A SRAM (16 KB)
+		if (core1_data_cache_a == 0)	HW::L1DM->CPLB_ADDR[n] = 0xFF404000, HW::L1DM->CPLB_DATA[n++] = DCPLB_L1_SRAM;				// L1 Data Block A SRAM/Cache (16 KB)
+										HW::L1DM->CPLB_ADDR[n] = 0xFF500000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L1_SRAM;				// L1 Data Block B SRAM (16 KB)
+		if (core1_data_cache_b == 0)	HW::L1DM->CPLB_ADDR[n] = 0xFF504000, HW::L1DM->CPLB_DATA[n++] = DCPLB_L1_SRAM;				// L1 Data Block B SRAM/Cache (16 KB)
 
-									HW::L1DM->CPLB_ADDR[n] = 0xB0000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ASRAM;			// Async SRAM Bank 0 (64MB)
-									HW::L1DM->CPLB_ADDR[n] = 0xB4000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ASRAM;			// Async SRAM Bank 1 (64MB)
-									HW::L1DM->CPLB_ADDR[n] = 0xB8000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ASRAM;			// Async SRAM Bank 2 (64MB)
-									HW::L1DM->CPLB_ADDR[n] = 0xBc000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ASRAM;			// Async SRAM Bank 3 (64MB)
+										HW::L1DM->CPLB_ADDR[n] = 0xB0000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ASRAM;			// Async SRAM Bank 0 (64MB)
+										HW::L1DM->CPLB_ADDR[n] = 0xB4000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ASRAM;			// Async SRAM Bank 1 (64MB)
+										HW::L1DM->CPLB_ADDR[n] = 0xB8000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ASRAM;			// Async SRAM Bank 2 (64MB)
+										HW::L1DM->CPLB_ADDR[n] = 0xBc000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ASRAM;			// Async SRAM Bank 3 (64MB)
 
-									HW::L1DM->CPLB_ADDR[n] = 0xC8000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ROM;				// L2 ROM (16 KB)
-									HW::L1DM->CPLB_ADDR[n] = 0xC8004000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ROM;				// L2 ROM (16 KB)
+										HW::L1DM->CPLB_ADDR[n] = 0xC8000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ROM;				// L2 ROM (16 KB)
+										HW::L1DM->CPLB_ADDR[n] = 0xC8004000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ROM;				// L2 ROM (16 KB)
 
-									HW::L1DM->CPLB_ADDR[n] = 0xC8080000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_SRAM_NOCACHE;	// L2 SRAM (64 KB)
-									HW::L1DM->CPLB_ADDR[n] = 0xC8090000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_SRAM_CACHEWT;	// L2 SRAM (64 KB)
-									HW::L1DM->CPLB_ADDR[n] = 0xC80A0000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_SRAM_CACHEWT;	// L2 SRAM (64 KB)
-									HW::L1DM->CPLB_ADDR[n] = 0xC80B0000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_SRAM_CACHEWT;	// L2 SRAM (64 KB)
+										HW::L1DM->CPLB_ADDR[n] = 0xC8080000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_SRAM_NOCACHE;	// L2 SRAM (64 KB)
+										HW::L1DM->CPLB_ADDR[n] = 0xC8090000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_SRAM_CACHEWT;	// L2 SRAM (64 KB)
+										HW::L1DM->CPLB_ADDR[n] = 0xC80A0000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_SRAM_CACHEWT;	// L2 SRAM (64 KB)
+										HW::L1DM->CPLB_ADDR[n] = 0xC80B0000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_SRAM_CACHEWT;	// L2 SRAM (64 KB)
 
 		for ( ; n < 16; n++) HW::L1DM->CPLB_DATA[n] = 0;
 
@@ -1132,7 +1132,7 @@ extern "C" void SystemInit()
 
 	Init_SEC();
 
-	Init_Heap();
+	//Init_Heap();
 
 #if (((CCLK_MHz/SCLK_MHz)*SCLK_MHz) == CCLK_MHz) || (((SCLK_MHz/CCLK_MHz)*CCLK_MHz) == SCLK_MHz)
 
