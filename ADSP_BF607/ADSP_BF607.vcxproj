@@ -39,6 +39,7 @@
   <ItemDefinitionGroup>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="cpp\core1_main.cpp" />
     <ClCompile Include="cpp\main.cpp" />
   </ItemGroup>
   <ItemGroup>

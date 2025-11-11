@@ -251,7 +251,7 @@ union DataPointer
 	__packed dword	*d;
 	__packed float	*f;
 
-	DataPointer(void *p) { v = p; } 
+	DataPointer(void *p) : v(p) { } 
 
 	void operator=(void *p) { v = p; } 
 

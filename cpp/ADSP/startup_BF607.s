@@ -165,13 +165,13 @@ start:
       // This is a workaround for the yet to characterized anomaly described
       // in TAR-50309.
 
-      BITSET(R7, BITP_ITEST_COMMAND_PARCTL);
+        BITSET(R7, BITP_ITEST_COMMAND_PARCTL);
 
-      LOADIMM32REG(I0, ITEST_COMMAND)
-      LOADIMM32REG(I1, DTEST_COMMAND)
-      [I0] = R7;
-      [I1] = R7;
-      CSYNC;
+        LOADIMM32REG(I0, ITEST_COMMAND)
+        LOADIMM32REG(I1, DTEST_COMMAND)
+        [I0] = R7;
+        [I1] = R7;
+        CSYNC;
 
 
       // Initialize the Event Vector Table (EVT) entries other than
@@ -189,8 +189,8 @@ start:
         [P0++]	= R1;
         LOADIMM32REG(R1, core0_dummy_IVG)
 
-		P1 = 9;
-		LSETUP (.ivt, .ivt) LC0 = P1;
+        P1 = 9;
+        LSETUP (.ivt, .ivt) LC0 = P1;
 
 .ivt:	[P0++] = R1;
 
@@ -207,7 +207,7 @@ start:
       // Configure SYSCFG.
       R1 = SYSCFG;
       BITSET (R1, BITP_SYSCFG_CCEN);  // Enable the cycle counter.
-      BITSET (R1, BITP_SYSCFG_SNEN);  // Enable self-nesting interrupts.
+      BITCLR (R1, BITP_SYSCFG_SNEN);  // Disable self-nesting interrupts.
       SYSCFG = R1;
 
       // __install_default_handlers is called to allow the opportunity
@@ -327,57 +327,80 @@ supervisor_mode:
 #endif
 
 		// Call constructors for C++ global scope variables.
-		.EXTERN ___ctorloop;
-		.TYPE ___ctorloop,STT_FUNC
-		CALL.X ___ctorloop;
+		//.EXTERN ___ctorloop;
+		//.TYPE ___ctorloop,STT_FUNC
+		//CALL.X ___ctorloop;
 
-ctorloop_start:
+_core0_ctorloop:
 
-        LOADIMM32REG(P4, ___ctor_table)
-        P4 += 4;
-        P1 = [P4];
-        CC = P1 == 0;
-        IF CC JUMP ctorloop_end;
+	    P5.L = ___ctor_table;
+	    P5.H = ___ctor_table;
 
-        P5 = 4;
+        R0 = 0;
+	    [P5++] = R0; // Обнуляем для синхронизации ядер
 
-ctorloop_loop:
+	    R0 = [P5];
+	    CC = R0 == 0;
+	    if CC jump _core0_ctorloop_end;
 
-        CALL(P1);
-        P4 = P4 + P5;
-        P1 = [P4];
-        CC = P1 == 0;
-        IF !CC JUMP ctorloop_loop;
+	    R7 = -1;
+	    R7 <<= 20; // 0xFFF00000
+	    R6 = 0 /* -10485760 */;
+        R6.H = HI(MEM_C1_BASE_L1IM); // -160 /* -10485760 */;
 
-ctorloop_end:
+_core0_ctorloop_begin:
 
-//          ___ctorloop:
-//c8088140:   LINK 0x0 ;
-//c8088144:   [ -- SP ] = ( P5:4 ) ;
-//c8088146:   SP += -12 ;
-//c8088148:   P4.L = 0x30 ;
-//c808814c:   P4.H = 0xff90 ;
-//c8088150:   P1 = [ P4 ] ;
-//c8088152:   R0 = [ P1 + 0x4 ] ;
-//c8088154:   CC = R0 == 0 ;
-//c8088156:   IF CC JUMP .P34L2 ;
-//c8088158:   P5 = 4 ;
-//          .P34L3:
-//c808815a:   P1 = [ P4 ] ;
-//c808815c:   P1 = P1 + P5 ;
-//c808815e:   P1 = [ P1 ] ;
-//c8088160:   P5 += 4 ;
-//c8088162:   CALL ( P1 ) ;
-//c8088164:   P1 = [ P4 ] ;
-//c8088166:   P1 = P1 + P5 ;
-//c8088168:   R0 = [ P1 ] ;
-//c808816a:   CC = R0 == 0 ;
-//c808816c:   IF ! CC JUMP .P34L3 ( BP ) ;
-//          .P34L2:
-//c808816e:   SP += 12 ;
-//c8088170:   ( P5:4 ) = [ SP ++ ] ;
-//c8088172:   UNLINK ;
-//c8088176:   RTS ;
+        P1 = [P5++];
+        R0 = P1;    //[P5++];
+	    R0 = R0 & R7;
+	    CC = R0 == R6;
+	    if CC jump _core0_ctorloop_skipcall (bp);
+
+	    CALL (P1);
+
+_core0_ctorloop_skipcall:
+
+	    R0 = [P5];
+	    CC = R0 == 0;
+	    if !CC jump _core0_ctorloop_begin (bp);
+
+_core0_ctorloop_end:
+
+        P5.L = ___ctor_table;
+	    P5.H = ___ctor_table;
+
+        R0 = [P5];
+		BITSET(R0, 0); 
+	    [P5] = R0;      // Core 0 ctorloop complete
+        
+        // Enable System Interface Core 1
+        
+        LOADIMM32REG(P1, REG_RCU0_SIDIS)
+        R0 = [P1];
+        BITCLR(R0, BITP_RCU_SIDIS_SI1);  
+        [P1] = R0;
+ 
+        // Enable Core 1
+
+        LOADIMM32REG(P1, REG_RCU0_CRCTL)
+        R0 = [P1];
+        BITCLR(R0, BITP_RCU_CRCTL_CR1);    
+        [P1] = R0;
+
+        CSYNC;
+        SSYNC;
+
+_wait_core1_ctorloop_complete:
+
+        FLUSHINV[P5];
+        R0 = [P5];
+
+        CSYNC;
+        SSYNC;
+
+        CC = BITTST(R0, 1);
+	    if !CC jump _wait_core1_ctorloop_complete;
+        
 
 		// Call the application program.
 		.EXTERN _main;
@@ -616,7 +639,7 @@ core1_start:
       // Configure SYSCFG.
       R1 = SYSCFG;
       BITSET (R1, BITP_SYSCFG_CCEN);  // Enable the cycle counter.
-      BITSET (R1, BITP_SYSCFG_SNEN);  // Enable self-nesting interrupts.
+      BITCLR (R1, BITP_SYSCFG_SNEN);  // Disable self-nesting interrupts.
       SYSCFG = R1;
 
       // __install_default_handlers is called to allow the opportunity
@@ -741,6 +764,56 @@ core1_supervisor_mode:
 		//.EXTERN ___ctorloop;
 		//.TYPE ___ctorloop,STT_FUNC
 		//CALL.X ___ctorloop;
+
+_core1_ctorloop:
+
+	    P5.L = ___ctor_table+4;
+	    P5.H = ___ctor_table+4;
+
+	    R0 = [P5];
+	    CC = R0 == 0;
+	    if CC jump _core1_ctorloop_end;
+
+	    R7 = -1;
+	    R7 <<= 20; // 0xFFF00000
+	    R6 = 0 /* -10485760 */;
+        R6.H = HI(MEM_C1_BASE_L1IM); // -160 /* -10485760 */;
+
+_core1_ctorloop_begin:
+
+        P1 = [P5++];
+        R0 = P1;    //[P5++];
+	    R0 = R0 & R7;
+	    CC = R0 == R6;
+	    if !CC jump _core1_ctorloop_skipcall (bp);
+
+	    CALL (P1);
+
+_core1_ctorloop_skipcall:
+
+	    R0 = [P5];
+	    CC = R0 == 0;
+	    if !CC jump _core1_ctorloop_begin (bp);
+
+_core1_ctorloop_end:
+
+        P5.L = ___ctor_table;
+	    P5.H = ___ctor_table;
+
+_wait_core0_ctorloop_complete:
+
+        FLUSHINV[P5];
+
+        CSYNC;
+        SSYNC;
+        R0 = [P5];
+
+        CSYNC;
+        SSYNC;
+
+        CC = BITTST(R0, 0);
+	    if !CC jump _wait_core0_ctorloop_complete;
+
 
 		// Call the application program.
 		.EXTERN _core1_main;
@@ -906,13 +979,13 @@ _dev_dup:
       // runtime library support to determine which area of code to which a
       // particular address belongs. These sections must be mapped contiguously
       // into memory by the LDF starting with this one and followed by .gdtl.
-.SECTION/DOUBLEANY .gdt;
-      .ALIGN 4;
-      .GLOBAL ___eh_gdt;
-      .TYPE ___eh_gdt,STT_OBJECT;
-      .EXTERN ___eh_gdt_end;
-      .type ___eh_gdt_end,STT_OBJECT;
-      .BYTE4 ___eh_gdt = ___eh_gdt_end;
+//.SECTION/DOUBLEANY .gdt;
+//      .ALIGN 4;
+//      .GLOBAL ___eh_gdt;
+//      .TYPE ___eh_gdt,STT_OBJECT;
+//      .EXTERN ___eh_gdt_end;
+//      .type ___eh_gdt_end,STT_OBJECT;
+//      .BYTE4 ___eh_gdt = ___eh_gdt_end;
 
 .section ctorl;
 .align 4;
@@ -921,10 +994,10 @@ ___ctor_end:
    .byte4=0;    // NULL terminator reauired by __ctorloop
 .type ___ctor_end,STT_OBJECT; 
 
-.section .gdtl;
-.align 4;
-___eh_gdt_end:
-.global ___eh_gdt_end;
-    .byte4=0;
-.type ___eh_gdt_end,STT_OBJECT; 
+//.section .gdtl;
+//.align 4;
+//___eh_gdt_end:
+//.global ___eh_gdt_end;
+//    .byte4=0;
+//.type ___eh_gdt_end,STT_OBJECT; 
  

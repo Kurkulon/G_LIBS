@@ -359,9 +359,9 @@ MEMORY
 //#define L2_SRAM_START	0x08000000
 //#define L2_SRAM_END		0x080FFFFF
 
-	MEM_L2_SRAM_UNCACHED	{ TYPE(RAM) START(0xC8080000) END(0xC8083FFF) WIDTH(8) } 
-	MEM_L2_SRAM_WT          { TYPE(RAM) START(0xC8084000) END(0xC8087FFF) WIDTH(8) }
-	MEM_L2_SRAM				{ TYPE(RAM) START(0xC8088000) END(0xC80BFFFF) WIDTH(8) }
+	MEM_L2_SRAM				{ TYPE(RAM) START(0xC8080000) END(0xC80BFFFF) WIDTH(8) }
+	//MEM_L2_SRAM_UNCACHED	{ TYPE(RAM) START(0xC8080000) END(0xC8083FFF) WIDTH(8) } 
+	//MEM_L2_SRAM_WT          { TYPE(RAM) START(0xC8084000) END(0xC8087FFF) WIDTH(8) }
 	//MEM_L2_ROM              { TYPE(ROM) START(0x04010000) END(0x0407FFFF) WIDTH(8) }
 	//MEM_SPI_FLASH           { TYPE(ROM) START(0x40000000) END(0x47FFFFFF) WIDTH(8) }
 
@@ -450,10 +450,8 @@ PROCESSOR P0
 
 		#ifdef USE_CORE0_DATA_B
 
-			INPUT_SECTIONS( $OBJS_LIBS(ctor) )   /* global C++ constructors list */
-			INPUT_SECTIONS( $OBJS_LIBS(ctorl) )  /* NULL terminator for ctor     */
-			INPUT_SECTIONS( $OBJS_LIBS(.gdt) )   /* C++ exceptions data          */
-			INPUT_SECTIONS( $OBJS_LIBS(.gdtl) )  /* NULL terminator for .gdt     */
+			//INPUT_SECTIONS( $OBJS_LIBS(.gdt) )   /* C++ exceptions data          */
+			//INPUT_SECTIONS( $OBJS_LIBS(.gdtl) )  /* NULL terminator for .gdt     */
 			INPUT_SECTIONS( $OBJS_LIBS_INTERNAL(data1 voldata vtbl constdata) )
 			INPUT_SECTIONS( $OBJS_LIBS_NOT_EXTERNAL(data1 voldata vtbl constdata) )
 			INPUT_SECTIONS( $OBJS_LIBS(data1 voldata cplb_data vtbl constdata .edt .cht .rtti) )
@@ -597,7 +595,7 @@ PROCESSOR P0
 
 			___core1_data_cache_a = CORE1_DATA_CACHE_A; /* DATA A cache is not enabled */
 
-			INPUT_SECTIONS( $OBJS_LIBS(L1_data_a L1_data) )
+			INPUT_SECTIONS( $OBJS_LIBS(CORE1_DATA_A CORE1_DATA core1_data_a core1_data CR1_DATA_A CR1_DATA cr1_data_a cr1_data ) )
 
         #ifdef USE_CORE1_DATA_A
 
@@ -718,10 +716,45 @@ PROCESSOR P0
 		** contiguously into memory.
 		*/
 
+		L2_Cached_data DEF_SECTION_QUAL // Cached write thrue
+		{
+            ldf_L2_Cached_Adr = (.);
+
+			INPUT_SECTION_ALIGN(4)
+
+			INPUT_SECTIONS( $OBJS_LIBS(voldata vtbl constdata ) )
+			INPUT_SECTIONS( $OBJS_LIBS(L2_SRAM_WT l2_sram_wt SRAM_CACHED sram_cached) )
+
+            //RESERVE(heap_L2_CacheWT, heap_L2_CacheWT_len, 0, 4)
+            //RESERVE_EXPAND(heap_L2_CacheWT, heap_L2_CacheWT_len, 0, 4)
+
+            //ldf_heap_L2_CacheWT_adr	= heap_L2_CacheWT;
+            //ldf_heap_L2_CacheWT_len	= heap_L2_CacheWT_len /*& 0xfffffffc*/;
+            //ldf_heap_L2_CacheWT_end	= ldf_heap_L2_CacheWT_adr + ldf_heap_L2_CacheWT_len;
+		} > MEM_L2_SRAM
+
+		L2_Cached_data_bsz ZERO_INIT
+		{
+			INPUT_SECTION_ALIGN(4)
+			INPUT_SECTIONS( $OBJS_LIBS(bsz) )
+
+		} > MEM_L2_SRAM
+      
+		L2_Cached_data_no_init NO_INIT
+		{
+			INPUT_SECTION_ALIGN(4)
+			INPUT_SECTIONS( $OBJS_LIBS(noinit_data) )
+
+            ALIGN(16384)
+
+            ldf_L2_Cached_Len = (.) - ldf_L2_Cached_Adr;
+
+		} > MEM_L2_SRAM
+
+
 		L2_code DEF_SECTION_QUAL
 		{
 			INPUT_SECTION_ALIGN(4)
-
 			INPUT_SECTIONS( $OBJS_LIBS(L2_code cplb_code cplb noncache_code) )
 			INPUT_SECTIONS( $OBJS_LIBS_INTERNAL(program) )
 			INPUT_SECTIONS( $OBJS_LIBS_NOT_EXTERNAL(program) )
@@ -729,62 +762,42 @@ PROCESSOR P0
 
 		} > MEM_L2_SRAM
 
+		L2_data_shared DEF_SECTION_QUAL
+		{
+			INPUT_SECTION_ALIGN(4)
+
+			FORCE_CONTIGUITY
+			INPUT_SECTIONS( $OBJS_LIBS(ctor) )   /* global C++ constructors list */
+			INPUT_SECTIONS( $OBJS_LIBS(ctorl) )  /* NULL terminator for ctor     */
+
+			INPUT_SECTIONS( $OBJS_LIBS(L2_SRAM_UNCACHED l2_sram_uncached SRAM_UNCACHED sram_uncached SRAM_SHARED sram_shared) )
+			INPUT_SECTIONS( $OBJS_LIBS(L2_sram l2_sram L2_data l2_data) )
+			INPUT_SECTIONS( $OBJS_LIBS(data1 voldata cplb_data vtbl .edt .cht .rtti) )
+
+			//RESERVE(heap_L2_NoCache, heap_L2_NoCache_len, 0, 4)
+			//RESERVE_EXPAND(heap_L2_NoCache, heap_L2_NoCache_len, 0, 4)
+
+			//ldf_heap_L2_NoCache_adr	= heap_L2_NoCache;
+			//ldf_heap_L2_NoCache_len	= heap_L2_NoCache_len /*& 0xfffffffc*/;
+			//ldf_heap_L2_NoCache_end	= ldf_heap_L2_NoCache_adr + ldf_heap_L2_NoCache_len;
+
+		} > MEM_L2_SRAM
+
 		L2_tables DEF_SECTION_QUAL
 		{
 			INPUT_SECTION_ALIGN(4)
 			FORCE_CONTIGUITY
-			INPUT_SECTIONS( $OBJS_LIBS(ctor) )   /* global C++ constructors list */
-			INPUT_SECTIONS( $OBJS_LIBS(ctorl) )  /* NULL terminator for ctor     */
-			INPUT_SECTIONS( $OBJS_LIBS(.gdt) )   /* C++ exceptions data          */
-			INPUT_SECTIONS( $OBJS_LIBS(.gdtl) )  /* NULL terminator for .gdt     */
+			//INPUT_SECTIONS( $OBJS_LIBS(.gdt) )   /* C++ exceptions data          */
+			//INPUT_SECTIONS( $OBJS_LIBS(.gdtl) )  /* NULL terminator for .gdt     */
 
 		} > MEM_L2_SRAM
       
-		L2_uncached DEF_SECTION_QUAL
-		{
-			INPUT_SECTION_ALIGN(4)
-
-			INPUT_SECTIONS( $OBJS_LIBS(L2_sram_uncached L2_sram_uncached) )
-
-			RESERVE(heap_L2_NoCache, heap_L2_NoCache_len, 0, 4)
-			RESERVE_EXPAND(heap_L2_NoCache, heap_L2_NoCache_len, 0, 4)
-
-			ldf_heap_L2_NoCache_adr	= heap_L2_NoCache;
-			ldf_heap_L2_NoCache_len	= heap_L2_NoCache_len /*& 0xfffffffc*/;
-			ldf_heap_L2_NoCache_end	= ldf_heap_L2_NoCache_adr + ldf_heap_L2_NoCache_len;
-
-		} > MEM_L2_SRAM_UNCACHED
-
-		L2_Cache_WT DEF_SECTION_QUAL // Cached write thrue
-		{
-			INPUT_SECTION_ALIGN(4)
-
-			INPUT_SECTIONS( $OBJS_LIBS(L2_SRAM_WT l2_sram_wt) )
-
-			RESERVE(heap_L2_CacheWT, heap_L2_CacheWT_len, 0, 4)
-			RESERVE_EXPAND(heap_L2_CacheWT, heap_L2_CacheWT_len, 0, 4)
-
-			ldf_heap_L2_CacheWT_adr	= heap_L2_CacheWT;
-			ldf_heap_L2_CacheWT_len	= heap_L2_CacheWT_len /*& 0xfffffffc*/;
-			ldf_heap_L2_CacheWT_end	= ldf_heap_L2_CacheWT_adr + ldf_heap_L2_CacheWT_len;
-
-		} > MEM_L2_SRAM_WT
-
-		L2_data DEF_SECTION_QUAL // Cached Write Back
-		{
-			INPUT_SECTION_ALIGN(4)
-
-			INPUT_SECTIONS( $OBJS_LIBS(L2_sram l2_sram L2_data l2_data) )
-			INPUT_SECTIONS( $OBJS_LIBS(program noncache_code data1 voldata cplb_data vtbl constdata .edt .cht .rtti) )
-
-		} > MEM_L2_SRAM
-
 		L2_data_bsz ZERO_INIT
 		{
 			INPUT_SECTION_ALIGN(4)
 
 			INPUT_SECTIONS( $OBJS_LIBS(L2_bsz) )
-			INPUT_SECTIONS( $OBJS_LIBS(bsz) )
+			//INPUT_SECTIONS( $OBJS_LIBS(bsz) )
 
 		} > MEM_L2_SRAM
       
@@ -793,7 +806,7 @@ PROCESSOR P0
 			INPUT_SECTION_ALIGN(4)
 
 			INPUT_SECTIONS( $OBJS_LIBS(L2_noinit_data) )
-			INPUT_SECTIONS( $OBJS_LIBS(noinit_data) )
+			//INPUT_SECTIONS( $OBJS_LIBS(noinit_data) )
 
 			INPUT_SECTION_ALIGN(4)
 

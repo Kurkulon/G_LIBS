@@ -231,17 +231,17 @@ char build_date[] __attribute__ ((used)) = "\n" "ADSP_AFP" "\n" __DATE__ "\n" __
 
 #pragma optimize_for_space
 
-extern "C" void __ctorloop()
+extern "C" void core0_ctorloop()
 {
 	typedef void (*CTR)();
 
-	extern CTR *__ctor_table;
+	extern CTR __ctor_table;
 
-	CTR *p = __ctor_table+1;
+	CTR *p = &__ctor_table+1;
 
-	while (p != 0)
+	while (*p != 0)
 	{
-		if (((u32)p & 0xFFF00000) != 0xFF600000) (*p)();
+		if (((u32)*p & 0xFFF00000) != 0xFF600000) (*p)();
 
 		p++;
 	};
@@ -257,7 +257,7 @@ void main()
 {
 	PIO_MAINLOOP->DirSet(MAINLOOP);
 	
-	HW::RCU->CRCTL &= ~RCU_CR1;
+	//HW::RCU->CRCTL &= ~RCU_CR1;
 
 	while (1)
 	{
@@ -279,17 +279,27 @@ void main()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-//#pragma section("CORE1_L1_CODE")
-#pragma default_section(CODE, "CORE1_CODE")
-
-extern "C" void core1_main()
-{
-	PIO_TST->DirSet(TST);
-
-	while (1)
-	{
-		PIO_TST->NOT(TST);
-	};
-}
+////#pragma section("CORE1_L1_CODE")
+//#pragma default_section(STI, "CORE1_CODE")
+//#pragma default_section(CODE, "CORE1_CODE")
+//
+//#pragma default_section(ALLDATA, "CORE1_DATA")
+//
+//DataPointer dp1(0);
+//
+//extern "C" void core1_main()
+//{
+//	DataPointer dp2(0);
+//
+//	PIO_TST->DirSet(TST);
+//
+//	while (1)
+//	{
+//		dp1.b += 1;
+//		dp2.b += 1;
+//
+//		PIO_TST->NOT(TST);
+//	};
+//}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
