@@ -2,6 +2,7 @@
 #define SYSTEM_TICK_TIMER_DISABLE
 
 #include "core.h"
+#include "CRC\CRC16.h"
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -251,17 +252,20 @@ extern "C" void core0_ctorloop()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-DataPointer dp(0);
 
 void main()
 {
+	static DataPointer dp[8];
+
 	PIO_MAINLOOP->DirSet(MAINLOOP);
 	
 	//HW::RCU->CRCTL &= ~RCU_CR1;
 
 	while (1)
 	{
-		dp.b += 1;
+		dp[0].b += 1;
+
+		GetCRC16(dp, sizeof(dp));
 
 		//if (HW::RCU->SIDIS & RCU_SI1)
 		//{

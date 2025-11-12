@@ -33,6 +33,7 @@
 
 		#define __disable_irq() u32 irqeirutyieurtu = cli()
 		#define __enable_irq()  sti(irqeirutyieurtu)
+		#pragma diag(suppress: 1645,1646)
 
 	#endif
 
@@ -211,6 +212,9 @@ union DataCRC
 };
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#ifdef __ADSPBF6xx__
+#pragma default_section(CODE, "shared_code")
+#endif
 
 union U16u 
 {
@@ -251,6 +255,7 @@ union DataPointer
 	__packed dword	*d;
 	__packed float	*f;
 
+	DataPointer() : v(0) { } 
 	DataPointer(void *p) : v(p) { } 
 
 	void operator=(void *p) { v = p; } 
@@ -276,6 +281,10 @@ union ConstDataPointer
 
 	void operator=(const void *p) { v = p; } 
 };
+
+#ifdef __ADSPBF6xx__
+#pragma default_section(CODE)
+#endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

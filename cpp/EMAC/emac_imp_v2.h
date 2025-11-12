@@ -898,6 +898,7 @@ static void RecieveFrame()
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+static Ptr<MB> buf_UpdateTransmit;
 
 static void UpdateTransmit()
 {
@@ -905,7 +906,7 @@ static void UpdateTransmit()
 
 	static byte i = 0;
 
-	static Ptr<MB> buf;
+	Ptr<MB> &buf = buf_UpdateTransmit;
 
 	static Transmit_Desc *dsc = 0;
 

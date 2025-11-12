@@ -8,6 +8,10 @@
 #pragma optimize_for_speed
 #endif
 
+#ifdef __ADSPBF6xx__
+#pragma section ("shared_code")
+#endif
+
 word GetCRC16(const void *data, u32 len)
 {
 	DataCRC CRC = { 0xFFFF };

@@ -1,5 +1,8 @@
 #include "types.h"
 
+#ifdef __ADSPBF6xx__
+#pragma section ("shared_constdata")
+#endif
 
 extern const u32 tableCRC32[256] = 
 {

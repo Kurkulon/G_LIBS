@@ -9,6 +9,9 @@
 #endif
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#ifdef __ADSPBF6xx__
+#pragma section ("shared_code")
+#endif
 
 u32 GetCRC32(const void *data, u16 len)
 {
@@ -33,6 +36,9 @@ u32 GetCRC32(const void *data, u16 len)
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#ifdef __ADSPBF6xx__
+#pragma section ("shared_code")
+#endif
 
 u32 GetCRC32(const void *data, u16 len, u32 init, u32 xorOut)
 {

@@ -34,8 +34,10 @@
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-extern void InitIVG(u32 IVG, void (*EVT)());
-extern void InitSEC(u32 PID, void (*EVT)(), byte prio = 0);
+extern void Core0_InitIVG(u32 IVG, void (*EVT)());
+extern void Core1_InitIVG(u32 IVG, void (*EVT)());
+
+extern void InitSEC(u32 PID, void (*EVT)(), byte coren, byte prio = 0);
 
 extern u32 Get_CCLK();
 extern u32 Get_SCLK();
@@ -315,16 +317,20 @@ namespace T_HW
 	#define L1DM_PSIZE_16MB         (6<<16)			/* PSIZE: 16 MB Page Size */
 	#define L1DM_PSIZE_64MB         (7<<16)			/* PSIZE: 64 MB Page Size */
 
-	#define L1DM_NOCACHE			(0<<12)			/* CPROPS: Non-cacheable memory space */
-	#define L1DM_WB_L1				(1<<12)			/* CPROPS: Non-cacheable in L2; write back cacheable in L1 */
-	#define L1DM_WB_L2				(2<<12)			/* CPROPS: Write back cacheable in L2; non-cacheable in L1 */
-	#define L1DM_WB_L1L2			(3<<12)			/* CPROPS: Write back cacheable in L1 and L2 */
-	#define L1DM_IO					(4<<12)			/* CPROPS: I/O device space */
-	#define L1DM_WT_L1				(5<<12)			/* CPROPS: Non-cacheable in L2; write through cacheable in L1 */
-	#define L1DM_WT_L2				(6<<12)			/* CPROPS: Write through cacheable in L2; non-cacheable in L1 */
-	#define L1DM_WT_L1L2			(7<<12)			/* CPROPS: Write through cacheable in L1 and L2 */
+	//#define L1DM_WB_L2				(2<<12)			/* CPROPS: Write back cacheable in L2; non-cacheable in L1 */
+	//#define L1DM_WB_L1L2			(3<<12)			/* CPROPS: Write back cacheable in L1 and L2 */
+	//#define L1DM_IO					(4<<12)			/* CPROPS: I/O device space */
+	//#define L1DM_WT_L2				(6<<12)			/* CPROPS: Write through cacheable in L2; non-cacheable in L1 */
+	//#define L1DM_WT_L1L2			(7<<12)			/* CPROPS: Write through cacheable in L1 and L2 */
 
+	//#define L1DM_CPL7B_L1_AOW       (1UL<<15)       /* CPLB Allocate cache lines on reads and writes */
+	//#define L1DM_WT                 (1UL<<14)       /* CPLB Write Through */
+	//#define L1DM_L1_CHBL            (1UL<<12)       /* CPLB L1 Cacheable */
+	#define L1DM_WT_L1				(0xD<<12)			/* CPROPS: Non-cacheable in L2; write through cacheable in L1 */
+	#define L1DM_WB_L1				(1<<12)			/* CPROPS: Non-cacheable in L2; write back cacheable in L1 */
+	#define L1DM_NOCACHE			(0<<12)			/* CPROPS: Non-cacheable memory space */
 	#define L1DM_DIRTY				(1UL<<7)		/* CPROPS: Dirty CPLB */
+	#define L1DM_L1SRAM             (1UL<<5)        /* CPLB L1SRAM */
 	#define L1DM_SWRITE				(1UL<<4)		/* CPROPS: Supervisor Mode Write */
 	#define L1DM_UWRITE				(1UL<<3)		/* CPROPS: User Mode Write */
 	#define L1DM_UREAD				(1UL<<2)		/* CPROPS: User Mode Read */
@@ -338,46 +344,6 @@ namespace T_HW
 	 * \struct ADI_L1IM_TypeDef
 	 * \brief  Instruction Memory Unit
 	*/ 
-
-
-//#define IMEM_CONTROL                    //	0xFFE01004         /* Instruction memory control */
-//#define ICPLB_STATUS                    //	0xFFE01008         /* Cacheability Protection Lookaside Buffer Status */
-//#define ICPLB_FAULT_ADDR                //	0xFFE0100C         /* Cacheability Protection Lookaside Buffer Fault Address */
-
-//#define ICPLB_ADDR0                     //	0xFFE01100         /* Cacheability Protection Lookaside Buffer Descriptor Address */
-//#define ICPLB_ADDR1                     //	0xFFE01104         /* Cacheability Protection Lookaside Buffer Descriptor Address */
-//#define ICPLB_ADDR2                     //	0xFFE01108         /* Cacheability Protection Lookaside Buffer Descriptor Address */
-//#define ICPLB_ADDR3                     //	0xFFE0110C         /* Cacheability Protection Lookaside Buffer Descriptor Address */
-//#define ICPLB_ADDR4                     //	0xFFE01110         /* Cacheability Protection Lookaside Buffer Descriptor Address */
-//#define ICPLB_ADDR5                     //	0xFFE01114         /* Cacheability Protection Lookaside Buffer Descriptor Address */
-//#define ICPLB_ADDR6                     //	0xFFE01118         /* Cacheability Protection Lookaside Buffer Descriptor Address */
-//#define ICPLB_ADDR7                     //	0xFFE0111C         /* Cacheability Protection Lookaside Buffer Descriptor Address */
-//#define ICPLB_ADDR8                     //	0xFFE01120         /* Cacheability Protection Lookaside Buffer Descriptor Address */
-//#define ICPLB_ADDR9                     //	0xFFE01124         /* Cacheability Protection Lookaside Buffer Descriptor Address */
-//#define ICPLB_ADDR10                    //	0xFFE01128         /* Cacheability Protection Lookaside Buffer Descriptor Address */
-//#define ICPLB_ADDR11                    //	0xFFE0112C         /* Cacheability Protection Lookaside Buffer Descriptor Address */
-//#define ICPLB_ADDR12                    //	0xFFE01130         /* Cacheability Protection Lookaside Buffer Descriptor Address */
-//#define ICPLB_ADDR13                    //	0xFFE01134         /* Cacheability Protection Lookaside Buffer Descriptor Address */
-//#define ICPLB_ADDR14                    //	0xFFE01138         /* Cacheability Protection Lookaside Buffer Descriptor Address */
-//#define ICPLB_ADDR15                    //	0xFFE0113C         /* Cacheability Protection Lookaside Buffer Descriptor Address */
-
-//#define ICPLB_DATA0                     //	0xFFE01200         /* Cacheability Protection Lookaside Buffer Descriptor Status */
-//#define ICPLB_DATA1                     //	0xFFE01204         /* Cacheability Protection Lookaside Buffer Descriptor Status */
-//#define ICPLB_DATA2                     //	0xFFE01208         /* Cacheability Protection Lookaside Buffer Descriptor Status */
-//#define ICPLB_DATA3                     //	0xFFE0120C         /* Cacheability Protection Lookaside Buffer Descriptor Status */
-//#define ICPLB_DATA4                     //	0xFFE01210         /* Cacheability Protection Lookaside Buffer Descriptor Status */
-//#define ICPLB_DATA5                     //	0xFFE01214         /* Cacheability Protection Lookaside Buffer Descriptor Status */
-//#define ICPLB_DATA6                     //	0xFFE01218         /* Cacheability Protection Lookaside Buffer Descriptor Status */
-//#define ICPLB_DATA7                     //	0xFFE0121C         /* Cacheability Protection Lookaside Buffer Descriptor Status */
-//#define ICPLB_DATA8                     //	0xFFE01220         /* Cacheability Protection Lookaside Buffer Descriptor Status */
-//#define ICPLB_DATA9                     //	0xFFE01224         /* Cacheability Protection Lookaside Buffer Descriptor Status */
-//#define ICPLB_DATA10                    //	0xFFE01228         /* Cacheability Protection Lookaside Buffer Descriptor Status */
-//#define ICPLB_DATA11                    //	0xFFE0122C         /* Cacheability Protection Lookaside Buffer Descriptor Status */
-//#define ICPLB_DATA12                    //	0xFFE01230         /* Cacheability Protection Lookaside Buffer Descriptor Status */
-//#define ICPLB_DATA13                    //	0xFFE01234         /* Cacheability Protection Lookaside Buffer Descriptor Status */
-//#define ICPLB_DATA14                    //	0xFFE01238         /* Cacheability Protection Lookaside Buffer Descriptor Status */
-//#define ICPLB_DATA15                    //	0xFFE0123C         /* Cacheability Protection Lookaside Buffer Descriptor Status */
-
 
 	struct S_L1IM
 	{
@@ -790,7 +756,7 @@ namespace T_HW
 	//#define SEC_EN	(1UL<<0)			/*	GCTL Enable */
 
 	//#define SEC_LOCK	(1UL<<31)			/*	SCTL Lock */
-	#define SEC_CTG(v)	(((v)&0xFF)<<24)	/*	SCTL Core Target Select */
+	#define SEC_CTG(v)	(((v)&0xF)<<24)		/*	SCTL Core Target Select */
 	#define SEC_GRP		(1UL<<16)			/*	SCTL Group Select */
 	#define SEC_PRIO(v)	(((v)&0xFF)<<8)		/*	SCTL Priority Level Select */
 	#define SEC_ERREN	(1UL<<4)			/*	SCTL Error Enable */
@@ -908,17 +874,15 @@ namespace T_HW
 	};
 
 	#define L2CTL_LOCK                  (1UL<<31)	/* Lock */
-	#define L2CTL_DISURP                (1UL<<28)	/* Disable Urgent Request Priority */
-	#define L2CTL_ECCMAP8               (1UL<<24)	/* ECC Map Bank 8 (ROM) */
-	#define L2CTL_ECCMAP7               (1UL<<23)	/* ECC Map Bank 7 */
-	#define L2CTL_ECCMAP6               (1UL<<22)	/* ECC Map Bank 6 */
-	#define L2CTL_ECCMAP5               (1UL<<21)	/* ECC Map Bank 5 */
-	#define L2CTL_ECCMAP4               (1UL<<20)	/* ECC Map Bank 4 */
-	#define L2CTL_ECCMAP3               (1UL<<19)	/* ECC Map Bank 3 */
-	#define L2CTL_ECCMAP2               (1UL<<18)	/* ECC Map Bank 2 */
-	#define L2CTL_ECCMAP1               (1UL<<17)	/* ECC Map Bank 1 */
-	#define L2CTL_ECCMAP0               (1UL<<16)	/* ECC Map Bank 0 */
-	#define L2CTL_BK8EDIS               (1UL<<8)	/* Bank 8 (ROM) ECC Disable */
+	#define L2CTL_DISURP                (1UL<<16)	/* Disable Urgent Request Priority */
+	#define L2CTL_ECCMAP7               (1UL<<15)	/* ECC Map Bank 7 */
+	#define L2CTL_ECCMAP6               (1UL<<14)	/* ECC Map Bank 6 */
+	#define L2CTL_ECCMAP5               (1UL<<13)	/* ECC Map Bank 5 */
+	#define L2CTL_ECCMAP4               (1UL<<12)	/* ECC Map Bank 4 */
+	#define L2CTL_ECCMAP3               (1UL<<11)	/* ECC Map Bank 3 */
+	#define L2CTL_ECCMAP2               (1UL<<10)	/* ECC Map Bank 2 */
+	#define L2CTL_ECCMAP1               (1UL<<9)	/* ECC Map Bank 1 */
+	#define L2CTL_ECCMAP0               (1UL<<8)	/* ECC Map Bank 0 */
 	#define L2CTL_BK7EDIS               (1UL<<7)	/* Bank 7 ECC Disable */
 	#define L2CTL_BK6EDIS               (1UL<<6)	/* Bank 6 ECC Disable */
 	#define L2CTL_BK5EDIS				(1UL<<5)	/* Bank 5 ECC Disable */

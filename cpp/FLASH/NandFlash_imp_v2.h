@@ -2694,6 +2694,9 @@ bool NandFlash_AddSessionInfo(NandFileDsc *dsc)
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+static ReadSpare readSpare_UpdateBlackBoxSendSessions;
+static FLADR rd_UpdateBlackBoxSendSessions;
+static FLADR adr_UpdateBlackBoxSendSessions;
 
 static bool UpdateBlackBoxSendSessions()
 {
@@ -2701,12 +2704,12 @@ static bool UpdateBlackBoxSendSessions()
 
 	static byte state = 0;
 
-	static FLADR rd;
-	static FLADR adr;
+	FLADR &rd	= rd_UpdateBlackBoxSendSessions;
+	FLADR &adr	= adr_UpdateBlackBoxSendSessions;
 
 	static SpareArea spare;
 
-	static ReadSpare readSpare;
+	ReadSpare &readSpare = readSpare_UpdateBlackBoxSendSessions;
 
 	static NANDFLRB flrb;
 
@@ -3115,6 +3118,7 @@ void NandFlash_StartSendSession()
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+static FLADR a_UpdateSendSession(0);
 
 static bool UpdateSendSession()
 {
@@ -3127,8 +3131,9 @@ static bool UpdateSendSession()
 	static u16 count = 0;
 //	static u32 lp = 0;
 //	static u32 sum = 0;
-	static FLADR a(0);
 	static TM32 tm;
+	
+	FLADR &a = a_UpdateSendSession;
 
 	NandFileDsc &s = nvsi[ind].f;
 

@@ -56,11 +56,11 @@
 	.GLOBAL _SEC_VecTable;
 	.TYPE	_SEC_VecTable,STT_OBJECT;
 
-.SECTION/NO_INIT core1_SEC_VecTable;
+//.SECTION/NO_INIT core1_SEC_VecTable;
 
-	.BYTE4	_core1_SEC_VecTable[SEC_VECTABLE_LEN];
-	.GLOBAL _core1_SEC_VecTable;
-	.TYPE	_core1_SEC_VecTable,STT_OBJECT;
+//	.BYTE4	_core1_SEC_VecTable[SEC_VECTABLE_LEN];
+//	.GLOBAL _core1_SEC_VecTable;
+//	.TYPE	_core1_SEC_VecTable,STT_OBJECT;
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -688,12 +688,12 @@ core1_supervisor_mode:
 
 		SP += -8;
 
-		LOADIMM32REG(P0, _core1_SEC_VecTable)
-		LOADIMM32REG(R1, core1_dummy_sec_vector)
-		P1 = SEC_VECTABLE_LEN;
-		LSETUP (.core1_secvt, .core1_secvt) LC0 = P1;
+		//LOADIMM32REG(P0, SEC_VecTable)
+		//LOADIMM32REG(R1, core1_dummy_sec_vector)
+		//P1 = SEC_VECTABLE_LEN;
+		//LSETUP (.core1_secvt, .core1_secvt) LC0 = P1;
 
-		.core1_secvt:	[P0++] = R1;
+		//.core1_secvt:	[P0++] = R1;
 
 		LOADIMM32REG(R0, __core1_sec_int_dispatcher)
         LOADIMM32REG(P0, EVT11)
@@ -800,6 +800,13 @@ _core1_ctorloop_end:
         P5.L = ___ctor_table;
 	    P5.H = ___ctor_table;
 
+        R0 = [P5];
+		BITSET(R0, 1); 
+	    [P5] = R0;      // Core 0 ctorloop complete
+
+        CSYNC;
+        SSYNC;
+
 _wait_core0_ctorloop_complete:
 
         FLUSHINV[P5];
@@ -835,7 +842,7 @@ __core1_sec_int_dispatcher:
 		[P1] = P0;					// interrupt acknowledgement
 		[--SP] = P0;
 
-		LOADIMM32REG(P1, _core1_SEC_VecTable)
+		LOADIMM32REG(P1, SEC_VecTable)
 
 		P1 = P1 + (P0 << 2);			// &_SEC_VecTable[index]
 
@@ -979,13 +986,13 @@ _dev_dup:
       // runtime library support to determine which area of code to which a
       // particular address belongs. These sections must be mapped contiguously
       // into memory by the LDF starting with this one and followed by .gdtl.
-//.SECTION/DOUBLEANY .gdt;
-//      .ALIGN 4;
-//      .GLOBAL ___eh_gdt;
-//      .TYPE ___eh_gdt,STT_OBJECT;
-//      .EXTERN ___eh_gdt_end;
-//      .type ___eh_gdt_end,STT_OBJECT;
-//      .BYTE4 ___eh_gdt = ___eh_gdt_end;
+.SECTION/DOUBLEANY .gdt;
+      .ALIGN 4;
+      .GLOBAL ___eh_gdt;
+      .TYPE ___eh_gdt, STT_OBJECT;
+      .EXTERN ___eh_gdt_end;
+      .type ___eh_gdt_end, STT_OBJECT;
+      .BYTE4 ___eh_gdt = ___eh_gdt_end;
 
 .section ctorl;
 .align 4;
@@ -994,10 +1001,9 @@ ___ctor_end:
    .byte4=0;    // NULL terminator reauired by __ctorloop
 .type ___ctor_end,STT_OBJECT; 
 
-//.section .gdtl;
-//.align 4;
-//___eh_gdt_end:
-//.global ___eh_gdt_end;
-//    .byte4=0;
-//.type ___eh_gdt_end,STT_OBJECT; 
- 
+.section .gdtl;
+.align 4;
+___eh_gdt_end:
+.global ___eh_gdt_end;
+    .byte4 = 0;
+.type ___eh_gdt_end, STT_OBJECT;

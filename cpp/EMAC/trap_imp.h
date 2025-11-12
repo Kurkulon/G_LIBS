@@ -1141,12 +1141,14 @@ static bool UpdateSendVector()
 
 #else
 
+static Ptr<MB> mb_UpdateSendVector;
+
 static bool UpdateSendVector()
 {
 	static byte i = 0;
 	static NANDFLRB flrb;
 
-	static Ptr<MB> mb;
+	Ptr<MB> &mb = mb_UpdateSendVector;
 //	static VecData::Hdr h;
 
 	static u64 vecCount = 0;
@@ -1645,12 +1647,14 @@ void SendFragTrap(Ptr<MB> &mb)
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+static Ptr<MB> mb_UpdateRequestTraps;
 
 static void UpdateRequestTraps()
 {
 	static byte i = 0;
-	static Ptr<MB> mb;
 	static EthPtr et = {0};
+	
+	Ptr<MB> &mb = mb_UpdateRequestTraps;
 
 	switch(i)
 	{

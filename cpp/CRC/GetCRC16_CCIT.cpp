@@ -9,6 +9,9 @@
 #endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#ifdef __ADSPBF6xx__
+#pragma section ("shared_code")
+#endif
 
 word GetCRC16_CCIT(const void *data, u32 len, word init, bool revres)
 {
@@ -25,6 +28,9 @@ word GetCRC16_CCIT(const void *data, u32 len, word init, bool revres)
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#ifdef __ADSPBF6xx__
+#pragma section ("shared_code")
+#endif
 
 word GetCRC16_CCIT_refl(const void *data, u32 len, word init, bool revres)
 {

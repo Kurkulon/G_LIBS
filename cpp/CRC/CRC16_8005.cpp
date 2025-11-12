@@ -2,6 +2,10 @@
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#ifdef __ADSPBF6xx__
+#pragma section ("shared_constdata")
+#endif
+
 extern const u16 tableCRC_8005[256] = 
 {
 	0x0000, 0x8005, 0x800F, 0x000A, 0x801B, 0x001E, 0x0014, 0x8011,
