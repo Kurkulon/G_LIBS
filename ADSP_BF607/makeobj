@@ -56,7 +56,7 @@ startup_obj = $(objdir)\startup_BF706.doj
 !else ifeq targetcpu BF607
 
 cpu_opt		= -proc ADSP-BF607 -si-revision 0.2
-adsp_cache_opt = USE_CACHE_C
+adsp_cache_opt = USE_CACHE_C_A_B
 adsp_memmap_opt = USE_CORE1_DA_DB #USE_L1_DA_DB
 adsp_comp_opt = -D$(adsp_cache_opt) -D$(adsp_memmap_opt)
 loader_opt	= -bcode 13

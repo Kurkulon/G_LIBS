@@ -1,6 +1,12 @@
 #include <sys/platform.h>
 #include <sys/anomaly_macros_rtl.h>
 
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#define TEST_DCPLB
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 #define UNASSIGNED_VAL 0x81818181
 #define UNASSIGNED_FILL 0
 
@@ -276,53 +282,48 @@ supervisor_mode:
 
 #ifdef TEST_DCPLB
 
-		P0 = 0x04000000;
+		LOADIMM32REG(P0, 0xFF800000)    // MEM_C0_BASE_L1DM_A_SRAM
 		R0 = [P0];
 
-		P0 = 0x04080000-4;
+		LOADIMM32REG(P0, 0xFF803FFC)    // MEM_C0_BASE_L1DM_A_SRAM
 		R0 = [P0];
 
-		P0 = 0x08000000;
+		LOADIMM32REG(P0, 0xFF900000)    // MEM_C0_BASE_L1DM_B_SRAM
 		R0 = [P0];
 
-		P0 = 0x08100000-4;
+		LOADIMM32REG(P0, 0xFF903FFC)    // MEM_C0_BASE_L1DM_B_SRAM
 		R0 = [P0];
 
-		P0 = 0x11800000;
+		LOADIMM32REG(P0, 0xC8000000)    // MEM_BASE_L2_ROM
 		R0 = [P0];
 
-		P0 = 0x11808000-4;
+		LOADIMM32REG(P0, 0xC8080000)    // MEM_BASE_L2_SRAM
 		R0 = [P0];
 
-		P0 = 0x11900000;
+		LOADIMM32REG(P0, 0xC8084000)    
 		R0 = [P0];
 
-		P0 = 0x11908000-4;
+		LOADIMM32REG(P0, 0xC8088000)    
 		R0 = [P0];
 
-		P0 = 0x11B00000;
+		LOADIMM32REG(P0, 0xC808C000)    
 		R0 = [P0];
 
-		P0 = 0x11B02000-4;
+		LOADIMM32REG(P0, 0xC8090000)    
 		R0 = [P0];
 
-		P0 = 0x1FC00000;
+		LOADIMM32REG(P0, 0xC8094000)    
 		R0 = [P0];
 
-		P0 = 0x20000000;
+		LOADIMM32REG(P0, 0xC8098000)    
 		R0 = [P0];
 
-		P0 = 0x38000000;
+		LOADIMM32REG(P0, 0xC809C000)    
+		R0 = [P0];
+		
+        LOADIMM32REG(P0, 0xC80BFFFC)    // MEM_END_L2_SRAM  
 		R0 = [P0];
 
-		P0 = 0x38000400-4;
-		R0 = [P0];
-
-		P0 = 0x40000000;
-		R0 = [P0];
-
-		P0 = 0x48000000-4;
-		R0 = [P0];
 
 #endif
 
@@ -708,9 +709,9 @@ core1_supervisor_mode:
 		.TYPE _Core1_SystemInit,STT_FUNC;
 		CALL.X _Core1_SystemInit;
 
-#ifdef TEST_DCPLB
+#ifdef TEST_DCPLB_CORE1
 
-		P0 = 0x04000000;
+		LOADIMM32REG(P0, 0x04000000)
 		R0 = [P0];
 
 		P0 = 0x04080000-4;

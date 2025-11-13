@@ -846,11 +846,11 @@ static void Init_Cache()
 	{
 		csync(); ssync();
 
-		HW::L1DM->CTL		= (core0_data_cache_b) ? (L1DM_ACACHE_BCACHE) : ((core0_data_cache_a) ? L1DM_ACACHE_BSRAM : L1DM_SRAM_AB);
+		HW::L1DM->CTL		= L1DM_PPREF0|((core0_data_cache_b) ? (L1DM_ACACHE_BCACHE) : ((core0_data_cache_a) ? L1DM_ACACHE_BSRAM : L1DM_SRAM_AB))|1;
 
-		const u32 DCPLB_L2_ROM				= L1DM_PSIZE_64KB	| L1DM_WB_L1	| L1DM_DIRTY |								L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
+		const u32 DCPLB_L2_ROM				= L1DM_PSIZE_64KB	| L1DM_NOCACHE	| L1DM_DIRTY | L1DM_L1SRAM				 |	L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
 		const u32 DCPLB_L2_ASRAM			= L1DM_PSIZE_64MB	| L1DM_NOCACHE	| L1DM_DIRTY | L1DM_SWRITE | L1DM_UWRITE |	L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
-		const u32 DCPLB_L2_SRAM_NOCACHE	= L1DM_PSIZE_1MB	| L1DM_NOCACHE	| L1DM_DIRTY | L1DM_SWRITE | L1DM_UWRITE |	L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
+		const u32 DCPLB_L2_SRAM_NOCACHE	=					  L1DM_NOCACHE	| L1DM_DIRTY | L1DM_SWRITE | L1DM_UWRITE |	L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
 		const u32 DCPLB_L2_SRAM_CACHEWT	=					  L1DM_WT_L1	| L1DM_DIRTY | L1DM_SWRITE | L1DM_UWRITE |	L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
 		//const u32 DCPLB_L2_SRAM_CACHEWB	= L1DM_PSIZE_64KB	| L1DM_WB_L1	| L1DM_DIRTY | L1DM_SWRITE | L1DM_UWRITE |	L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
 		const u32 DCPLB_L1_SRAM			= L1DM_PSIZE_16KB	| L1DM_NOCACHE	| L1DM_DIRTY | L1DM_SWRITE | L1DM_UWRITE |	L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
@@ -863,9 +863,9 @@ static void Init_Cache()
 		if (core0_data_cache_b == 0)	HW::L1DM->CPLB_ADDR[n] = 0xFF904000, HW::L1DM->CPLB_DATA[n++] = DCPLB_L1_SRAM;				// L1 Data Block B SRAM/Cache (16 KB)
 									
 										HW::L1DM->CPLB_ADDR[n] = 0xB0000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ASRAM;			// Async SRAM Bank 0 (64MB)
-										HW::L1DM->CPLB_ADDR[n] = 0xB4000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ASRAM;			// Async SRAM Bank 1 (64MB)
-										HW::L1DM->CPLB_ADDR[n] = 0xB8000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ASRAM;			// Async SRAM Bank 2 (64MB)
-										HW::L1DM->CPLB_ADDR[n] = 0xBc000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ASRAM;			// Async SRAM Bank 3 (64MB)
+										//HW::L1DM->CPLB_ADDR[n] = 0xB4000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ASRAM;			// Async SRAM Bank 1 (64MB)
+										//HW::L1DM->CPLB_ADDR[n] = 0xB8000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ASRAM;			// Async SRAM Bank 2 (64MB)
+										//HW::L1DM->CPLB_ADDR[n] = 0xBc000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ASRAM;			// Async SRAM Bank 3 (64MB)
 
 										HW::L1DM->CPLB_ADDR[n] = 0xC8000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ROM;				// L2 ROM (32 KB)
 										//HW::L1DM->CPLB_ADDR[n] = 0xC8004000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ROM;				// L2 ROM (16 KB)
@@ -874,31 +874,56 @@ static void Init_Cache()
 		u32 pageSize = 0;
 		u32 dcplb = 0;
 
-		while(L2_Cached_Len != 0)
+		for ( ; n < 16; n++)
 		{
-			if (L2_Cached_Len >= 0x10000)
+			if (L2_Cached_Len >= 0x10000 && (adr&0xFFFF)==0)
 			{
 				pageSize = 0x10000;
 				dcplb = L1DM_PSIZE_64KB;
 			}
-			else 
+			else if (L2_Cached_Len >= 0x4000 && (adr&0x3FFF)==0)
 			{
-				pageSize = (L2_Cached_Len >= 0x4000) ? 0x4000 : L2_Cached_Len;
+				pageSize = 0x4000;
 				dcplb = L1DM_PSIZE_16KB;
+			}
+			else
+			{
+				break;
 			};
 
-			HW::L1DM->CPLB_ADDR[n] = adr; HW::L1DM->CPLB_DATA[n++] = dcplb|DCPLB_L2_SRAM_CACHEWT;
+			HW::L1DM->CPLB_ADDR[n] = adr; HW::L1DM->CPLB_DATA[n] = dcplb|DCPLB_L2_SRAM_CACHEWT|L1DM_L1SRAM;
 			adr += pageSize;
 			L2_Cached_Len -= pageSize;
 		};
 
-		if (n < 16) HW::L1DM->CPLB_ADDR[n] = adr; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_SRAM_NOCACHE;	// L2 SRAM (64 KB)
+
+		for (u32 len = MEM_BASE_L2_SRAM+MEM_SIZE_L2_SRAM-adr; n < 16 && len > 0; n++)
+		{
+			if ((adr&0xFFFF)==0)
+			{
+				pageSize = 0x10000;
+				dcplb = L1DM_PSIZE_64KB;
+			}
+			else if ((adr&0x3FFF)==0)
+			{
+				pageSize = 0x4000;
+				dcplb = L1DM_PSIZE_16KB;
+			}
+			else
+			{
+				break;
+			};
+
+			HW::L1DM->CPLB_ADDR[n] = adr; HW::L1DM->CPLB_DATA[n] = dcplb|DCPLB_L2_SRAM_NOCACHE|L1DM_L1SRAM;
+			adr += pageSize;
+			len -= pageSize;
+		};
 
 		for ( ; n < 16; n++) HW::L1DM->CPLB_DATA[n] = 0;
 
 		csync(); ssync();
 
-		HW::L1DM->CTL |= L1DM_ENCPLB;
+		HW::L1DM->CTL |= L1DM_ENCPLB|L1DM_PPREF0|1;
 
 		csync(); ssync();
 	}
@@ -906,7 +931,7 @@ static void Init_Cache()
 	{
 		csync(); ssync();
 
-		HW::L1DM->CTL		= L1DM_SRAM_AB;
+		HW::L1DM->CTL		= L1DM_SRAM_AB|L1DM_PPREF0|1;
 
 		const u32 DCPLB_L2_ROM		= L1DM_PSIZE_64KB	| L1DM_NOCACHE	| L1DM_DIRTY |								L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
 		const u32 DCPLB_L2_ASRAM	= L1DM_PSIZE_64MB	| L1DM_NOCACHE	| L1DM_DIRTY | L1DM_SWRITE | L1DM_UWRITE |	L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
@@ -937,7 +962,7 @@ static void Init_Cache()
 
 		csync(); ssync();
 
-		HW::L1DM->CTL = L1DM_SRAM_AB|L1DM_ENCPLB;
+		HW::L1DM->CTL = L1DM_SRAM_AB|L1DM_ENCPLB|L1DM_PPREF0|1;
 
 		csync(); ssync();
 	};
@@ -1058,14 +1083,14 @@ static void Core1_Init_Cache()
 	{
 		ssync();
 
-		HW::L1DM->CTL		= (core1_data_cache_b) ? (L1DM_ACACHE_BCACHE) : ((core1_data_cache_a) ? L1DM_ACACHE_BSRAM : L1DM_SRAM_AB);
+		HW::L1DM->CTL		= L1DM_PPREF0|((core1_data_cache_b) ? (L1DM_ACACHE_BCACHE) : ((core1_data_cache_a) ? L1DM_ACACHE_BSRAM : L1DM_SRAM_AB))|1;
 
-		const u32 DCPLB_L2_ROM				= L1DM_PSIZE_64KB	| L1DM_WT_L1	| L1DM_DIRTY |								L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
+		const u32 DCPLB_L2_ROM				= L1DM_PSIZE_64KB	| L1DM_NOCACHE	| L1DM_DIRTY | L1DM_L1SRAM				 |	L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
 		const u32 DCPLB_L2_ASRAM			= L1DM_PSIZE_64MB	| L1DM_NOCACHE	| L1DM_DIRTY | L1DM_SWRITE | L1DM_UWRITE |	L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
-		const u32 DCPLB_L2_SRAM_NOCACHE	= L1DM_PSIZE_1MB	| L1DM_NOCACHE	| L1DM_DIRTY | L1DM_SWRITE | L1DM_UWRITE |	L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
+		const u32 DCPLB_L2_SRAM_NOCACHE	=					  L1DM_NOCACHE	| L1DM_DIRTY | L1DM_SWRITE | L1DM_UWRITE |	L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
 		const u32 DCPLB_L2_SRAM_CACHEWT	=					  L1DM_WT_L1	| L1DM_DIRTY | L1DM_SWRITE | L1DM_UWRITE |	L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
 		//const u32 DCPLB_L2_SRAM_CACHEWB	= L1DM_PSIZE_64KB	| L1DM_WB_L1	| L1DM_DIRTY | L1DM_SWRITE | L1DM_UWRITE |	L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
-		const u32 DCPLB_L1_SRAM			= L1DM_PSIZE_16KB	| L1DM_NOCACHE	| L1DM_DIRTY | L1DM_SWRITE | L1DM_UWRITE |	L1DM_UREAD | L1DM_LOCK | L1DM_VALID | L1DM_L1SRAM;
+		const u32 DCPLB_L1_SRAM			= L1DM_PSIZE_16KB	| L1DM_NOCACHE	| L1DM_DIRTY | L1DM_SWRITE | L1DM_UWRITE |	L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
 
 		byte n = 0;
 
@@ -1075,9 +1100,9 @@ static void Core1_Init_Cache()
 		if (core1_data_cache_b == 0)	HW::L1DM->CPLB_ADDR[n] = 0xFF504000, HW::L1DM->CPLB_DATA[n++] = DCPLB_L1_SRAM;				// L1 Data Block B SRAM/Cache (16 KB)
 
 										HW::L1DM->CPLB_ADDR[n] = 0xB0000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ASRAM;			// Async SRAM Bank 0 (64MB)
-										HW::L1DM->CPLB_ADDR[n] = 0xB4000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ASRAM;			// Async SRAM Bank 1 (64MB)
-										HW::L1DM->CPLB_ADDR[n] = 0xB8000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ASRAM;			// Async SRAM Bank 2 (64MB)
-										HW::L1DM->CPLB_ADDR[n] = 0xBc000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ASRAM;			// Async SRAM Bank 3 (64MB)
+										//HW::L1DM->CPLB_ADDR[n] = 0xB4000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ASRAM;			// Async SRAM Bank 1 (64MB)
+										//HW::L1DM->CPLB_ADDR[n] = 0xB8000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ASRAM;			// Async SRAM Bank 2 (64MB)
+										//HW::L1DM->CPLB_ADDR[n] = 0xBc000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ASRAM;			// Async SRAM Bank 3 (64MB)
 
 										HW::L1DM->CPLB_ADDR[n] = 0xC8000000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ROM;				// L2 ROM (32 KB)
 										//HW::L1DM->CPLB_ADDR[n] = 0xC8004000; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_ROM;				// L2 ROM (16 KB)
@@ -1086,31 +1111,56 @@ static void Core1_Init_Cache()
 		u32 pageSize = 0;
 		u32 dcplb = 0;
 
-		while(L2_Cached_Len != 0)
+		for ( ; n < 16; n++)
 		{
-			if (L2_Cached_Len >= 0x10000)
+			if (L2_Cached_Len >= 0x10000 && (adr&0xFFFF)==0)
 			{
 				pageSize = 0x10000;
 				dcplb = L1DM_PSIZE_64KB;
 			}
-			else 
+			else if (L2_Cached_Len >= 0x4000 && (adr&0x3FFF)==0)
 			{
-				pageSize = (L2_Cached_Len >= 0x4000) ? 0x4000 : L2_Cached_Len;
+				pageSize = 0x4000;
 				dcplb = L1DM_PSIZE_16KB;
+			}
+			else
+			{
+				break;
 			};
 
-			HW::L1DM->CPLB_ADDR[n] = adr; HW::L1DM->CPLB_DATA[n++] = dcplb|DCPLB_L2_SRAM_CACHEWT;
+			HW::L1DM->CPLB_ADDR[n] = adr; HW::L1DM->CPLB_DATA[n] = dcplb|DCPLB_L2_SRAM_CACHEWT|L1DM_L1SRAM;
 			adr += pageSize;
 			L2_Cached_Len -= pageSize;
 		};
 
-		if (n < 16) HW::L1DM->CPLB_ADDR[n] = adr; HW::L1DM->CPLB_DATA[n++] = DCPLB_L2_SRAM_NOCACHE;	// L2 SRAM (64 KB)
+
+		for (u32 len = MEM_BASE_L2_SRAM+MEM_SIZE_L2_SRAM-adr; n < 16 && len > 0; n++)
+		{
+			if ((adr&0xFFFF)==0)
+			{
+				pageSize = 0x10000;
+				dcplb = L1DM_PSIZE_64KB;
+			}
+			else if ((adr&0x3FFF)==0)
+			{
+				pageSize = 0x4000;
+				dcplb = L1DM_PSIZE_16KB;
+			}
+			else
+			{
+				break;
+			};
+
+			HW::L1DM->CPLB_ADDR[n] = adr; HW::L1DM->CPLB_DATA[n] = dcplb|DCPLB_L2_SRAM_NOCACHE|L1DM_L1SRAM;
+			adr += pageSize;
+			len -= pageSize;
+		};
 
 		for ( ; n < 16; n++) HW::L1DM->CPLB_DATA[n] = 0;
 
 		csync(); ssync();
 
-		HW::L1DM->CTL |= L1DM_ENCPLB;
+		HW::L1DM->CTL |= L1DM_ENCPLB|L1DM_PPREF0|1;
 
 		csync(); ssync();
 	}
@@ -1118,7 +1168,7 @@ static void Core1_Init_Cache()
 	{
 		ssync();
 
-		HW::L1DM->CTL		= L1DM_SRAM_AB;
+		HW::L1DM->CTL		= L1DM_SRAM_AB|L1DM_PPREF0|1;
 
 		const u32 DCPLB_L2_ROM		= L1DM_PSIZE_64KB	| L1DM_NOCACHE	| L1DM_DIRTY |								L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
 		const u32 DCPLB_L2_ASRAM	= L1DM_PSIZE_64MB	| L1DM_NOCACHE	| L1DM_DIRTY | L1DM_SWRITE | L1DM_UWRITE |	L1DM_UREAD | L1DM_LOCK | L1DM_VALID;
@@ -1149,7 +1199,7 @@ static void Core1_Init_Cache()
 
 		csync();
 
-		HW::L1DM->CTL = L1DM_SRAM_AB|L1DM_ENCPLB;
+		HW::L1DM->CTL = L1DM_SRAM_AB|L1DM_ENCPLB|L1DM_PPREF0|1;
 
 		ssync();
 	};
