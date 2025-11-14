@@ -3,6 +3,18 @@
 
 #include "mem.h"
 
+#ifdef CPU_BF607
+
+#define SHARED_CODE _Pragma("section (\"shared_code\")")
+#define SHARED_DATA _Pragma("section (\"shared_data\")")
+
+#else
+
+#define SHARED_CODE /**/
+#define SHARED_DATA /**/
+
+#endif
+
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 template <int L> List< MEMB<L> > MEMB<L>::_freeList;
@@ -13,9 +25,9 @@ template <int L> List< MEMB<L> > MEMB<L>::_freeList;
 #define MEMBM MEMB<MEDIUM_BUF_LEN>
 #define MEMBH MEMB<HUGE_BUF_LEN>
 
-MEMBS	small_buffer[NUM_SMALL_BUF];
-MEMBM	medium_buffer[NUM_MEDIUM_BUF];
-MEMBH	huge_buffer[NUM_HUGE_BUF];
+SHARED_DATA MEMBS	small_buffer[NUM_SMALL_BUF];
+SHARED_DATA MEMBM	medium_buffer[NUM_MEDIUM_BUF];
+SHARED_DATA MEMBH	huge_buffer[NUM_HUGE_BUF];
 
 #ifdef _ADI_COMPILER
 #pragma instantiate MEMBS
@@ -24,21 +36,21 @@ MEMBH	huge_buffer[NUM_HUGE_BUF];
 #endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
+SHARED_CODE
 MB* AllocSmallBuffer()
 {
 	return MEMBS::Create();
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
+SHARED_CODE
 MB* AllocMediumBuffer()
 {
 	return MEMBM::Create();
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
+SHARED_CODE
 MB* AllocHugeBuffer()
 {
 	return MEMBH::Create();
@@ -46,6 +58,7 @@ MB* AllocHugeBuffer()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+SHARED_CODE
 MB* AllocMemBuffer(u32 minLen)
 {
 	if (minLen > MEDIUM_BUF_LEN)

@@ -756,7 +756,7 @@ PROCESSOR P0
 		L2_code DEF_SECTION_QUAL
 		{
 			INPUT_SECTION_ALIGN(4)
-			INPUT_SECTIONS( $OBJS_LIBS(L2_code cplb_code cplb noncache_code shared_code) )
+			INPUT_SECTIONS( $OBJS_LIBS(L2_code /*cplb_code cplb*/ noncache_code shared_code) )
 			INPUT_SECTIONS( $OBJS_LIBS_INTERNAL(program) )
 			INPUT_SECTIONS( $OBJS_LIBS_NOT_EXTERNAL(program) )
 			INPUT_SECTIONS( $OBJS_LIBS(program) )

@@ -49,6 +49,11 @@ enum
 #define TFTP_FILE_PROGRAMM	"system.img"
 /******************************************************/
 
+#ifdef _ADI_COMPILER
+#pragma pack(1)
+#endif
+
+
 __packed struct	TFTP_PACKET_type
 {
 	u16 opcode;
@@ -172,6 +177,12 @@ __packed struct	EthTftp
 //{
 //	byte exdata[ETH_IP_MTU - sizeof(UdpHdr) - sizeof(TFTPHdr) - sizeof(data)];
 //};
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#ifdef _ADI_COMPILER
+#pragma pack()
+#endif
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

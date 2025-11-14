@@ -37,6 +37,8 @@
 extern void Core0_InitIVG(u32 IVG, void (*EVT)());
 extern void Core1_InitIVG(u32 IVG, void (*EVT)());
 
+#define InitIVG Core0_InitIVG
+
 extern void InitSEC(u32 PID, void (*EVT)(), byte coren, byte prio = 0);
 
 extern u32 Get_CCLK();
@@ -2232,6 +2234,7 @@ namespace T_HW
 		BF_RW32 VLANTAG					;//0xFFC2001C         /* EMAC0 VLAN Tag Register */
 									BF_RO32 z__Reserved0;
 		BF_RW32 DBG						;//0xFFC20024         /* EMAC0 Debug Register */
+									BF_RO32 z__Reserved01[(0x38-0x28)/4];
 		BF_RW32 ISTAT					;//0xFFC20038         /* EMAC0 Interrupt Status Register */
 		BF_RW32 IMSK					;//0xFFC2003C         /* EMAC0 Interrupt Mask Register */
 		BF_RW32 ADDR0_HI				;//0xFFC20040         /* EMAC0 MAC Address 0 High Register */
@@ -2294,8 +2297,9 @@ namespace T_HW
 		BF_RW32 RXWDOG_ERR				;//0xFFC201DC         /* EMAC0 Rx Watch Dog Error Register */
 									BF_RO32 z__Reserved3[(0x200-0x1E0)/4];
 		BF_RW32 IPC_RXIMSK				;//0xFFC20200         /* EMAC0 MMC IPC Rx Interrupt Mask Register */
-		BF_RW32 IPC_RXINT				;//0xFFC20208         /* EMAC0 MMC IPC Rx Interrupt Register */
 									BF_RO32 z__Reserved4;
+		BF_RW32 IPC_RXINT				;//0xFFC20208         /* EMAC0 MMC IPC Rx Interrupt Register */
+									BF_RO32 z__Reserved41;
 		BF_RW32 RXIPV4_GD_FRM			;//0xFFC20210         /* EMAC0 Rx IPv4 Datagrams (Good) Register */
 		BF_RW32 RXIPV4_HDR_ERR_FRM		;//0xFFC20214         /* EMAC0 Rx IPv4 Datagrams Header Errors Register */
 		BF_RW32 RXIPV4_NOPAY_FRM		;//0xFFC20218         /* EMAC0 Rx IPv4 Datagrams No Payload Frame Register */
@@ -2365,11 +2369,12 @@ namespace T_HW
 
 	typedef S_EMAC S_EMAC0, S_EMAC1;
 
+	// EMAC_MACCFG
+
 	#define EMAC_CST				(1UL<<25)			/* CRC Stripping */
 	#define EMAC_WD					(1UL<<23)			/* Watch Dog Disable */
 	#define EMAC_JB					(1UL<<22)			/* Jabber Disable */
 	#define EMAC_JE					(1UL<<20)			/* Jumbo Frame Enable */
-
 	#define EMAC_IFG(v)				(((v)&7)<<17)		/* Inter-Frame Gap */
 	#define EMAC_IFG96				(0<<17)				/* IFG: 96 bit times */
 	#define EMAC_IFG88				(1<<17)				/* IFG: 88 bit times */
@@ -2379,7 +2384,6 @@ namespace T_HW
 	#define EMAC_IFG56				(5<<17)				/* IFG: 56 bit times */
 	#define EMAC_IFG48				(6<<17)				/* IFG: 48 bit times */
 	#define EMAC_IFG40				(7<<17)				/* IFG: 40 bit times */
-
 	#define EMAC_DCRS				(1UL<<16)			/* Disable Carrier Sense */
 	#define EMAC_FES				(1UL<<14)			/* Speed of Operation */
 	#define EMAC_DO					(1UL<<13)			/* Disable Receive Own */
@@ -2397,6 +2401,8 @@ namespace T_HW
 	#define EMAC_TE					(1UL<< 3)			/* Transmitter Enable */
 	#define EMAC_RE					(1UL<< 2)			/* Receiver Enable */
 
+	// EMAC_MACFRMFILT
+
 	#define EMAC_RA					(1UL<<31)			/* Receive All Frames */
 	#define EMAC_HPF				(1UL<<10)			/* Hash or Perfect Filter */
 	#define EMAC_PCF_FILT_ALL		(0UL<< 6)			/* PCF: Pass no control frames */
@@ -2410,46 +2416,119 @@ namespace T_HW
 	#define EMAC_HUC				(1UL<< 1)			/* Hash Unicast */
 	#define EMAC_PR					(1UL<< 0)			/* Promiscuous Mode */
 
-	#define EMAC_SMI_PA				(((v)&31)<<11)		/* Physical Layer Address */
-	#define EMAC_SMI_SMIR			(((v)&31)<<6 )		/* SMI Register Address */
-	#define EMAC_SMI_CR				(((v)&15)<<2 )		/* Clock Range */
+	// EMAC_SMI_ADDR
+
+	#define EMAC_SMI_PA(v)			(((v)&31)<<11)		/* Physical Layer Address */
+	#define EMAC_SMI_SMIR(v)		(((v)&31)<<6 )		/* SMI Register Address */
+	#define EMAC_SMI_CR(v)			(((v)&15)<<2 )		/* Clock Range */
 	#define EMAC_SMI_SMIW			(1UL<< 1)			/* SMI Write */
 	#define EMAC_SMI_SMIB			(1UL<< 0)			/* SMI Busy */
 
-	#define TD0_OWN    0x80000000
-	#define TD0_IC     0x40000000
-	#define TD0_LS     0x20000000
-	#define TD0_FS     0x10000000
-	#define TD0_DC     0x08000000
-	#define TD0_DP     0x04000000
-	#define TD0_TTSE   0x02000000
-	#define TD0_CIC    0x00C00000
-	#define TD0_TER    0x00200000
-	#define TD0_TCH    0x00100000
-	#define TD0_TTSS   0x00020000
-	#define TD0_IHE    0x00010000
-	#define TD0_ES     0x00008000
-	#define TD0_JT     0x00004000
-	#define TD0_FF     0x00002000
-	#define TD0_IPE    0x00001000
-	#define TD0_LCA    0x00000800
-	#define TD0_NC     0x00000400
-	#define TD0_LCO    0x00000200
-	#define TD0_EC     0x00000100
-	#define TD0_VF     0x00000080
-	#define TD0_CC     0x00000078
-	#define TD0_ED     0x00000004
-	#define TD0_UF     0x00000002
-	#define TD0_DB     0x00000001
-	#define TD1_TBS2   0x1FFF0000
-	#define TD1_TBS1   0x00001FFF
-	#define TD2_B1AP   0xFFFFFFFF
-	#define TD3_B2AP   0xFFFFFFFF
-	#define TD6_TTSL   0xFFFFFFFF
-	#define TD7_TTSH   0xFFFFFFFF
+	//	EMAC_FLOWCTL                         
 
-	#define RBS1(v)				((v)&0x1FFF)
-	#define RBS2(v)				(((v)&0x7FF)<<16)
+	#define EMAC_PT(v)              ((v)<<16)			/* Pause Time */
+	#define EMAC_UP                 (1UL<< 3)			/* Unicast Pause Frame Detect */
+	#define EMAC_RFE                (1UL<< 2)			/* Receive Flow Control Enable */
+	#define EMAC_TFE                (1UL<< 1)			/* Transmit Flow Control Enable */
+	#define EMAC_FCBBPA             (1UL<< 0)			/* Initiate Pause Control Frame */
+
+	//	EMAC_ISTAT                           
+
+	#define EMAC_ITS				(1UL<< 9)			/* Time Stamp Interrupt Status */
+	#define EMAC_IMMCRC				(1UL<< 7)			/* MMC Receive Checksum Offload Interrupt Status */
+	#define EMAC_IMMCTX				(1UL<< 6)			/* MMC Transmit Interrupt Status */
+	#define EMAC_IMMCRX				(1UL<< 5)			/* MMC Receive Interrupt Status */
+	#define EMAC_IMMC				(1UL<< 4)			/* MMC Interrupt Status */
+
+
+
+
+
+	// EMAC_DMA_BUSMODE
+
+	#define EMAC_DMA_AAL			(1UL<<25)			/* Address Aligned Bursts */
+	#define EMAC_DMA_PBL8			(1UL<<24)			/* PBL * 8 */
+	#define EMAC_DMA_USP			(1UL<<23)			/* Use Separate PBL */
+	#define EMAC_DMA_RPBL			(1UL<<17)			/* Receive Programmable Burst Length */
+	#define EMAC_DMA_FB				(1UL<<16)			/* Fixed Burst */
+	#define EMAC_DMA_PBL			(1UL<< 8)			/* Programmable Burst Length */
+	#define EMAC_DMA_ATDS			(1UL<< 7)			/* Alternate Descriptor Size */
+	#define EMAC_DMA_DSL			(1UL<< 2)			/* Descriptor Skip Length */
+	#define EMAC_DMA_SWR			(1UL<< 0)			/* Software Reset */
+
+	//	EMAC_DMA_OPMODE                      Pos/Masks                        Description
+
+	#define EMAC_DMA_DT				(1UL<<26)			/* Disable Dropping TCP/IP Errors */
+	#define EMAC_DMA_RSF			(1UL<<25)			/* Receive Store and Forward */
+	#define EMAC_DMA_DFF			(1UL<<24)			/* Disable Flushing of received Frames */
+	#define EMAC_DMA_TSF			(1UL<<21)			/* Transmit Store and Forward */
+	#define EMAC_DMA_FTF			(1UL<<20)			/* Flush Transmit FIFO */
+	#define EMAC_DMA_TTC			(1UL<<14)			/* Transmit Threshold Control */
+	#define EMAC_DMA_ST				(1UL<<13)			/* Start/Stop Transmission */
+	#define EMAC_DMA_FEF			(1UL<<7)			/* Forward Error Frames */
+	#define EMAC_DMA_FUF			(1UL<<6)			/* Forward Undersized good Frames */
+	#define EMAC_DMA_RTC			(1UL<<3)			/* Receive Threshold Control */
+	#define EMAC_DMA_OSF			(1UL<<2)			/* Operate on Second Frame */
+	#define EMAC_DMA_SR				(1UL<<1)			/* Start/Stop Receive */
+
+	//	EMAC_DMA_STAT
+
+	#define EMAC_DMA_TTI				(1UL<<29)			/* Time Stamp Trigger Interrupt */
+	#define EMAC_DMA_MCI				(1UL<<27)			/* MAC MMC Interrupt */
+	#define EMAC_DMA_EB					(1UL<<23)			/* Error Bits */
+	#define EMAC_DMA_TS					(1UL<<20)			/* Tx Process State */
+	#define EMAC_DMA_RS					(1UL<<17)			/* Rx Process State */
+	#define EMAC_DMA_NIS				(1UL<<16)			/* Normal Interrupt Summary */
+	#define EMAC_DMA_AIS				(1UL<<15)			/* Abnormal Interrupt Summary */
+	#define EMAC_DMA_ERI				(1UL<<14)			/* Early Receive Interrupt */
+	#define EMAC_DMA_FBI				(1UL<<13)			/* Fatal Bus Error Interrupt */
+	#define EMAC_DMA_ETI				(1UL<<10)			/* Early Transmit Interrupt */
+	#define EMAC_DMA_RWT				(1UL<<9)			/* Receive WatchDog Timeout */
+	#define EMAC_DMA_RPS				(1UL<<8)			/* Receive Process Stopped */
+	#define EMAC_DMA_RU					(1UL<<7)			/* Receive Buffer Unavailable */
+	#define EMAC_DMA_RI					(1UL<<6)			/* Receive Interrupt */
+	#define EMAC_DMA_UNF				(1UL<<5)			/* Transmit Buffer Underflow */
+	#define EMAC_DMA_OVF				(1UL<<4)			/* Receive Buffer Overflow */
+	#define EMAC_DMA_TJT				(1UL<<3)			/* Transmit Jabber Timeout */
+	#define EMAC_DMA_TU					(1UL<<2)			/* Transmit Buffer Unavailable */
+	#define EMAC_DMA_TPS				(1UL<<1)			/* Transmit Process Stopped */
+	#define EMAC_DMA_TI					(1UL<<0)			/* Transmit Interrupt */
+
+
+	#define TD0_OWN		0x80000000
+	#define TD0_IC		0x40000000
+	#define TD0_LS		0x20000000
+	#define TD0_FS		0x10000000
+	#define TD0_DC		0x08000000
+	#define TD0_DP		0x04000000
+	#define TD0_TTSE	0x02000000
+	#define TD0_CIC		0x00C00000
+	#define TD0_TER		0x00200000
+	#define TD0_TCH		0x00100000
+	#define TD0_TTSS	0x00020000
+	#define TD0_IHE		0x00010000
+	#define TD0_ES		0x00008000
+	#define TD0_JT		0x00004000
+	#define TD0_FF		0x00002000
+	#define TD0_IPE		0x00001000
+	#define TD0_LCA		0x00000800
+	#define TD0_NC		0x00000400
+	#define TD0_LCO		0x00000200
+	#define TD0_EC		0x00000100
+	#define TD0_VF		0x00000080
+	#define TD0_CC		0x00000078
+	#define TD0_ED		0x00000004
+	#define TD0_UF		0x00000002
+	#define TD0_DB		0x00000001
+	#define TD1_TBS2	0x1FFF0000
+	#define TD1_TBS1	0x00001FFF
+	#define TD2_B1AP	0xFFFFFFFF
+	#define TD3_B2AP	0xFFFFFFFF
+	#define TD6_TTSL	0xFFFFFFFF
+	#define TD7_TTSH	0xFFFFFFFF
+
+	#define RBS1(v)		((v)&0x1FFF)
+	#define RBS2(v)		(((v)&0x7FF)<<16)
 
 	#define TBS1(v)		((v)&0x1FFF)
 	#define TBS2(v)		(((v)&0x7FF)<<16)
@@ -2634,11 +2713,11 @@ namespace HW
 
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	inline bool RamCheck(const void *ptr)
+	__forceinline bool RamCheck(const void *ptr)
 	{
 		u32 v = (u32)ptr;
 
-		return ((v&~0x107FFF) == 0x11800000 || (v&~0xFFFFF) == 0x8000000);
+		return true; //((v&~0x107FFF) == 0x11800000 || (v&~0xFFFFF) == 0x8000000);
 
 	};
 

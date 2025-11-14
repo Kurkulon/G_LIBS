@@ -1315,6 +1315,22 @@ static void WDT_Init()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#ifdef CPU_BF607
+
+#pragma section ("core1_code")
+
+extern "C" void core1_main()
+{
+	while(1)
+	{
+		idle();
+	};
+}
+
+#endif
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 int main()
 {
 	#ifdef BOOT_START_BREAKPOINT
@@ -1333,7 +1349,7 @@ int main()
 		ResetPHY();
 	#endif
 
-	Init_time(MCK);
+	Init_time();
 	WDT_Init();
 
 	bootFlash.Init();

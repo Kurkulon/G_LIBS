@@ -70,7 +70,8 @@ extern RTC timeBDC;
 #endif // #ifdef REAL_TIME_CLOCK_ENABLE
 
 
-extern void Init_time(u32 mck);
+//extern void Init_time(u32 mck);
+extern void Init_time();
 
 
 #ifdef WIN32	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

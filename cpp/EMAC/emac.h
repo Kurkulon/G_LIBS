@@ -48,18 +48,6 @@ inline bool EmacIsCableNormal()
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-__packed struct MAC
-{
-	u32 B;
-	u16 T;
-
-	inline void operator=(const MAC &v) { B = v.B; T = v.T; }
-	inline bool operator==(const MAC &v) { return (B == v.B) && (T == v.T); }
-	inline bool operator!=(const MAC &v) { return (B != v.B) || (T != v.T); }
-};
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
 #ifdef CPU_SAME53	
 
 	struct Receive_Desc
@@ -168,6 +156,10 @@ __packed struct MAC
 			u32		ctrl;
 			void*	addr1;
 			void*	addr2;
+			u32		exStat;
+			u32		reserved;
+			u32		timeStampLo;
+			u32		timeStampHi;
 
 		public:
 
@@ -192,6 +184,10 @@ __packed struct MAC
 			u32		ctrl;
 			void*	addr1;
 			void*	addr2;
+			u32		reserved1;
+			u32		reserved2;
+			u32		timeStampLo;
+			u32		timeStampHi;
 
 		public:
 
@@ -208,6 +204,21 @@ __packed struct MAC
 	};
 
 #endif
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#ifdef _ADI_COMPILER
+#pragma pack(1)
+#endif
+
+__packed struct MAC
+{
+	u32 B;
+	u16 T;
+
+	inline void operator=(const MAC &v) { B = v.B; T = v.T; }
+	inline bool operator==(const MAC &v) { return (B == v.B) && (T == v.T); }
+	inline bool operator!=(const MAC &v) { return (B != v.B) || (T != v.T); }
+};
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -348,6 +359,7 @@ __packed struct DhcpHdr
 	byte	options[230];
 };
 
+
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 __packed struct EthDhcp
@@ -357,6 +369,10 @@ __packed struct EthDhcp
 	UdpHdr		udp; // 8
 	DhcpHdr		dhcp;// 
 };
+
+#ifdef _ADI_COMPILER
+#pragma pack()
+#endif
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

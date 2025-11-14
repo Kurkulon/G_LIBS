@@ -233,12 +233,14 @@ void EnablePHY()	{ PIO_RESET_PHY->BSET(PIN_RESET_PHY); }
 
 #elif defined(CPU_BF607)
 
+	#define HWEMAC CONCAT2(HW::EMAC, HWEMAC_NUM)
+
 	inline void EnableMDI()	{ }
 	inline void DisableMDI()	{ }
 	bool IsReadyPHY() { return (HWEMAC->SMI_ADDR & EMAC_SMI_SMIB) == 0; }
 	u16 ResultPHY() { return HWEMAC->SMI_DATA; }
-	inline	bool CheckStatusIP(u32 stat) { return (stat /*& RD_IP_ERR*/) == 0; }
-	inline 	bool CheckStatusUDP(u32 stat) { return (stat /*& RD_UDP_ERR*/) == 0; }
+	inline	bool CheckStatusIP(u32 stat) { return (stat & RD_IP_ERR) == 0; }
+	inline 	bool CheckStatusUDP(u32 stat) { return (stat & RD_UDP_ERR) == 0; }
 	inline	void ResumeReceiveProcessing() {  }
 
 #endif
@@ -662,7 +664,7 @@ static bool RequestDHCP(Ptr<MB> &mb)
 	u32 dhcp_ip_s = (ipAdr & ipMask) | DHCP_IP_START;
 	u32 dhcp_ip_e = (ipAdr & ipMask) | DHCP_IP_END;
 
-	if (op == DHCPDISCOVER || reqIP == 0 || ((*reqIP & ipMask) != (ipAdr & ipMask)) || (*reqIP == ipAdr))
+	if (op == DHCPDISCOVER || reqIP == 0 || ((misaligned_load32(reqIP) & ipMask) != (ipAdr & ipMask)) || (misaligned_load32(reqIP) == ipAdr))
 	{
 		dhcp_IP += IP32(0,0,0,1);
 
@@ -681,7 +683,7 @@ static bool RequestDHCP(Ptr<MB> &mb)
 	t->dhcp.secs = 0;
 	t->dhcp.flags = 0x80;
 	t->dhcp.ciaddr = 0;
-	t->dhcp.yiaddr = *reqIP; // New client IP
+	t->dhcp.yiaddr = misaligned_load32(reqIP); // New client IP
 	t->dhcp.siaddr = 0;//ipAdr;
 	t->dhcp.giaddr = 0;
 	t->dhcp.chaddr = h->dhcp.chaddr; //h->eth.src;
@@ -935,21 +937,10 @@ static void UpdateTransmit()
 
 				#ifdef CPU_SAME53	
 
-					//dsc->addr1 = &buf->eth;
-					//dsc->stat &= TD_TRANSMIT_OK|TD_TRANSMIT_WRAP;
-					//dsc->stat |= TD_LAST_BUF | (buf->len & TD_LENGTH_MASK);
-					//dsc->stat &= ~TD_TRANSMIT_OK;
-
 					HW::GMAC->TSR = 0x17F;
 					HW::GMAC->NCR |= GMAC_TXEN|GMAC_TSTART;
 
 				#elif defined(CPU_XMC48)
-
-					//dsc->addr1 = &buf->eth;
-					//dsc->addr2 = 0;
-					//dsc->ctrl = TBS1(buf->len);
-					//dsc->stat |= TD0_LS|TD0_FS;
-					//dsc->stat |= TD0_OWN;
 
 					HW::ETH0->MAC_CONFIGURATION |= MAC_TE;
 					HW::ETH0->OPERATION_MODE |= ETH_OPERATION_MODE_ST_Msk;
@@ -959,6 +950,15 @@ static void UpdateTransmit()
 
 					//Instruct the DMA to poll the transmit descriptor list
 					HW::ETH0->TRANSMIT_POLL_DEMAND = 0;
+
+				#elif defined(CPU_BF607)
+
+					HWEMAC->MACCFG |= EMAC_TE;
+					HWEMAC->DMA_OPMODE |= EMAC_DMA_ST;
+					
+					HWEMAC->DMA_STAT = EMAC_DMA_TU;	//Clear TU flag to resume processing
+					
+					HWEMAC->DMA_TXPOLL = 0;			//Instruct the DMA to poll the transmit descriptor list
 
 				#endif
 
@@ -1172,6 +1172,53 @@ bool InitEMAC()
 		//Enable DMA transmission and reception
 		HW::ETH0->OPERATION_MODE |= ETH_OPERATION_MODE_SR_Msk; // | ETH_OPERATION_MODE_ST_Msk;
 
+	#elif defined(CPU_BF607)
+
+		// Transmit and Receive disable. 
+		HWEMAC->MACCFG = EMAC_IPC|EMAC_DM;
+
+		//Set the MAC address
+		HWEMAC->ADDR0_LO = hwAdr.B;
+		HWEMAC->ADDR0_HI = hwAdr.T;
+	 
+		//Initialize hash table
+		HWEMAC->HASHTBL_LO = 0;
+		HWEMAC->HASHTBL_HI = 0;
+	 
+		//Configure the receive filter
+		HWEMAC->MACFRMFILT = EMAC_PR;//ETH_MAC_FRAME_FILTER_HPF_Msk | ETH_MAC_FRAME_FILTER_HMC_Msk;
+		//Disable flow control
+		HWEMAC->FLOWCTL = 0;
+		//Enable store and forward mode
+		//HWEMAC->OPERATION_MODE = ETH_OPERATION_MODE_RSF_Msk | ETH_OPERATION_MODE_TSF_Msk;
+	 
+		//Configure DMA bus mode
+		//HWEMAC->BUS_MODE = BUS_AAL | BUS_FB | BUS_USP | BUS_RPBL(16) | BUS_PR(0) | BUS_PBL(16);
+
+
+		/* Initialize Tx and Rx DMA Descriptors */
+		rx_descr_init ();
+		tx_descr_init ();
+
+	   //Prevent interrupts from being generated when statistic counters reach
+		//half their maximum value
+		HWEMAC->MMC_TXIMSK = ~0;
+		HWEMAC->MMC_RXIMSK = ~0;
+		HWEMAC->IPC_RXIMSK = ~0;
+	 
+		//Disable MAC interrupts
+		HWEMAC->IMSK = EMAC_ITS; 
+	 
+		//Enable the desired DMA interrupts
+		HWEMAC->DMA_IEN = 0; //ETH_INTERRUPT_ENABLE_NIE_Msk | ETH_INTERRUPT_ENABLE_RIE_Msk | ETH_INTERRUPT_ENABLE_TIE_Msk;
+	 
+	 
+		//Enable MAC transmission and reception
+		HWEMAC->MACCFG |= EMAC_IPC|EMAC_DM|EMAC_RE; 
+
+		//Enable DMA transmission and reception
+		HWEMAC->DMA_OPMODE |= EMAC_DMA_SR; // | ETH_OPERATION_MODE_ST_Msk;
+
 	#endif
 
 	HW_EMAC_StartLink();
@@ -1302,6 +1349,10 @@ static void rx_descr_init (void)
 
 		HW::ETH0->RECEIVE_DESCRIPTOR_LIST_ADDRESS = (u32)Rx_Desc; // Set Rx Queue pointer to descriptor list.
 
+	#elif defined(CPU_BF607)
+
+		HWEMAC->DMA_RXDSC_ADDR = (u32)Rx_Desc; // Set Rx Queue pointer to descriptor list.
+
 	#endif
 
 }
@@ -1327,6 +1378,10 @@ static void tx_descr_init (void)
 
 		HW::ETH0->TRANSMIT_DESCRIPTOR_LIST_ADDRESS = (u32)&Tx_Desc[0]; // Set Tx Queue pointer to descriptor list. 
 
+	#elif defined(CPU_BF607)
+
+		HWEMAC->DMA_TXDSC_ADDR = (u32)&Tx_Desc[0]; // Set Tx Queue pointer to descriptor list. 
+
 	#endif
 }
 
@@ -1342,6 +1397,11 @@ void WritePHY (byte PhyReg, u16 Value)
 
 		HW::ETH0->GMII_DATA = Value;
 		HW::ETH0->GMII_ADDRESS = GMII_PA(EMAC_PHYA)|GMII_CR(0)|GMII_MR(PhyReg)|GMII_MW|GMII_MB;
+
+	#elif defined(CPU_BF607)
+
+		HWEMAC->SMI_DATA = Value;
+		HWEMAC->SMI_ADDR = EMAC_SMI_PA(EMAC_PHYA)|EMAC_SMI_CR(0)|EMAC_SMI_SMIR(PhyReg)|EMAC_SMI_SMIW|EMAC_SMI_SMIB;
 
 	#endif
 
@@ -1359,6 +1419,10 @@ u16 ReadPHY (byte PhyReg)
 	#elif defined(CPU_XMC48)
 	
 		HW::ETH0->GMII_ADDRESS = GMII_PA(EMAC_PHYA)|GMII_CR(0)|GMII_MR(PhyReg)|GMII_MB;
+
+	#elif defined(CPU_BF607)
+
+		HWEMAC->SMI_ADDR = EMAC_SMI_PA(EMAC_PHYA)|EMAC_SMI_CR(0)|EMAC_SMI_SMIR(PhyReg)|EMAC_SMI_SMIB;
 
 	#endif
 
@@ -1380,6 +1444,11 @@ void ReqWritePHY(byte PhyReg, u16 Value)
 		HW::ETH0->GMII_DATA = Value;
 		HW::ETH0->GMII_ADDRESS = GMII_PA(EMAC_PHYA)|GMII_CR(0)|GMII_MR(PhyReg)|GMII_MW|GMII_MB;
 
+	#elif defined(CPU_BF607)
+
+		HWEMAC->SMI_DATA = Value;
+		HWEMAC->SMI_ADDR = EMAC_SMI_PA(EMAC_PHYA)|EMAC_SMI_CR(0)|EMAC_SMI_SMIR(PhyReg)|EMAC_SMI_SMIW|EMAC_SMI_SMIB;
+
 	#endif
 }
 
@@ -1394,6 +1463,10 @@ void ReqReadPHY(byte PhyReg)
 	#elif defined(CPU_XMC48)
 
 		HW::ETH0->GMII_ADDRESS = GMII_PA(EMAC_PHYA)|GMII_CR(0)|GMII_MR(PhyReg)|GMII_MB;
+
+	#elif defined(CPU_BF607)
+
+		HWEMAC->SMI_ADDR = EMAC_SMI_PA(EMAC_PHYA)|EMAC_SMI_CR(0)|EMAC_SMI_SMIR(PhyReg)|EMAC_SMI_SMIB;
 
 	#endif
 }
@@ -1523,6 +1596,8 @@ bool HW_EMAC_UpdateLink()
 						HW::GMAC->NCFGR &= ~(GMAC_SPD|GMAC_FD);
 					#elif defined(CPU_XMC48)
 						HW::ETH0->MAC_CONFIGURATION &= ~(MAC_DM|MAC_FES);
+					#elif defined(CPU_BF607)
+						HWEMAC->MACCFG &= ~(EMAC_DM|EMAC_FES);
 					#endif
 
 					if (ResultPHY() & PHYCON1_OP_MODE_100BTX /*ANLPAR_100*/)	// Speed 100Mbit is enabled.
@@ -1531,6 +1606,8 @@ bool HW_EMAC_UpdateLink()
 							HW::GMAC->NCFGR |= GMAC_SPD;
 						#elif defined(CPU_XMC48)
 							HW::ETH0->MAC_CONFIGURATION |= MAC_FES;
+						#elif defined(CPU_BF607)
+							HWEMAC->MACCFG |= EMAC_FES;
 						#endif
 
 						SEGGER_RTT_WriteString(0, RTT_CTRL_TEXT_WHITE "Ethernet Speed 100 Mbit ");
@@ -1546,6 +1623,8 @@ bool HW_EMAC_UpdateLink()
 							HW::GMAC->NCFGR |= GMAC_FD;
 						#elif defined(CPU_XMC48)
 							HW::ETH0->MAC_CONFIGURATION |= MAC_DM;
+						#elif defined(CPU_BF607)
+							HWEMAC->MACCFG |= EMAC_DM;
 						#endif
 						
 						SEGGER_RTT_WriteString(0, "Full duplex mode\n");
@@ -1630,6 +1709,8 @@ void UpdateEMAC()
 					HW::GMAC->NCR |= GMAC_RXEN;
 				#elif defined(CPU_XMC48)
 					HW::ETH0->MAC_CONFIGURATION |= MAC_RE;
+				#elif defined(CPU_BF607)
+					HWEMAC->MACCFG |= EMAC_RE;
 				#endif
 
 				emacConnected = true;
@@ -1645,6 +1726,8 @@ void UpdateEMAC()
 					HW::GMAC->NCR &= ~GMAC_RXEN;
 				#elif defined(CPU_XMC48)
 					HW::ETH0->MAC_CONFIGURATION &= ~MAC_RE;
+				#elif defined(CPU_BF607)
+					HWEMAC->MACCFG &= ~EMAC_RE;
 				#endif
 
 				HW_EMAC_StartLink();
@@ -1733,7 +1816,50 @@ static bool HW_EMAC_Init()
 
 	while (HW::ETH0->BUS_MODE & ETH_BUS_MODE_SWR_Msk) HW::WDT->Update();
 
-#endif
+#elif defined(CPU_BF607)
+
+	#if HWEMAC_NUM==0
+	#else 
+
+		PIOE->SetFER(PE10|PE11|PE13|PE15);
+		PIOG->SetFER(PG0|PG2|PG3|PG5|PG6);
+
+		PIOE->SetMUX(10, 0);	//	ETH1_MDC
+		PIOE->SetMUX(11, 0);	//	ETH1_MDIO
+		PIOE->SetMUX(13, 0);	//	ETH1_CRS
+		PIOE->SetMUX(15, 0);	//	ETH1_RXD1
+
+		PIOE->ClrFER(PE14); // ETH1_RXERR
+		PIOE->DirSet(PE14);
+		PIOE->CLR(PE14);
+
+		PIOG->SetMUX(0, 0);		//	ETH1_RXD0
+		PIOG->SetMUX(2, 0);		//	ETH1_TXD1
+		PIOG->SetMUX(3, 0);		//	ETH1_TXD0
+		PIOG->SetMUX(5, 0);		//	ETH1_TXEN
+		PIOG->SetMUX(6, 0);		//	ETH1_REFCLK
+
+	#endif
+
+	PIO_RESET_PHY->CLR(RESET_PHY);
+	PIO_RESET_PHY->DirSet(RESET_PHY);
+	PIO_RESET_PHY->ClrFER(RESET_PHY);
+
+	EnablePHY();
+
+	//HW::ETH0_CON->CON = EMAC_INIT_ETH0_CON;
+
+	HWEMAC->DMA_BUSMODE |= EMAC_DMA_SWR;
+
+	csync(); ssync();
+
+	while (HWEMAC->DMA_BUSMODE & EMAC_DMA_SWR) HW::WDT->Update();
+
+	csync(); ssync();
+
+	HWEMAC->DMA_BUSMODE |= EMAC_DMA_ATDS;
+
+#endif // #elif defined(CPU_BF607)
 
 	EnableMDI();
   

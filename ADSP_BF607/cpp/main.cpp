@@ -257,6 +257,18 @@ void main()
 {
 	static DataPointer dp[8];
 
+	HW::EMAC1->MACCFG			= 0;
+	HW::EMAC1->DBG				= 0;
+	HW::EMAC1->MMC_CTL			= 0;
+	HW::EMAC1->RXFRMCNT_GB		= 0;
+	HW::EMAC1->IPC_RXIMSK		= 0;
+	HW::EMAC1->RXIPV4_GD_FRM	= 0;
+	HW::EMAC1->RXIPV4_GD_OCT	= 0;
+	HW::EMAC1->TM_CTL			= 0;
+	HW::EMAC1->TM_PPSINTVL		= 0;
+	HW::EMAC1->DMA_BUSMODE		= 0;
+	HW::EMAC1->DMA_TXDSC_CUR	= 0;
+
 	PIO_MAINLOOP->DirSet(MAINLOOP);
 	
 	//HW::RCU->CRCTL &= ~RCU_CR1;

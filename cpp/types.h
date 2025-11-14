@@ -170,6 +170,15 @@ __forceinline void Pop_IRQ(u32 t)
 
 #ifdef _ADI_COMPILER
 
+__forceinline u32 strlcpy(void *dst, const void *src, u32 size)
+{
+	u32 len = size; 
+	const byte *s = (const byte*)src; 
+	byte *d = (byte*)dst;  
+	while(*s != 0 && size != 0) *d++ = *s++, size -= 1; 
+	return len - size;
+}
+
 __forceinline void Read32(u32 v) {  }
 //__forceinline word ReverseWord(word v) { return ((v&0x00FF)<<8 | (v&0xFF00)>>8); }
 //__forceinline dword ReverseDword(dword v) { v = (v&0x00FF00FF)<<8 | (v&0xFF00FF00)>>8;	return (v&0x0000FFFF)<<16 | (v&0xFFFF0000)>>16; }
@@ -181,6 +190,9 @@ __forceinline i32 _InterlockedIncrement(volatile i32 *v) { u32 t = __builtin_cli
 __forceinline i32 _InterlockedDecrement(volatile i32 *v) { u32 t = __builtin_cli(); i32 r = *v -= 1; __builtin_sti(t); return r; }
 
 #elif  defined(__CC_ARM)
+
+__forceinline int misaligned_load32(__packed void *p) { return *((__packed int*)p); }
+__forceinline int misaligned_load32(void *p) { return *((__packed int*)p); }
 
 __forceinline u32 ReadMem32(u32 ptr) { return ptr; }
 __forceinline void Read32(u32 v) { u32 t; __asm { add t, v }; }
@@ -213,7 +225,7 @@ union DataCRC
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #ifdef __ADSPBF6xx__
-#pragma default_section(CODE, "shared_code")
+//#pragma default_section(CODE, "shared_code")
 #endif
 
 union U16u 
@@ -283,7 +295,7 @@ union ConstDataPointer
 };
 
 #ifdef __ADSPBF6xx__
-#pragma default_section(CODE)
+//#pragma default_section(CODE)
 #endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
