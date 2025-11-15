@@ -68,9 +68,15 @@ cpu_link_options = --cpu ARM7TDMI
 !else ifeq targetcpu SAME53
 
 buildtool = ARMCC
+#buildtool = ARMCLANG
+
 cpu_compiler_options = --cpu=CORTEX-M4.fp.sp --thumb
 cpu_asm_options = --cpu CORTEX-M4.fp.sp --apcs /interwork
 cpu_link_options = --cpu CORTEX-M4.fp.sp
+
+armclang_cpu_compiler_options = --target=arm-arm-none-eabi -mcpu=cortex-m4+fp -mthumb
+armclang_cpu_asm_options = --cpu CORTEX -M4.fp.sp --apcs / interwork
+armclang_cpu_link_options = --cpu CORTEX -M4.fp.sp
 
 !else ifeq targetcpu SAM4SA
 
@@ -153,6 +159,20 @@ debug_compiler_options = -O3 -Otime --debug
 debug_linker_options = 
 !endif
 
+!else ifeq buildtool ARMCLANG
+
+.cpp:	$(cpp_dir_list)
+	
+bindir = $(%ARMCLANG60BIN)
+
+!ifeq version Debug
+debug_compiler_options = -O0 -D_DEBUG 
+debug_linker_options = DEBUG ALL
+!else
+debug_compiler_options = -O3 -Omax 
+debug_linker_options = 
+!endif
+
 !else ifeq buildtool ADSP
 
 .cpp:	initcode;$(cpp_dir_list)
@@ -184,9 +204,21 @@ arm_asm_options = $(cpu_asm_options) -g --xref --diag_style=ide --pd "__MICROLIB
 
 ##################################################################################################
 
-arm_link_options = $(cpu_link_options) --bestdebug --strict --map --xref --callgraph --symbols --summary_stderr --library_type=microlib
+#arm_link_options = $(cpu_link_options) --bestdebug --strict --map --xref --callgraph --symbols --summary_stderr --library_type=microlib
   
-##################################################################################################-wd4996
+##################################################################################################-wd4996 --gnu -E -dM -MMD 
+
+armclang_compiler_options = $(debug_compiler_options) $(armclang_cpu_compiler_options)  -c -xc++ -std=gnu++11 -DCPU_$(targetcpu) -I$(curdir)\cpp
+
+##################################################################################################
+
+armclang_asm_options = $(armclang_cpu_asm_options) - g --xref --diag_style = ide --pd "__MICROLIB SETA 1" --cpreproc
+
+##################################################################################################
+
+#armclang_link_options = $(armclang_cpu_link_options) --bestdebug --strict --map --xref --callgraph --symbols --summary_stderr --library_type = microlib
+
+################################################################################################## - wd4996
 
 win32_compiler_options = -nologo -DWIN32 -D_DEBUG -c -Z7 -Zp -I$(curdir)\cpp
 
@@ -262,6 +294,30 @@ $(libname) : $(modules_obj)
 	@$(bindir)\armasm $(arm_asm_options) --list $(objdir)\$^&.lst  -o $(objdir)\$^. $[@	
 
 ##################################################################################################
+
+!else ifeq buildtool ARMCLANG
+
+$(libname) : $(modules_obj)	
+	@echo Creating library $(libname) ...
+	@$(bindir)\armar --create $(libname) $(modules_obj)
+
+##################################################################################################
+
+!include $(objdir)\mkoutdep
+
+########################################################-MF "$^*.d"##########################################
+
+.cpp.doj:
+	@echo Compiling $[. ...
+	@$(bindir)\armclang $(armclang_compiler_options)  -o "$^@" $[@
+#	@$(bindir)\armclang $(armclang_compiler_options)  -S -o "$^*.s" $[@
+
+##################################################################################################
+
+.s.doj:
+	@echo Assembling $[. ...
+	@$(bindir)\armasm $(armclang_asm_options) --list $(objdir)\$^&.lst  -o $(objdir)\$^. $[@
+
 ##################################################################################################
 	
 !else ifeq version Win32_Debug

@@ -39,6 +39,31 @@
 
 #endif // _ADI_COMPILER
 
+#ifdef __clang__
+
+	#include <arm_acle.h>
+	#include <arm_compat.h>
+	
+	#ifndef _MSC_VER
+
+		#ifdef __DEBUG
+//			#define __breakpoint(v) asm("EMUEXCPT;")
+		#else
+//			#define __breakpoint(v)
+		#endif
+
+		#define __forceinline __inline__
+//		#define __nop __builtin_NOP
+		#define __packed /*__attribute__((packed))*/
+
+		//#define __disable_irq() u32 irqeirutyieurtu = cli()
+		//#define __enable_irq()  sti(irqeirutyieurtu)
+		//#pragma diag(suppress: 1645,1646)
+
+	#endif
+
+#endif // __clang__
+
 #ifdef _MSC_VER
 
 	#define WINDOWS_IGNORE_PACKING_MISMATCH
@@ -202,6 +227,20 @@ __forceinline dword SwapDword(dword v) { __asm { rev16 v, v }; return v; }
 
 __forceinline i32 _InterlockedIncrement(volatile i32 *v) { u32 t = Push_IRQ(); i32 r = *v += 1; Pop_IRQ(t); return r; }
 __forceinline i32 _InterlockedDecrement(volatile i32 *v) { u32 t = Push_IRQ(); i32 r = *v -= 1; Pop_IRQ(t); return r; }
+
+#elif  defined(__clang__)
+
+__forceinline int misaligned_load32(__packed void* p) { return *((__packed int*)p); }
+//__forceinline int misaligned_load32(void* p) { return *((__packed int*)p); }
+
+__forceinline u32 ReadMem32(u32 ptr) { return ptr; }
+//__forceinline void Read32(u32 v) { u32 t; __asm { add t, v }; }
+__forceinline u16 ReverseWord(u16 v) { return __builtin_bswap16(v); }
+__forceinline u32 ReverseDword(u32 v) { return __rev(v); }
+__forceinline dword SwapDword(dword v) { return __rev16(v); }
+
+__forceinline i32 _InterlockedIncrement(volatile i32* v) { u32 t = Push_IRQ(); i32 r = *v += 1; Pop_IRQ(t); return r; }
+__forceinline i32 _InterlockedDecrement(volatile i32* v) { u32 t = Push_IRQ(); i32 r = *v -= 1; Pop_IRQ(t); return r; }
 
 #elif defined(_MSC_VER)
 

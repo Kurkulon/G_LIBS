@@ -423,7 +423,6 @@
     <None Include="LDF\initcode.ldf">
       <Filter>LDF</Filter>
     </None>
-    <None Include="makeobj" />
     <None Include="cpp\ADSP\startup_BF706.s">
       <Filter>CPP\ADSP</Filter>
     </None>
@@ -442,5 +441,8 @@
     <None Include="cpp\ADSP\startup_BF607.s">
       <Filter>CPP\ADSP</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="makeobj" />
   </ItemGroup>
 </Project>

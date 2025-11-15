@@ -2,7 +2,7 @@
 
 #include "types.h"
 
-#ifndef WIN32
+#ifdef __CC_ARM
 #pragma O3
 #pragma Otime
 

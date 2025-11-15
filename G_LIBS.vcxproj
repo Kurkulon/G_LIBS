@@ -637,7 +637,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='BF706_Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='BF607_Debug|Win32'">true</ExcludedFromBuild>
     </None>
-    <None Include="makeobj" />
+    <CustomBuild Include="makeobj">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='XMC48_Release|Win32'">true</ExcludedFromBuild>
+      <FileType>Document</FileType>
+    </CustomBuild>
     <None Include="Scatter\LPC812.sct" />
     <None Include="Scatter\LPC812_BOOT.sct" />
     <None Include="Scatter\LPC812_NO_BOOTLOADER.sct" />
