@@ -239,9 +239,9 @@ void EnablePHY()	{ PIO_RESET_PHY->BSET(PIN_RESET_PHY); }
 	inline void DisableMDI()	{ }
 	bool IsReadyPHY() { return (HWEMAC->SMI_ADDR & EMAC_SMI_SMIB) == 0; }
 	u16 ResultPHY() { return HWEMAC->SMI_DATA; }
-	inline	bool CheckStatusIP(u32 stat) { return (stat & RD_IP_ERR) == 0; }
-	inline 	bool CheckStatusUDP(u32 stat) { return (stat & RD_UDP_ERR) == 0; }
-	inline	void ResumeReceiveProcessing() {  }
+	inline	bool CheckStatusIP(u32 stat) { return (stat & RD4_IPHE) == 0; }
+	inline 	bool CheckStatusUDP(u32 stat) { return (stat & RD4_IPE) == 0; }
+	inline	void ResumeReceiveProcessing() { HWEMAC->DMA_STAT = EMAC_DMA_RU; HWEMAC->DMA_RXPOLL = 0; }
 
 #endif
 
@@ -634,7 +634,7 @@ static bool RequestDHCP(Ptr<MB> &mb)
 	bool c = false;
 	byte op = ~0;
 
-	__packed u32 *reqIP = 0;
+	pack_u32 *reqIP = 0;
 
 	while (i < optLen)
 	{
@@ -647,7 +647,7 @@ static bool RequestDHCP(Ptr<MB> &mb)
 		}
 		else if (t == 50)
 		{
-			reqIP = (__packed u32*)(h->dhcp.options+i+2);
+			reqIP = (pack_u32*)(h->dhcp.options+i+2);
 		};
 		
 		i += h->dhcp.options[i+1]+2;
@@ -664,13 +664,13 @@ static bool RequestDHCP(Ptr<MB> &mb)
 	u32 dhcp_ip_s = (ipAdr & ipMask) | DHCP_IP_START;
 	u32 dhcp_ip_e = (ipAdr & ipMask) | DHCP_IP_END;
 
-	if (op == DHCPDISCOVER || reqIP == 0 || ((misaligned_load32(reqIP) & ipMask) != (ipAdr & ipMask)) || (misaligned_load32(reqIP) == ipAdr))
+	if (op == DHCPDISCOVER || reqIP == 0 || ((*reqIP & ipMask) != (ipAdr & ipMask)) || (*reqIP == ipAdr))
 	{
 		dhcp_IP += IP32(0,0,0,1);
 
 		if (dhcp_IP > dhcp_ip_e) dhcp_IP = dhcp_ip_s;
 
-		reqIP = &dhcp_IP;
+		reqIP = (pack_u32*)&dhcp_IP;
 	};
 
 	EthDhcp *t = (EthDhcp*)buf->GetDataPtr();
@@ -683,7 +683,7 @@ static bool RequestDHCP(Ptr<MB> &mb)
 	t->dhcp.secs = 0;
 	t->dhcp.flags = 0x80;
 	t->dhcp.ciaddr = 0;
-	t->dhcp.yiaddr = misaligned_load32(reqIP); // New client IP
+	t->dhcp.yiaddr = *reqIP; // New client IP
 	t->dhcp.siaddr = 0;//ipAdr;
 	t->dhcp.giaddr = 0;
 	t->dhcp.chaddr = h->dhcp.chaddr; //h->eth.src;

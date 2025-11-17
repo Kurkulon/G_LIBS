@@ -12,25 +12,25 @@ struct PointerCRC
 	{
 		__packed void	*v;
 		__packed byte 	*b;
-		__packed word 	*w;
-		__packed dword 	*d;
-		__packed float 	*f;
+		pack_u16		*w;
+		pack_u32		*d;
+		pack_float		*f;
 	};
 
 	union { word w; byte b[2]; } CRC;
 
 	PointerCRC() {v = 0; CRC.w = 0xFFFF; }
-	PointerCRC(void *p) { v = p; CRC.w = 0xFFFF; } 
-	PointerCRC(byte *p) { b = p; CRC.w = 0xFFFF; } 
-	PointerCRC(word *p) { w = p; CRC.w = 0xFFFF; } 
-	PointerCRC(dword *p) { d = p; CRC.w = 0xFFFF; } 
-	PointerCRC(float *p) { f = p; CRC.w = 0xFFFF; } 
+	PointerCRC(void *p)		{ v = p; CRC.w = 0xFFFF; } 
+	PointerCRC(byte *p)		{ b = p; CRC.w = 0xFFFF; } 
+	PointerCRC(word *p)		{ w = (pack_u16*)p;		CRC.w = 0xFFFF; } 
+	PointerCRC(dword *p)	{ d = (pack_u32*)p;		CRC.w = 0xFFFF; } 
+	PointerCRC(float *p)	{ f = (pack_float*)p;	CRC.w = 0xFFFF; } 
 
-	void operator=(void *p) { v = p; } 
-	void operator=(byte *p) { b = p; } 
-	void operator=(word *p) { w = p; } 
-	void operator=(dword *p) { d = p; } 
-	void operator=(float *p) { f = p; } 
+	void operator=(void *p)		{ v = p; } 
+	void operator=(byte *p)		{ b = p; } 
+	void operator=(word *p)		{ w = (pack_u16*)p;	 } 
+	void operator=(dword *p)	{ d = (pack_u32*)p;	 } 
+	void operator=(float *p)	{ f = (pack_float*)p; } 
 
 	void WriteB(byte var) {*(b++) = var; CRC.w = tableCRC[CRC.b[0] ^ var] ^ CRC.b[1]; }
 	void WriteW(U16u var) {*(w++) = var; CRC.w = tableCRC[CRC.b[0] ^ var.b[0]] ^ CRC.b[1]; CRC.w = tableCRC[CRC.b[0] ^ var.b[1]] ^ CRC.b[1];}

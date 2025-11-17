@@ -585,7 +585,7 @@ ERROR_CODE ProcessCommand()
 
 		// read
 		case FLASH_READ:
-			ErrorCode = spiFlash.Read(AFP_Offset, AFP_Buffer, AFP_Count);
+			ErrorCode = spiFlash.CmdRead(AFP_Offset, AFP_Buffer, AFP_Count);
 			break;
 
 		// reset

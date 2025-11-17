@@ -21,7 +21,7 @@
 
 #include "types.h"
 
-//typedef ADI_ROM_BOOT_HEADER ADI_BOOT_HEADER;
+typedef STRUCT_ROM_BOOT_HEADER ADI_BOOT_HEADER;
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -1629,8 +1629,8 @@ namespace T_HW
 	typedef S_DMACH		S_DMA0,S_DMA1,S_DMA2,S_DMA3,S_DMA4,S_DMA5,S_DMA6,S_DMA7,S_DMA8,S_DMA9,S_DMA10,S_DMA11,S_DMA12,S_DMA13,S_DMA14,S_DMA15,S_DMA16,
 						S_DMA17,S_DMA18,S_DMA19,S_DMA20,S_DMA21,S_DMA22,S_DMA23,S_DMA24,S_DMA25,S_DMA26,S_DMA27,S_DMA28,S_DMA29,S_DMA30,S_DMA31,S_DMA32,S_DMA33,S_DMA34;
 
-	#define DMA_HSDA                (1UL<<31)       					/* High Speed Descriptor Array Mode */
-	#define DMA_DBURST              (1UL<<30)       					/* Descriptor Bursting (HSDA Mode) */
+	//#define DMA_HSDA                (1UL<<31)       					/* High Speed Descriptor Array Mode */
+	//#define DMA_DBURST              (1UL<<30)       					/* Descriptor Bursting (HSDA Mode) */
 	#define DMA_PDRF                (1UL<<28)       					/* Peripheral Data Request Forward */
 	#define DMA_TWOD                (1UL<<26)       					/* Two Dimension Addressing Enable */
 	#define DMA_DESCIDCPY           (1UL<<25)       					/* Descriptor ID Copy Control */

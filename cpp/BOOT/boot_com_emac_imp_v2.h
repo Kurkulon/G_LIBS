@@ -23,7 +23,7 @@
 #include <EMAC\tftp.h>
 
 #ifndef TFTP_DATA_CHUNK_SIZE
-#define TFTP_DATA_CHUNK_SIZE 512
+#define TFTP_DATA_CHUNK_SIZE ISP_PAGESIZE
 #endif
 
 #ifndef ISP_DATASIZE

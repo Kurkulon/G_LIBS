@@ -4,7 +4,8 @@
 #pragma once
 
 #ifdef __CC_ARM
-#pragma anon_unions
+	#pragma anon_unions
+	//#define __align1 /*__attribute__((aligned(1)))*/
 #endif
 
 #if defined(_DEBUG) && !defined(__DEBUG)
@@ -30,6 +31,7 @@
 		#define __forceinline _Pragma("inline") _Pragma("always_inline")
 		#define __nop __builtin_NOP
 		#define __packed /*__attribute__((packed))*/
+		//#define __align1 __attribute__((aligned(1)))
 
 		#define __disable_irq() u32 irqeirutyieurtu = cli()
 		#define __enable_irq()  sti(irqeirutyieurtu)
@@ -75,6 +77,7 @@
 	#define __softfp /**/
 	#define __irq __declspec(naked)
 	#define __align(v) __declspec(align(v))
+	//#define __align1 /*__attribute__((aligned(1)))*/
 	#define __attribute__(v)
 	#define __func__ __FUNCTION__
 	#define restrict /**/
@@ -195,6 +198,35 @@ __forceinline void Pop_IRQ(u32 t)
 
 #ifdef _ADI_COMPILER
 
+#pragma pack(1)
+
+struct pack_u16
+{
+	u16 w;
+
+	__forceinline u16 operator=(u16 v) { return w = v; }
+	__forceinline operator u16() { return w; }
+};
+
+struct pack_u32
+{
+	u32 dw;
+
+	__forceinline u32 operator=(u32 v) { return dw = v; }
+	__forceinline operator u32() { return dw; }
+};
+
+struct pack_float
+{
+	u32 fl;
+
+	__forceinline float operator=(float v) { return fl = v; }
+	__forceinline operator float() { return fl; }
+};
+
+#pragma pack()
+
+
 __forceinline u32 strlcpy(void *dst, const void *src, u32 size)
 {
 	u32 len = size; 
@@ -216,6 +248,10 @@ __forceinline i32 _InterlockedDecrement(volatile i32 *v) { u32 t = __builtin_cli
 
 #elif  defined(__CC_ARM)
 
+typedef __packed u16 pack_u16;
+typedef __packed u32 pack_u32;
+typedef __packed float pack_float;
+
 __forceinline int misaligned_load32(__packed void *p) { return *((__packed int*)p); }
 __forceinline int misaligned_load32(void *p) { return *((__packed int*)p); }
 
@@ -230,6 +266,10 @@ __forceinline i32 _InterlockedDecrement(volatile i32 *v) { u32 t = Push_IRQ(); i
 
 #elif  defined(__clang__)
 
+typedef __unaligned u16 pack_u16;
+typedef __unaligned u32 pack_u32;
+typedef __unaligned float pack_float;
+
 __forceinline int misaligned_load32(__packed void* p) { return *((__packed int*)p); }
 //__forceinline int misaligned_load32(void* p) { return *((__packed int*)p); }
 
@@ -243,6 +283,10 @@ __forceinline i32 _InterlockedIncrement(volatile i32* v) { u32 t = Push_IRQ(); i
 __forceinline i32 _InterlockedDecrement(volatile i32* v) { u32 t = Push_IRQ(); i32 r = *v -= 1; Pop_IRQ(t); return r; }
 
 #elif defined(_MSC_VER)
+
+typedef __packed u16 pack_u16;
+typedef __packed u32 pack_u32;
+typedef __packed float pack_float;
 
 __forceinline void Read32(u32 v) {  }
 __forceinline word ReverseWord(word v) { return ((v&0x00FF)<<8 | (v&0xFF00)>>8); }
@@ -302,9 +346,9 @@ union DataPointer
 {
 	__packed void	*v;
 	__packed byte	*b;
-	__packed word	*w;
-	__packed dword	*d;
-	__packed float	*f;
+	pack_u16		*w;
+	pack_u32		*d;
+	pack_float		*f;
 
 	DataPointer() : v(0) { } 
 	DataPointer(void *p) : v(p) { } 
@@ -324,9 +368,9 @@ union ConstDataPointer
 {
 	__packed const void		*v;
 	__packed const byte		*b;
-	__packed const word		*w;
-	__packed const dword	*d;
-	__packed const float	*f;
+	const pack_u16			*w;
+	const pack_u32			*d;
+	const pack_float		*f;
 
 	ConstDataPointer(const void *p) { v = p; } 
 

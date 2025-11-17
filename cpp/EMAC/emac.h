@@ -173,7 +173,7 @@ inline bool EmacIsCableNormal()
 			byte*	GetAdr() 					{ return (byte*)addr1; }
 			void 	SetAdr(void *adr, u32 len)	{ addr1 = adr; ctrl = (ctrl & RD1_RER) | (len & RD1_RBS1); addr2 = 0; SetOwn(); }
 			void 	ClrAdr()					{ addr1 = 0;ClrOwn(); }
-			u32		GetStatus()					{ return stat; }
+			u32		GetStatus()					{ return exStat; }
 	};
 
 	struct Transmit_Desc
