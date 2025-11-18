@@ -23,7 +23,7 @@
 #include <EMAC\tftp.h>
 
 #ifndef TFTP_DATA_CHUNK_SIZE
-#define TFTP_DATA_CHUNK_SIZE ISP_PAGESIZE
+#define TFTP_DATA_CHUNK_SIZE 512
 #endif
 
 #ifndef ISP_DATASIZE
@@ -928,6 +928,24 @@ static void _MainAppStart(u32 adr)
 			//HW::SPI2->STAT		= ~0;
 
 			adi_rom_Boot((void*)(FLASH_START_ADR), 0, 0, 0, BITM_ROM_BCMD_SPIM_SPEED | ENUM_ROM_BCMD_SPIM_DEV_SPI | ENUM_ROM_BCMD_SPIM_DEVENUM_2);
+
+		#elif defined(__ADSPBF60x__)
+
+			ssync();
+
+			HW::L1IM->CTL &= ~(L1IM_ENCPLB|L1IM_CFG);
+
+			ssync();
+
+			HW::L1DM->CTL &= ~(L1DM_ENCPLB|L1DM_CFG);
+
+			ssync();
+
+			HW::SPI0->CTL		= 0;
+			HW::SPI0->CLK		= 0xF;
+			HW::SPI0->DLY		= 0x31;
+
+			rom_Boot((void*)(FLASH_START_ADR), 0, 0, 0, (0xF<<BITP_ROM_BCMD_SPI_SPEED) | ENUM_ROM_BCMD_DEVICE_SPI | ENUM_ROM_BCMD_SPI_CHANNEL_0 | ENUM_ROM_BCMD_DEVENUM_0, 0);
 
 		#endif
 	};

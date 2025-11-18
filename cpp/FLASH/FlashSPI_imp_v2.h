@@ -18,6 +18,9 @@
 ////#error !!! Must defined flash type !!!
 //#define FLASH_AT25DF021
 //#endif
+#ifdef _ADI_COMPILER
+#define ADSP_CHECKFLASH
+#endif
 
 #ifndef FLASH_START_ADR
 #define FLASH_START_ADR 0x10000 	
@@ -51,6 +54,9 @@
 #define ADSP_CHECKFLASH
 #endif
 
+#if defined(ADSP_CHECKFLASH) && !defined(ADSP_CHECKFLASH_WRITE_TIMEOUT)
+#define ADSP_CHECKFLASH_WRITE_TIMEOUT (MS2CTM(3000))
+#endif
 
 #ifndef PAGEDWORDS
 #define PAGEDWORDS		(FLASH_PAGE_SIZE/4)
@@ -283,12 +289,18 @@ protected:
 		FLASH_STATE_WRITE_PAGE_3, 
 		FLASH_STATE_WRITE_PAGE_4, 
 		FLASH_STATE_WRITE_PAGE_CHECK, 
-		FLASH_STATE_VERIFY_PAGE
+		FLASH_STATE_VERIFY_PAGE, 
+		FLASH_STATE_WRITE_INIT
 	};
 
 	FlashState flashState;
 
 	CTM32 tm;
+
+	#ifdef ADSP_CHECKFLASH
+		CTM32 chfltm;
+	#endif
+
 	byte*		flashWritePtr;
 	u16			flashWriteLen;
 	u32			flashWriteAdr;
@@ -441,22 +453,18 @@ protected:
 
 public:
 
-	#ifdef ADSP_CHECKFLASH
+	bool 	flashOK;
+	bool 	flashChecked;
 
-		u32 	flashLen;
-		bool 	flashOK;
-		bool 	flashChecked;
+	u32 	flashLen;
 
-		#ifdef ADSP_CRC_PROTECTION
+	#ifdef ADSP_CRC_PROTECTION
 
-			bool 	flashCRCOK;
-			u16 	flashCRC;
+		bool 	flashCRCOK;
+		u16 	flashCRC;
 			
-			u16		CRC16(u32 len, u32 *rlen);
+		u16		CRC16(u32 len, u32 *rlen);
 
-		#endif
-	
-	
 	#endif
 
 	u32			GetSectorAdrLen(u32 sadr, u32 *radr);
@@ -464,7 +472,7 @@ public:
 	u32			Read(u32 addr, void *data, u32 size);
 
 #ifdef FLASHSPI_REQUESTUPDATE
-	void	InitFlashWrite() { /*state_write_flash = WRITE_INIT;*/ }
+	void	InitFlashWrite() { flashState = FLASH_STATE_WRITE_INIT; }
 	bool	Busy() { return (flashState != FLASH_STATE_WAIT) || !writeFlBuf.Empty(); }
 	u32 	Get_WriteError() { return flash_write_error; }
 	u32 	Get_WriteOK() { return flash_write_ok; }
@@ -508,10 +516,14 @@ void FlashSPI::Init()
 	flash_write_ok		= 0;
 #endif
 
-#ifdef ADSP_CHECKFLASH
 	flashLen			= 0;
+
+#ifdef ADSP_CHECKFLASH
 	flashOK				= false;
 	flashChecked		= false;
+#else
+	flashOK				= true;
+	flashChecked		= true;
 #endif
 
 #ifdef ADSP_CRC_PROTECTION
@@ -870,8 +882,10 @@ u32 FlashSPI::Read(u32 addr, void *data, u32 size)
 	u32 flashend = FLASH_SECTOR_SIZE*gNumSectors;
 
 #ifdef ADSP_CHECKFLASH
-	if (flashChecked) flashend = flashLen;
+	if (!flashChecked) ADSP_CheckFlash();
 #endif
+
+	if (flashChecked && flashLen != 0) flashend = flashStartAdr + flashLen;
 
 	u32 a = addr+flashStartAdr;
 
@@ -945,6 +959,10 @@ ERROR_CODE FlashSPI::WritePage(const void *data, u32 stAdr, u16 count )
 	u16 block = stAdr/FLASH_SECTOR_SIZE;
 
 	if ((stAdr & 0xFF) != 0 || count > 256 || count == 0) { lastError = INVALID_BLOCK; goto exit; };
+
+#ifdef ADSP_CHECKFLASH
+	flashChecked = false;
+#endif
 
 	if (lastErasedBlock != block)
 	{
@@ -1065,6 +1083,10 @@ exit:
 
 ERROR_CODE FlashSPI::EraseFlash()
 {
+	#ifdef ADSP_CHECKFLASH
+		flashChecked = false;
+	#endif
+
 	GlobalUnProtect();
 //	GlobalUnProtect();
 
@@ -1313,7 +1335,18 @@ void FlashSPI::Update()
 {
 	switch (flashState)
 	{
-		case FLASH_STATE_WAIT:
+		case FLASH_STATE_WRITE_INIT:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+			lastErasedBlock = ~0;
+			flash_write_error = 0;
+			flash_write_ok = 0;
+			curFlwb.Free();
+			lastError = NO_ERR;
+			flashState = FLASH_STATE_WAIT;
+
+			break;
+
+		case FLASH_STATE_WAIT:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 			curFlwb = writeFlBuf.Get();
 
@@ -1326,6 +1359,17 @@ void FlashSPI::Update()
 				flashWriteLen = flwb->dataLen;
 
 				flashState = FLASH_STATE_WRITE_START;
+
+#ifdef ADSP_CHECKFLASH
+
+				flashChecked = false;
+
+				chfltm.Reset();
+			}
+			else if (chfltm.Check(ADSP_CHECKFLASH_WRITE_TIMEOUT))
+			{
+				if (!flashChecked) ADSP_CheckFlash();
+#endif
 
 #ifdef FLASHSPI_EXTWDT_TIMEOUT
 
@@ -1558,7 +1602,7 @@ void FlashSPI::Update()
 
 				u16 len = (flashWriteLen > FLASH_PAGE_SIZE) ? FLASH_PAGE_SIZE : flashWriteLen;
 
-				for (u32 i = 0; i < flashWriteLen; i++)
+				for (u32 i = 0; i < len; i++)
 				{
 					if (flashWritePtr[i] != bufpage[i]) { c = true; break; };
 				};
@@ -1569,7 +1613,14 @@ void FlashSPI::Update()
 
 					DEBUG_ASSERT(0);
 
+					flash_write_error++;
+
 					lastError = VERIFY_WRITE;
+
+					curFlwb.Free();
+					flwb = 0;
+
+					flashState = FLASH_STATE_WAIT;
 				}
 				else
 				{
@@ -1589,6 +1640,8 @@ void FlashSPI::Update()
 				{
 					flashWritePtr = 0;
 					flashWriteLen = 0;
+
+					flash_write_ok++;
 
 					flashState = FLASH_STATE_WAIT;
 				};
@@ -1626,7 +1679,7 @@ void FlashSPI::ADSP_CheckFlash()
 
 	while (1)
 	{
-		Read(adr, (byte*)&bh, sizeof(bh));
+		CmdRead(adr, (byte*)&bh, sizeof(bh));
 
 		u32 x = p[0] ^ p[1] ^ p[2] ^ p[3];
 		x ^= x >> 16; 
@@ -1658,13 +1711,14 @@ void FlashSPI::ADSP_CheckFlash()
 
 	#ifdef ADSP_CRC_PROTECTION
 
-		Read(adr, &adsp_crc, sizeof(adsp_crc));
+		CmdRead(adr, &adsp_crc, sizeof(adsp_crc));
 
 		if (flashLen > 0)
 		{
 			flashCRC = this->GetCRC16(0, flashLen);
 			flashCRCOK = (flashCRC == adsp_crc);
 		};
+
 		if (!flashCRCOK) flashLen = 0;
 
 	#endif
