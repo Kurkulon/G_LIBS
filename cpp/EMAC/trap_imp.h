@@ -221,6 +221,41 @@ bool TRAP_INFO_SendInfo()
 	return true;
 }
 
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#if TRAP_PACKET_VERSION >= 5
+
+static const char trapDevStr[] = TRAP_DEVICES;
+
+bool TRAP_INFO_SendDevices()
+{
+	Ptr<MB> mb(AllocMemBuffer(sizeof(EthTrap)));
+
+	if (!mb.Valid()) return false;
+
+	EthTrap &et = *((EthTrap*)mb->GetDataPtr());
+
+	TrapInfoDevices &trap = (TrapInfoDevices&)et.trap;
+
+	MakePacketHeaders(&trap.hdr, TRAP_PACKET_NO_NEED_ASK, TRAP_PACKET_NO_ASK, TRAP_INFO_DEVICE);
+
+	trap.hdr.cmd = TRAP_INFO_COMMAND_TAKE_DEVICES;
+
+	for (u16 n = 0; n < (sizeof(trapDevStr)-1); n++)
+	{
+		trap.devices[n] = trapDevStr[n];
+	};
+
+	mb->len = sizeof(EthUdp) + sizeof(trap) - sizeof(trap.devices) + sizeof(trapDevStr)-1;
+
+	SendTrap(mb);
+
+	if (__trace) { TRAP_TRACE_PrintString(__func__); };
+
+	return true;
+}
+
+#endif
+
 /******************** CLOCK ******************************/
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -649,6 +684,15 @@ void TRAP_HandleRxData(Ptr<MB> &mb)
 						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_INFO_DEVICE, TrapRxCounter);					
 						TRAP_INFO_SendInfo();
 						break;
+
+#if TRAP_PACKET_VERSION >= 5
+
+					case TRAP_INFO_COMMAND_GET_DEVICES:
+
+						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_INFO_DEVICE, TrapRxCounter);					
+						TRAP_INFO_SendDevices();
+						break;
+#endif
 
 					case TRAP_INFO_COMMAND_SET_NUMBER:
 
@@ -1278,7 +1322,7 @@ static bool UpdateSendVector()
 
 #if TRAP_PACKET_VERSION >= 5
 					trap.tx_size	= 0;
-					trap.rx_size	= flrb.len-2;
+					trap.rx_size	= flrb.hdr.dataLen-2;
 #endif
 
 #if TRAP_PACKET_VERSION >= 7

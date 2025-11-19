@@ -41,6 +41,10 @@
        //                     (1u << (TRAP_ONLINE_DEVICE - 'A')) | \
 							//(1u << (TRAP_RDC_DEVICE - 'A')))
 
+#ifndef TRAP_DEVICES
+#define TRAP_DEVICES "TICOL"
+#endif
+
 #define TRAP_PACKET_ERROR_VERSION	0x7	// ошибка версии протокола
 #define TRAP_PACKET_ERROR_CHECKSUM	0x6	// ошибка контрольной суммы
 #define TRAP_PACKET_ERROR_UNKNOW	0x1	
@@ -128,6 +132,20 @@ __packed struct	TrapInfo
 	byte 	device_type;
 	byte 	device_telemetry;
 };
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#if TRAP_PACKET_VERSION >= 5
+
+#define TRAP_INFO_COMMAND_GET_DEVICES	TRAPCMD('G', 'D')
+#define TRAP_INFO_COMMAND_TAKE_DEVICES	TRAPCMD('T', 'D')
+
+__packed struct TrapInfoDevices
+{
+	TrapHdr	hdr;
+	byte devices[];
+};
+
+#endif
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -443,6 +461,7 @@ enum { TRAP_INFO_COMMAND_SET_TELEMETRY = ('S'<<8) + 'T' };
 		byte telemetry;
 	} TRAP_INFO_set_telemetry_type;	
 
+
 /**************** ѕјћя“№ *******************************/
 
 enum { TRAP_MEMORY_COMMAND_STATUS= ('T'<<8) + 'S' };
@@ -740,5 +759,10 @@ typedef enum
 	DEVICE_COMMAND_SETUP,
 	DEVICE_COMMAND_CALIBRATION
 } device_command_type;
+
+#if TRAP_PACKET_VERSION >= 7
+#define TRAP_MEMORY_COMMAND_FORMAT			TRAPCMD('F', 'O')
+#define TRAP_MEMORY_COMMAND_FIND_SESSION	TRAPCMD('F', 'S')
+#endif
 
 #endif // TRAP_DEF_H__28_01_2016__15_08
