@@ -180,6 +180,11 @@
 		#define __NUM_CORES__ 2
 		#endif
 
+		#ifdef BOOTLOADER 
+		#define DISABLE_CORE1
+		#undef ENABLE_CORE1
+		#endif
+
 		#include "ADSP\BF607.h"
 
 	#endif

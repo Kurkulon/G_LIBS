@@ -931,6 +931,11 @@ static void _MainAppStart(u32 adr)
 
 		#elif defined(__ADSPBF60x__)
 
+			HW::SEC->SCI.CCTL = SEC_RESET;
+			HW::SEC->SCI.CSTAT = ~0;
+			HW::SEC->GCTL = SEC_RESET;
+			HW::SEC->FCTL = SEC_RESET;
+
 			ssync();
 
 			HW::L1IM->CTL &= ~(L1IM_ENCPLB|L1IM_CFG);
@@ -941,11 +946,31 @@ static void _MainAppStart(u32 adr)
 
 			ssync();
 
+			HW::RCU->CRSTAT = RCU_CR1;
+			
+			//HW::RCU->SIDIS = RCU_SI1;
+			
+			ssync();
+
+			//while ((HW::RCU->SISTAT & RCU_SI1) == 0) ssync();
+			
+			//ssync();
+			
+			HW::RCU->CRCTL &= ~RCU_CR1;
+
+			ssync();
+
+			while ((HW::RCU->CRSTAT & RCU_CR1) == 0) ssync();
+
+			ssync();
+
 			HW::SPI0->CTL		= 0;
 			HW::SPI0->CLK		= 0xF;
 			HW::SPI0->DLY		= 0x31;
 
-			rom_Boot((void*)(FLASH_START_ADR), 0, 0, 0, (0xF<<BITP_ROM_BCMD_SPI_SPEED) | ENUM_ROM_BCMD_DEVICE_SPI | ENUM_ROM_BCMD_SPI_CHANNEL_0 | ENUM_ROM_BCMD_DEVENUM_0, 0);
+			ssync();
+
+			rom_Boot((void*)(FLASH_START_ADR), 0, 0, 0, (0xF<<BITP_ROM_BCMD_SPI_SPEED) | ENUM_ROM_BCMD_SPI_MCODE_1 | ENUM_ROM_BCMD_DEVICE_SPI | ENUM_ROM_BCMD_SPI_CHANNEL_0 | ENUM_ROM_BCMD_DEVENUM_0, 0);
 
 		#endif
 	};

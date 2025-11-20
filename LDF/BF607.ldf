@@ -59,6 +59,11 @@ may be suppressed by defining the LDF macro NO_UTILITY_ROM.
     A loader initialization code to disable instruction cache during booting is required. This message may be suppressed by defining the LDF macro USING_ICACHE_DISABLE_INIT_CODE.
 #endif
 
+#ifdef BOOTLOADER 
+#define DISABLE_CORE1
+#undef ENABLE_CORE1
+#endif
+
 #if defined(USE_CORE0_CODE_DA_DB) || defined(USE_L1_CODE_DA_DB)
 #define USE_CORE0_CODE
 #define USE_CORE0_DATA_A
@@ -137,6 +142,14 @@ may be suppressed by defining the LDF macro NO_UTILITY_ROM.
 	#define USE_CORE1_CACHE_CODE
 #endif
 
+#if !defined(ENABLE_CORE1) || defined(DISABLE_CORE1)
+#undef USE_CORE1_CODE
+#undef USE_CORE1_DATA_A
+#undef USE_CORE1_DATA_B
+#undef USE_CORE1_CACHE_CODE
+#undef USE_CORE1_CACHE_DA
+#undef USE_CORE1_CACHE_DB
+#endif
 
 /*
 ** Define a linked objects list.
@@ -209,6 +222,7 @@ $OBJS_LIBS_NOT_EXTERNAL =
 #if !defined(CORE1_START_ADDR)
 #define CORE1_START_ADDR  0xFF600000 /* reset address */
 #endif
+
 #if !defined(CORE1_START_SYM)
   #define CORE1_START_SYM core1_start
 #endif
@@ -382,8 +396,10 @@ PROCESSOR P0
 	RESOLVE(START_SYM, START_ADDR)
 	KEEP(START_SYM, _main)
 
+#if defined(ENABLE_CORE1) && !defined(DISABLE_CORE1)
 	RESOLVE(CORE1_START_SYM, CORE1_START_ADDR)
 	KEEP(CORE1_START_SYM, _core1_main)
+#endif
    
   
 	SECTIONS

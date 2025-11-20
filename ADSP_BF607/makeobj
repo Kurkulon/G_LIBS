@@ -56,12 +56,13 @@ startup_obj = $(objdir)\startup_BF706.doj
 !else ifeq targetcpu BF607
 
 cpu_opt		= -proc ADSP-BF607 -si-revision 0.2
+adsp_core_opt = BOOTLOADER
 adsp_cache_opt = USE_CACHE_C_A_B
 adsp_memmap_opt = USE_CORE1_DA_DB #USE_L1_DA_DB
-adsp_comp_opt = -D$(adsp_cache_opt) -D$(adsp_memmap_opt)
+adsp_comp_opt = -D$(adsp_cache_opt) -D$(adsp_memmap_opt) -D$(adsp_core_opt)
 loader_opt	= -bcode 13
 startup_obj = $(objdir)\startup_BF607.doj
-link_ldf    = -T $(libdir)\LDF\BF607.ldf -flags-link -e,-MDADI_CCES,-MD__cplusplus,-MDNO_UTILITY_ROM,-MDUSING_ICACHE_DISABLE_INIT_CODE,-MD$(adsp_cache_opt),-MD$(adsp_memmap_opt)
+link_ldf    = -T $(libdir)\LDF\BF607.ldf -flags-link -e,-MDADI_CCES,-MD__cplusplus,-MDNO_UTILITY_ROM,-MDUSING_ICACHE_DISABLE_INIT_CODE,-MD$(adsp_cache_opt),-MD$(adsp_memmap_opt),-MD$(adsp_core_opt)
 
 !endif
 
@@ -100,12 +101,12 @@ initcode_name = $(libdir)\$(targetcpu)_$(version)\initcode_osc25.dxe
 
 ####################################################################################################################################################################################################
 
-asm_options = $(cpu_opt) -g -Wno-info -DADI_CCES
+asm_options = $(cpu_opt) -g -Wno-info -DADI_CCES $(adsp_comp_opt)
 
 ####################################################################################################################################################################################################
 
 compiler_options = $(debug_compiler_options) -c -c++11 -g++ -g -absolute-path-dependencies -structs-do-not-overlap -no-multiline -save-temps -path-output $(objdir) &
-	-double-size-32 -decls-strong -warn-protos $(cpu_opt) -DCPU_$(targetcpu) -Wterse -I$(incdir)
+	-double-size-32 -decls-strong -warn-protos $(cpu_opt) -DCPU_$(targetcpu) $(adsp_comp_opt) -Wterse -I$(incdir)
 
 ####################################################################################################################################################################################################
 

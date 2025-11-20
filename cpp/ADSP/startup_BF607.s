@@ -3,6 +3,13 @@
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#ifdef BOOTLOADER 
+#define DISABLE_CORE1
+#undef ENABLE_CORE1
+#endif
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 #define TEST_DCPLB
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -373,10 +380,12 @@ _core0_ctorloop_end:
         R0 = [P5];
 		BITSET(R0, 0); 
 	    [P5] = R0;      // Core 0 ctorloop complete
-        
-        // Enable System Interface Core 1
-        
-        LOADIMM32REG(P1, REG_RCU0_SIDIS)
+
+#ifdef ENABLE_CORE1
+
+// Enable System Interface Core 1
+
+LOADIMM32REG(P1, REG_RCU0_SIDIS)
         R0 = [P1];
         BITCLR(R0, BITP_RCU_SIDIS_SI1);  
         [P1] = R0;
@@ -401,7 +410,8 @@ _wait_core1_ctorloop_complete:
 
         CC = BITTST(R0, 1);
 	    if !CC jump _wait_core1_ctorloop_complete;
-        
+
+#endif // ENABLE_CORE1
 
 		// Call the application program.
 		.EXTERN _main;
@@ -502,6 +512,8 @@ core0_dummy_IVG:
       .type start,STT_FUNC;
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#ifdef ENABLE_CORE1
 
 .SECTION/DOUBLEANY core1_code;
 .ALIGN 2;
@@ -921,7 +933,7 @@ core1_dummy_IVG:
       .GLOBAL core1_start;
       .type core1_start,STT_FUNC;
 
-
+#endif // ENABLE_CORE1
 
 
       // If File IO support isn't provided, then

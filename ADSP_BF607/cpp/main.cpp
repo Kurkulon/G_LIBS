@@ -3,6 +3,7 @@
 
 #include "core.h"
 #include "CRC\CRC16.h"
+#include "time.h"
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -12,6 +13,8 @@
 char build_date[] __attribute__ ((used)) = "\n" "ADSP_AFP" "\n" __DATE__ "\n" __TIME__ "\n";
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#define FLASH_START_ADR 0x10000 	
 
 #ifdef __ADSPBF59x__
 
@@ -252,32 +255,71 @@ extern "C" void core0_ctorloop()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+static void _MainAppStart(u32 adr)
+{
+		HW::SEC->SCI.CCTL = SEC_RESET;
+		HW::SEC->SCI.CSTAT = ~0;
+		HW::SEC->GCTL = SEC_RESET;
+		HW::SEC->FCTL = SEC_RESET;
+
+		ssync();
+
+		HW::L1IM->CTL &= ~(L1IM_ENCPLB|L1IM_CFG);
+
+		ssync();
+
+		HW::L1DM->CTL &= ~(L1DM_ENCPLB|L1DM_CFG);
+
+		ssync();
+
+		HW::RCU->CRSTAT = RCU_CR1;
+
+		//HW::RCU->SIDIS = RCU_SI1;
+
+		ssync();
+
+		//while ((HW::RCU->SISTAT & RCU_SI1) == 0) ssync();
+
+		//ssync();
+
+		HW::RCU->CRCTL &= ~RCU_CR1;
+
+		ssync();
+
+		//while ((HW::RCU->CRSTAT & RCU_CR1) == 0) ssync();
+
+		ssync();
+
+		HW::SPI0->CTL		= 0;
+		HW::SPI0->CLK		= 0xF;
+		HW::SPI0->DLY		= 0x31;
+
+		ssync();
+
+		rom_Boot((void*)(FLASH_START_ADR), 0, 0, 0, (0xF<<BITP_ROM_BCMD_SPI_SPEED) | ENUM_ROM_BCMD_SPI_MCODE_1 | ENUM_ROM_BCMD_DEVICE_SPI | ENUM_ROM_BCMD_SPI_CHANNEL_0 | ENUM_ROM_BCMD_DEVENUM_0, 0);
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 void main()
 {
 	static DataPointer dp[8];
 
-	HW::EMAC1->MACCFG			= 0;
-	HW::EMAC1->DBG				= 0;
-	HW::EMAC1->MMC_CTL			= 0;
-	HW::EMAC1->RXFRMCNT_GB		= 0;
-	HW::EMAC1->IPC_RXIMSK		= 0;
-	HW::EMAC1->RXIPV4_GD_FRM	= 0;
-	HW::EMAC1->RXIPV4_GD_OCT	= 0;
-	HW::EMAC1->TM_CTL			= 0;
-	HW::EMAC1->TM_PPSINTVL		= 0;
-	HW::EMAC1->DMA_BUSMODE		= 0;
-	HW::EMAC1->DMA_TXDSC_CUR	= 0;
-
 	PIO_MAINLOOP->DirSet(MAINLOOP);
 	
 	//HW::RCU->CRCTL &= ~RCU_CR1;
+
+	CTM32 tm;
+
+	tm.Reset();
 
 	while (1)
 	{
 		dp[0].b += 1;
 
 		GetCRC16(dp, sizeof(dp));
+
+		if (tm.Check(MS2CTM(5000))) break;
 
 		//if (HW::RCU->SIDIS & RCU_SI1)
 		//{
@@ -291,6 +333,8 @@ void main()
 
 		PIO_MAINLOOP->NOT(MAINLOOP);
 	};
+
+	_MainAppStart(FLASH_START_ADR);
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
