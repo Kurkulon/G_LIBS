@@ -340,6 +340,31 @@ void ComPort::InitHW()
 			_PIO_RTS->CLR(_MASK_RTS); 
 		};
 
+	#elif defined(__ADSPBF60x__)
+
+		_uhw->CLK = _BaudRateRegister;
+		_uhw->CTL = _ModeRegister;
+
+		if (_usic_num == 0)
+		{
+			HW::PIOD->SetFER(PD7|PD8);
+			HW::PIOD->SetMUX(7, 1);
+			HW::PIOD->SetMUX(8, 1);
+		}
+		else if (_usic_num == 1)
+		{
+			HW::PIOG->SetFER(PG14|PG15);
+			HW::PIOG->SetMUX(14, 0);
+			HW::PIOG->SetMUX(15, 0);
+		};
+
+		if (_PIO_RTS != 0)
+		{
+			_PIO_RTS->DirSet(_MASK_RTS); 
+			_PIO_RTS->ClrFER(_MASK_RTS); 
+			_PIO_RTS->CLR(_MASK_RTS); 
+		};
+
 	#endif
 
 }
@@ -521,7 +546,7 @@ bool ComPort::Connect(CONNECT_TYPE ct, dword speed, byte parity, byte stopBits)
 				break;
 		};
 
-	#elif defined(__ADSPBF70x__)
+	#elif defined(__ADSPBF70x__) || defined(__ADSPBF60x__)
 
 		BoudToPresc(speed);
 
@@ -813,7 +838,7 @@ void ComPort::EnableTransmit(void* src, word count)
 
 		*pUART0_IER = ETBEI;
 
-	#elif defined(__ADSPBF70x__)
+	#elif defined(__ADSPBF70x__) || defined(__ADSPBF60x__)
 
 		_uhw->CTL = _ModeRegister;
 
@@ -884,7 +909,7 @@ void ComPort::DisableTransmit()
 		*pDMA8_CONFIG = 0;	// Disable transmit and receive
 		*pUART0_IER = 0;
 
-	#elif defined(__ADSPBF70x__)
+	#elif defined(__ADSPBF70x__) || defined(__ADSPBF60x__)
 
 		_DMATX.Disable();
 
@@ -1006,7 +1031,7 @@ void ComPort::EnableReceive(void* dst, word count)
 		count = *pUART0_LSR;
 		*pUART0_IER = ERBFI;
 
-	#elif defined(__ADSPBF70x__)
+	#elif defined(__ADSPBF70x__) || defined(__ADSPBF60x__)
 
 		_uhw->CTL = _ModeRegister;
 
@@ -1079,7 +1104,7 @@ void ComPort::DisableReceive()
 		*pDMA7_CONFIG = 0;	// Disable transmit and receive
 		*pUART0_IER = 0;
 
-	#elif defined(__ADSPBF70x__)
+	#elif defined(__ADSPBF70x__) || defined(__ADSPBF60x__)
 
 		_DMARX.Disable();
 

@@ -113,6 +113,24 @@ u16	nand_dma_CopyErr = 0;
 
 #endif
 
+#ifdef _ADI_COMPILER
+
+static bool __memcmp(void *src, void *dst, u32 len)
+{
+	byte *s = (byte*)src;
+	byte *d = (byte*)dst;
+
+	while (len > 0)
+	{
+		if (*s++ != *d++) return false;
+		len -= 1;
+	};
+
+	return true;
+}
+
+#else
+
 static bool __memcmp(ConstDataPointer s, ConstDataPointer d, u32 len)
 {
 	while (len > 3)
@@ -129,6 +147,8 @@ static bool __memcmp(ConstDataPointer s, ConstDataPointer d, u32 len)
 
 	return true;
 }
+
+#endif
 
 #ifdef __CC_ARM
 

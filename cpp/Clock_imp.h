@@ -497,7 +497,7 @@ static void InitClock()
 
 #elif defined(CPU_BF607)
 
-	InitSEC(0, Clock_IRQ);
+	InitSEC(0, Clock_IRQ, 0);
 
 #endif
 

@@ -360,14 +360,18 @@ SEC_INTERRUPT_HANDLER(TWI_ISR)
 #pragma never_inline
 void I2C_Init()
 {
-	u32 sclk_mhz = Get_SCLK0_MHz();
+	//u32 sclk_mhz = Get_SCLK0_MHz();
 
-	HW::TWI->CTL		= TWI_CTL_EN | TWI_CTL_PRESCALE(sclk_mhz/10);
+	HW::TWI->CTL		= TWI_CTL_EN | TWI_CTL_PRESCALE(SCLK0_MHz/10);
 	HW::TWI->CLKDIV		= TWI_CLKHI(10)|TWI_CLKLO(12);
 	HW::TWI->IMSK		= 0;
 	HW::TWI->MSTRADDR	= 0;
 
+#ifdef __ADSPBF60x__
+	InitSEC(PID_TWI0_DATA, TWI_ISR, 0);
+#else
 	InitSEC(PID_TWI0_DATA, TWI_ISR);
+#endif
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

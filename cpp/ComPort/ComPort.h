@@ -326,13 +326,9 @@ class ComPort : public USIC
 
 	ComPort() : _connected(false), _status485(READ_END) {}
 
-#elif defined(__ADSPBF70x__)
+#elif defined(__ADSPBF70x__) || defined(__ADSPBF60x__)
 
 	  ComPort(byte num, T_HW::S_PORT *prts, byte pinrts) : USIC(num), _PIO_RTS(prts), _PIN_RTS(pinrts), _MASK_RTS(1UL<<pinrts), _DMATX(UART0_TX_DMA+num*2), _DMARX(UART0_RX_DMA+num*2), _connected(false), _status485(READ_END) {}
-
-#elif defined(__ADSPBF60x__)
-
-	  ComPort(byte num, T_HW::S_PORT* prts, byte pinrts) : USIC(num), _PIO_RTS(prts), _PIN_RTS(pinrts), _MASK_RTS(1UL << pinrts), _DMATX(UART0_TX_DMA + num * 2), _DMARX(UART0_RX_DMA + num * 2), _connected(false), _status485(READ_END) {}
 
 #elif defined(CPU_SAME53)
 

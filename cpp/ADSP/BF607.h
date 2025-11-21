@@ -1132,27 +1132,44 @@ namespace T_HW
 	 * \brief  2-Wire Interface
 	*/
 
+
 	struct S_TWI
 	{
-		BF_RW32 CLKDIV;                        /*!< SCL Clock Divider Register */
-		BF_RW32 CTL;                           /*!< Control Register */
-		BF_RW32 SLVCTL;                        /*!< Slave Mode Control Register */
-		BF_RO32 SLVSTAT;                       /*!< Slave Mode Status Register */
-		BF_RW32 SLVADDR;                       /*!< Slave Mode Address Register */
-		BF_RW32 MSTRCTL;                       /*!< Master Mode Control Registers */
-		BF_RW32 MSTRSTAT;                      /*!< Master Mode Status Register */
-		BF_RW32 MSTRADDR;                      /*!< Master Mode Address Register */
-		BF_RW32 ISTAT;                         /*!< Interrupt Status Register */
-		BF_RW32 IMSK;                          /*!< Interrupt Mask Register */
-		BF_RW32 FIFOCTL;                       /*!< FIFO Control Register */
+		struct TWIREG
+		{
+		protected:
+
+			volatile u16 reg;
+			volatile u16 align;
+
+		public:		
+
+			__forceinline 			operator u16()		{ return __builtin_mmr_read16(&reg); }
+			__forceinline	u16		operator=(u16 v)	{ reg = v; return v; }
+			__forceinline	void	operator|=(u16 v)	{ reg = __builtin_mmr_read16(&reg)|v; }
+			__forceinline	void	operator&=(u16 v)	{ reg = __builtin_mmr_read16(&reg)&v; }
+		};
+
+		TWIREG CLKDIV;                        /*!< SCL Clock Divider Register */
+		TWIREG CTL;                           /*!< Control Register */
+		TWIREG SLVCTL;                        /*!< Slave Mode Control Register */
+		TWIREG SLVSTAT;                       /*!< Slave Mode Status Register */
+		TWIREG SLVADDR;                       /*!< Slave Mode Address Register */
+		TWIREG MSTRCTL;                       /*!< Master Mode Control Registers */
+		TWIREG MSTRSTAT;                      /*!< Master Mode Status Register */
+		TWIREG MSTRADDR;                      /*!< Master Mode Address Register */
+		TWIREG ISTAT;                         /*!< Interrupt Status Register */
+		TWIREG IMSK;                          /*!< Interrupt Mask Register */
+		TWIREG FIFOCTL;                       /*!< FIFO Control Register */
 
 		struct
 		{
-			volatile const u32 _TXSTAT		:2;				/* Rx FIFO Status */
-			volatile const u32 _RXSTAT		:2;				/* Tx FIFO Status */
+			volatile const u16 _TXSTAT		:2;				/* Rx FIFO Status */
+			volatile const u16 _RXSTAT		:2;				/* Tx FIFO Status */
+			volatile const u16 _align;
 
-			__forceinline operator u32()	{ return __builtin_mmr_read32(this); }
-			__forceinline u32 Bits()		{ return __builtin_mmr_read32(this); } 
+			__forceinline operator u16()	{ return __builtin_mmr_read16(this); }
+			__forceinline u16 Bits()		{ return __builtin_mmr_read16(this); } 
 
 		} FIFOSTAT; // BF_RO32 FIFOSTAT; /*!< FIFO Status Register */
 		                     
@@ -1344,23 +1361,61 @@ namespace T_HW
 
 	struct S_SMC
 	{
-    												BF_RO8                  z__RESERVED0[12];
-		BF_RW32 B0CTL;                         /*!< Bank 0 Control Register */
-		BF_RW32 B0TIM;                         /*!< Bank 0 Timing Register */
-		BF_RW32 B0ETIM;                        /*!< Bank 0 Extended Timing Register */
-    												BF_RO8                  z__RESERVED1[4];
-		BF_RW32 B1CTL;                         /*!< Bank 1 Control Register */
-		BF_RW32 B1TIM;                         /*!< Bank 1 Timing Register */
-		BF_RW32 B1ETIM;                        /*!< Bank 1 Extended Timing Register */
-    												BF_RO8                  z__RESERVED2[4];
-		BF_RW32 B2CTL;                         /*!< Bank 2 Control Register */
-		BF_RW32 B2TIM;                         /*!< Bank 2 Timing Register */
-		BF_RW32 B2ETIM;                        /*!< Bank 2 Extended Timing Register */
-    												BF_RO8                  z__RESERVED3[4];
-		BF_RW32 B3CTL;                         /*!< Bank 3 Control Register */
-		BF_RW32 B3TIM;                         /*!< Bank 3 Timing Register */
-		BF_RW32 B3ETIM;                        /*!< Bank 3 Extended Timing Register */
+		BF_RW32 GCTL;	// 0xFFC16004		/* SMC0 Grant Control Register */
+		BF_RW32 GSTAT;	// 0xFFC16008		/* SMC0 Grant Status Register */
+		
+		BF_RW32 B0CTL;						/*!< Bank 0 Control Register */
+		BF_RW32 B0TIM;						/*!< Bank 0 Timing Register */
+		BF_RW32 B0ETIM;						/*!< Bank 0 Extended Timing Register */
+    										BF_RO8                  z__RESERVED1[4];
+		BF_RW32 B1CTL;						/*!< Bank 1 Control Register */
+		BF_RW32 B1TIM;						/*!< Bank 1 Timing Register */
+		BF_RW32 B1ETIM;						/*!< Bank 1 Extended Timing Register */
+    										BF_RO8                  z__RESERVED2[4];
+		BF_RW32 B2CTL;						/*!< Bank 2 Control Register */
+		BF_RW32 B2TIM;						/*!< Bank 2 Timing Register */
+		BF_RW32 B2ETIM;						/*!< Bank 2 Extended Timing Register */
+    										BF_RO8                  z__RESERVED3[4];
+		BF_RW32 B3CTL;						/*!< Bank 3 Control Register */
+		BF_RW32 B3TIM;						/*!< Bank 3 Timing Register */
+		BF_RW32 B3ETIM;						/*!< Bank 3 Extended Timing Register */
 	};
+
+
+	#define SMC_BGDIS			(1UL<<4)			/* Bus Grant Disable */
+	#define SMC_BGHSTAT			(1UL<<2)			/* Bus Grant Hold Status */
+	#define SMC_BRQSTAT			(1UL<<1)			/* Bus Request Status */
+	#define SMC_BGSTAT			(1UL<<0)			/* Bus Grant Status */
+
+	#define SMC_BTYPE			(1UL<<26)			/* Burst Type for Flash */
+	#define SMC_BCLK(v)			(((v)&3)<<24)		/* Burst Clock Frequency Divisor */
+	#define SMC_PGSZ(v)			(((v)&3)<<20)		/* Flash Page Size */
+	#define SMC_RDYABTEN		(1UL<<14)           /* ARDY Abort Enable */
+	#define SMC_RDYPOL			(1UL<<13)           /* ARDY Polarity */
+	#define SMC_RDYEN			(1UL<<12)           /* ARDY Enable */
+	#define SMC_SELCTRL(v)		(((v)&3)<<8)		/* Select Control */
+	#define SMC_MODE(v)			(((v)&3)<<4)		/* Memory Access Mode */
+
+	#define SMC_MODE_ASRAM		(0<<4)				/* Memory Access Mode - Async SRAM protocol			*/
+	#define SMC_MODE_AFLASH		(1<<4)				/* Memory Access Mode - Async flash protocol		*/
+	#define SMC_MODE_AFLSHPG	(2<<4)				/* Memory Access Mode - Async flash page protocol	*/
+	#define SMC_MODE_SBRSTFLSH	(3<<4)				/* Memory Access Mode - Sync burst flash protocol	*/
+
+	#define SMC_EN				(1UL<<0)			/* Bank 0 Enable */
+
+	#define SMC_RAT(v)			(((v)&0x3F)<<24)	/* Read Access Time */
+	#define SMC_RHT(v)			(((v)&7)<<20)		/* Read Hold Time */
+	#define SMC_RST(v)			(((v)&7)<<16)		/* Read Setup Time */
+	#define SMC_WAT(v)			(((v)&0x3F)<< 8)	/* Write Access Time */
+	#define SMC_WHT(v)			(((v)&7)<<4)		/* Write Hold Time */
+	#define SMC_WST(v)			(((v)&7)<<0)		/* Write Setup Time */
+
+	#define SMC_PGWS (v)		(((v)&15)<<16)      /* Page Wait States */
+	#define SMC_IT(v)			(((v)&7)<<12)       /* Idle Time */
+	#define SMC_TT(v)			(((v)&7)<<8)		/* Transition Time */
+	#define SMC_PREAT(v)		(((v)&3)<<4)		/* Pre Access Time */
+	#define SMC_PREST(v)		(((v)&3)<<0)		/* Pre Setup Time */
+
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -2668,6 +2723,8 @@ namespace HW
 
 	MK_PTR(EMAC0,	REG_EMAC0_MACCFG);
 	MK_PTR(EMAC1,	REG_EMAC1_MACCFG);
+	
+	MK_PTR(SMC,		REG_SMC0_GCTL);
 	
 	MK_PTR(DMA0	,	REG_DMA0_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */
 	MK_PTR(DMA1	,	REG_DMA1_DSCPTR_NXT       ); /*!<  Pointer to DMA Channel (DMA0) */

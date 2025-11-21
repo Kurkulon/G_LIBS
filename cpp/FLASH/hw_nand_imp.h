@@ -189,9 +189,7 @@ inline byte NAND_READ()
 		PIO_WE_RE->SET(RE); 
 		NAND_DELAY_REH();
 		return v; 
-	#elif defined(CPU_XMC48)
-		return *FLD;
-	#elif defined(CPU_BF607)
+	#elif defined(CPU_XMC48) || defined(CPU_BF607)
 		return *FLD;
 	#elif defined(WIN32)
 		return 0;
@@ -210,7 +208,7 @@ inline void NAND_WRITE(byte data)
 		PIO_WE_RE->SET(WE); 
 		NAND_DELAY_WH();
 
-	#elif defined(CPU_XMC48)
+	#elif defined(CPU_XMC48) || defined(CPU_BF607)
 
 		*FLD = data;
 
@@ -230,7 +228,7 @@ inline void NAND_CMD_LATCH(byte cmd)
 		//__nop(); __nop();__nop(); __nop();__nop(); __nop(); __nop(); __nop(); 
 		PIO_CLE->CLR(CLE|ALE); 
 
-	#elif defined(CPU_XMC48)
+	#elif defined(CPU_XMC48) || defined(CPU_BF607)
 
 		*FLC = cmd;
 
@@ -250,7 +248,7 @@ inline void NAND_ADR_LATCH(byte cmd)
 		//__nop(); __nop();__nop(); __nop();__nop(); __nop(); __nop(); __nop(); 
 		PIO_CLE->CLR(CLE|ALE); 
 
-	#elif defined(CPU_XMC48)
+	#elif defined(CPU_XMC48) || defined(CPU_BF607)
 
 		*FLA = cmd;
 
@@ -271,9 +269,7 @@ inline byte NAND_ADR_READ()
 	PIO_WE_RE->SET(RE);
 	PIO_CLE->CLR(CLE | ALE);
 	return v;
-#elif defined(CPU_BF607)
-	return *FLA;
-#elif defined(CPU_XMC48)
+#elif defined(CPU_XMC48) || defined(CPU_BF607)
 	return *FLA;
 #endif
 }
@@ -290,7 +286,7 @@ inline void NAND_ADR_LATCH_COL(u16 col)
 		NAND_WRITE(col>>8); 
 		PIO_CLE->CLR(CLE|ALE); 
 
-	#elif defined(CPU_XMC48)
+	#elif defined(CPU_XMC48) || defined(CPU_BF607)
 
 		*FLA = col; *FLA = col >> 8;
 
@@ -310,7 +306,7 @@ inline void NAND_ADR_LATCH_ROW(u32 row)
 		NAND_WRITE(row>>16); 
 		PIO_CLE->CLR(CLE|ALE); 
 
-	#elif defined(CPU_XMC48)
+	#elif defined(CPU_XMC48) || defined(CPU_BF607)
 
 		*FLA = row; *FLA = row >> 8; *FLA = row >> 16;
 
@@ -332,7 +328,7 @@ inline void NAND_ADR_LATCH_COL_ROW(u16 col, u32 row)
 		NAND_WRITE(row>>16); 
 		PIO_CLE->CLR(CLE|ALE);
 
-	#elif defined(CPU_XMC48)
+	#elif defined(CPU_XMC48) || defined(CPU_BF607)
 
 		*FLA = col; *FLA = col >> 8;
 		*FLA = row; *FLA = row >> 8; *FLA = row >> 16;
@@ -363,9 +359,7 @@ inline bool NAND_BUSY()
 {
 	#ifdef CPU_SAME53	
 		return PIO_FLREADY->TBCLR(PIN_FLREADY); 
-	#elif defined(CPU_XMC48)
-		return PIO_FLREADY->TBCLR(PIN_FLREADY);
-	#elif defined(CPU_BF607)
+	#elif defined(CPU_XMC48) || defined(CPU_BF607)
 		return PIO_FLREADY->TBCLR(PIN_FLREADY);
 	#elif defined(WIN32)
 		return !HasOverlappedIoCompleted(&_overlapped);
@@ -1177,6 +1171,27 @@ void NAND_Init()
 
 //				 = |			|				 |		tWP		 |			   |			   |				;
 	EBU->BUSWAP0 = EBU_ADDRC(0)|EBU_CMDDELAY(0)|EBU_WAITWRC(NAND_WAITWRC)|EBU_DATAC(0)|EBU_WRRECOVC(NS2EBUCLK(0))|EBU_WRDTACS(0);
+
+#elif defined(CPU_BF607)
+
+	PIO_FCS->ClrFER(maskChipSelect);
+	PIO_FCS->DirSet(maskChipSelect);
+	PIO_FCS->SET(maskChipSelect);
+
+	PIO_FLREADY->ClrFER(FLREADY);
+	PIO_FLREADY->DirClr(FLREADY);
+	PIO_FLREADY->INEN_SET = FLREADY;
+
+	PIO_WP->ClrFER(WP);
+	PIO_WP->DirSet(WP);
+	PIO_WP->SET(WP);
+
+
+	//SMC->GCTL	= SMC_BGDIS;
+	//SMC->B0TIM	= SMC_WST(NS2SCLK(20))|SMC_WAT(NS2SCLK(50))|SMC_WHT(NS2SCLK(30))|SMC_RST(NS2SCLK(20))|SMC_RAT(NS2SCLK(50))|SMC_RHT(NS2SCLK(30));
+	//SMC->B0ETIM	= SMC_TT(7);
+	SMC->B0CTL	|= SMC_EN|SMC_MODE_ASRAM;
+
 
 #endif
 
