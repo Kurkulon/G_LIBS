@@ -1135,32 +1135,43 @@ namespace T_HW
 
 	struct S_TWI
 	{
-		struct TWIREG
-		{
-		protected:
+		//struct TWIREG
+		//{
+		//protected:
 
-			volatile u16 reg;
-			volatile u16 align;
+		//	volatile u16 reg;
+		//	volatile u16 align;
 
-		public:		
+		//public:		
 
-			__forceinline 			operator u16()		{ return __builtin_mmr_read16(&reg); }
-			__forceinline	u16		operator=(u16 v)	{ reg = v; return v; }
-			__forceinline	void	operator|=(u16 v)	{ reg = __builtin_mmr_read16(&reg)|v; }
-			__forceinline	void	operator&=(u16 v)	{ reg = __builtin_mmr_read16(&reg)&v; }
-		};
+		//	__forceinline 			operator u16()		{ return __builtin_mmr_read16(&reg); }
+		//	__forceinline	u16		operator=(u16 v)	{ reg = v; return v; }
+		//	__forceinline	void	operator|=(u16 v)	{ reg = __builtin_mmr_read16(&reg)|v; }
+		//	__forceinline	void	operator&=(u16 v)	{ reg = __builtin_mmr_read16(&reg)&v; }
+		//};
 
-		TWIREG CLKDIV;                        /*!< SCL Clock Divider Register */
-		TWIREG CTL;                           /*!< Control Register */
-		TWIREG SLVCTL;                        /*!< Slave Mode Control Register */
-		TWIREG SLVSTAT;                       /*!< Slave Mode Status Register */
-		TWIREG SLVADDR;                       /*!< Slave Mode Address Register */
-		TWIREG MSTRCTL;                       /*!< Master Mode Control Registers */
-		TWIREG MSTRSTAT;                      /*!< Master Mode Status Register */
-		TWIREG MSTRADDR;                      /*!< Master Mode Address Register */
-		TWIREG ISTAT;                         /*!< Interrupt Status Register */
-		TWIREG IMSK;                          /*!< Interrupt Mask Register */
-		TWIREG FIFOCTL;                       /*!< FIFO Control Register */
+		BF_RW16 CLKDIV;							/*!< SCL Clock Divider Register */
+							BF_RO16	z__Reserved0;
+		BF_RW16 CTL;                           /*!< Control Register */
+							BF_RO16	z__Reserved1;
+		BF_RW16 SLVCTL;                        /*!< Slave Mode Control Register */
+							BF_RO16	z__Reserved2;
+		BF_RW16 SLVSTAT;                       /*!< Slave Mode Status Register */
+							BF_RO16	z__Reserved3;
+		BF_RW16 SLVADDR;                       /*!< Slave Mode Address Register */
+							BF_RO16	z__Reserved4;
+		BF_RW16 MSTRCTL;                       /*!< Master Mode Control Registers */
+							BF_RO16	z__Reserved5;
+		BF_RW16 MSTRSTAT;                      /*!< Master Mode Status Register */
+							BF_RO16	z__Reserved6;
+		BF_RW16 MSTRADDR;                      /*!< Master Mode Address Register */
+							BF_RO16	z__Reserved7;
+		BF_RW16 ISTAT;                         /*!< Interrupt Status Register */
+							BF_RO16	z__Reserved8;
+		BF_RW16 IMSK;                          /*!< Interrupt Mask Register */
+							BF_RO16	z__Reserved9;
+		BF_RW16 FIFOCTL;                       /*!< FIFO Control Register */
+							BF_RO16	z__Reserved10;
 
 		struct
 		{
@@ -1173,11 +1184,14 @@ namespace T_HW
 
 		} FIFOSTAT; // BF_RO32 FIFOSTAT; /*!< FIFO Status Register */
 		                     
-    												BF_RO8                  z__RESERVED0[80];
-		BF_WO32 TXDATA8;                       /*!< Tx Data Single-Byte Register */
-		BF_WO32 TXDATA16;                      /*!< Tx Data Double-Byte Register */
-		BF_RO32 RXDATA8;                       /*!< Rx Data Single-Byte Register */
-		BF_RO32 RXDATA16;                      /*!< Rx Data Double-Byte Register */
+    												BF_RO16                  z__RESERVED11[40];
+		BF_WO16 TXDATA8;                       /*!< Tx Data Single-Byte Register */
+							BF_RO16	z__Reserved12;
+		BF_WO16 TXDATA16;                      /*!< Tx Data Double-Byte Register */
+							BF_RO16	z__Reserved13;
+		BF_RO16 RXDATA8;                       /*!< Rx Data Single-Byte Register */
+							BF_RO16	z__Reserved14;
+		BF_RO16 RXDATA16;                      /*!< Rx Data Double-Byte Register */
 	};
 
 	typedef S_TWI S_TWI0, S_TWI1;
