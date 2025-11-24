@@ -500,7 +500,7 @@ static byte NAND_CheckDataComplete()
 
 	#elif defined(CPU_BF607)
 
-		return NAND_DMA.CheckComplete();
+		return NAND_DMA.CheckMemCopyComplete();
 	
 	#elif defined(WIN32)
 
@@ -1187,10 +1187,19 @@ void NAND_Init()
 	PIO_WP->SET(WP);
 
 
-	//SMC->GCTL	= SMC_BGDIS;
-	//SMC->B0TIM	= SMC_WST(NS2SCLK(20))|SMC_WAT(NS2SCLK(50))|SMC_WHT(NS2SCLK(30))|SMC_RST(NS2SCLK(20))|SMC_RAT(NS2SCLK(50))|SMC_RHT(NS2SCLK(30));
-	//SMC->B0ETIM	= SMC_TT(7);
+	SMC->GCTL	= SMC_BGDIS;
+	SMC->B0TIM	= SMC_WST(NS2SCLK(20))|SMC_WAT(NS2SCLK(50))|SMC_WHT(NS2SCLK(30))|SMC_RST(NS2SCLK(20))|SMC_RAT(NS2SCLK(50))|SMC_RHT(NS2SCLK(30));
+	SMC->B0ETIM	= SMC_TT(7);
 	SMC->B0CTL	|= SMC_EN|SMC_MODE_ASRAM;
+
+	//PIO_RTCINT->DirSet(RTCINT);
+
+	//while(SMC->GSTAT & SMC_BRQSTAT)
+	//{
+	//	PIO_FCS->DATA_TGL = FCS1|FCS2;
+	//	PIO_RTCINT->DATA_TGL = RTCINT;
+	//};
+
 
 
 #endif
@@ -1530,6 +1539,10 @@ void NAND_WriteDataDMA(volatile void *src, u16 len)
 
 		NAND_DMA.MemCopySrcInc(src, FLD, len);
 
+	#elif defined(CPU_BF607)
+		
+		NAND_DMA.MemCopySrcInc(src, FLD, len);
+
 	#endif
 
 #else
@@ -1708,6 +1721,10 @@ void NAND_ReadDataDMA(volatile void *dst, u16 len)
 		#endif
 
 	#elif defined(CPU_XMC48)
+
+		NAND_DMA.MemCopyDstInc(FLD, dst, len);
+
+	#elif defined(CPU_BF607)
 
 		NAND_DMA.MemCopyDstInc(FLD, dst, len);
 

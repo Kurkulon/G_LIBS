@@ -34,6 +34,7 @@ protected:
 	static const HWPTR_DMACH DMACH_TBL[35];
 
 	T_HW::S_DMACH*				const _dmach;
+	T_HW::S_DMACH*				const _dstch;
 
 	T_HW::DMADSC_LM				_dsc1;
 	T_HW::DMADSC_LM				_dsc2;
@@ -125,12 +126,14 @@ public:
 	//void Write(const volatile void *src1, u16 len1, const volatile void *src2, u16 len2, u16 ctrl);
 	//void Read(volatile void *dst, u16 len, u16 ctrl);
 
-	void MemCopy(volatile void* src, volatile void* dst, u16 len) { }
-	byte CheckMemCopyComplete() { return CheckComplete(); }
+	void MemCopy(volatile void* src, volatile void* dst, u16 len)		{ _MemCopy(src, dst, len, 0x10001); }
+	void MemCopySrcInc(volatile void *src, volatile void *dst, u16 len)	{ _MemCopy(src, dst, len, 0x00001); }
+	void MemCopyDstInc(volatile void *src, volatile void *dst, u16 len)	{ _MemCopy(src, dst, len, 0x10000); }
+	bool CheckMemCopyComplete() { return _dstch->STAT & (DMA_STAT_IRQDONE|DMA_STAT_IRQERR); }
 	void Reset() {  }
 
 	#ifdef __ADSPBF60x__
-		DMA_CH(byte chnum) : _dmach(DMACH_TBL[chnum]) { }
+		DMA_CH(byte chnum) : _dmach(DMACH_TBL[chnum]), _dstch(DMACH_TBL[((chnum - MDMA0_SRC) < 7) ? (chnum+1) : 12]){ }
 	#else
 		DMA_CH(byte chnum) : _dmach(&HW::DMA->CH[chnum]) { }
 	#endif

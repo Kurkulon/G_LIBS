@@ -294,6 +294,25 @@ void DMA_CH::_MemCopy(const volatile void *src, volatile void *dst, u16 len, u32
 
 	Enable();
 
+#elif defined(CPU_BF607)
+
+	_dmach->CFG = 0;
+	_dstch->CFG = 0;
+
+	_dmach->ADDRSTART = (void*)src;
+	_dstch->ADDRSTART = (void*)dst;
+
+	_dmach->XCNT = len;
+	_dstch->XCNT = len;
+
+	_dmach->XMOD = ctrl & 0xFFFF;
+	_dstch->XMOD = ctrl>>16;
+	_dmach->STAT = ~0;
+	_dstch->STAT = ~0;
+
+	_dmach->CFG =				DMA_FLOW_STOP|DMA_PSIZE8|DMA_MSIZE8			|DMA_SYNC|DMA_EN;
+	_dstch->CFG = DMA_INT_XCNT|	DMA_FLOW_STOP|DMA_PSIZE8|DMA_MSIZE8|DMA_WNR	|DMA_SYNC|DMA_EN;
+
 #endif
 
 }

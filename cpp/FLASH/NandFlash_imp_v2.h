@@ -2604,11 +2604,21 @@ static void InitSessions()
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#ifdef CPU_BF607
+SpareArea spare_InitSessionsNew;
+#endif
+
 static void InitSessionsNew()
 {
 	//__breakpoint(0);
 
+#ifdef CPU_BF607
+	SpareArea &spare = spare_InitSessionsNew;
+#else	
 	SpareArea spare;
+#endif
+
+
 	ReadSpare rdspr;
 
 	write.Init();
@@ -4026,7 +4036,10 @@ static void NandFlash_LoadSessions()
 	fram_SPI_loadSessionsOk = true;
 	fram_I2C_loadSessionsOk = true;
 
-	NVSI nv1, nv2;
+	NVSI *nvsibuf = (NVSI*)buf;
+
+	NVSI &nv1 = nvsibuf[0];
+	NVSI &nv2 = nvsibuf[0];
 
 	for (u16 i = 0; i < ArraySize(nvsi); i++)
 	{
