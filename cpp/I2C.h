@@ -2,7 +2,7 @@
 #define I2C_H__11_02_2024__23_06
 
 
-#include "types.h"
+#include "core.h"
 #include "usic.h"
 #include "list.h"
 #include "DMA\DMA.h"
@@ -44,7 +44,11 @@ extern void I2C_Init();
 
 #else // #ifdef ADSP_BLACKFIN //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#ifdef __ADSPBF60x__
+class S_I2C
+#else
 class S_I2C : public USIC
+#endif
 {
 protected:
 
@@ -133,6 +137,19 @@ protected:
 
 	void	Write(DSCI2C *d);
 
+#elif defined(CPU_BF607)
+
+	T_HW::S_TWI * const _hw;
+
+	byte	*wrPtr;
+	byte	*wrPtr2;
+	byte	*rdPtr;
+	u16 	wlen;
+	u16		wlen2;
+	u16 	rlen;
+
+	bool Usic_Connect() { return true; }
+
 #elif defined(WIN32)
 
 	//byte fram_I2c_Mem[0x10000];
@@ -173,6 +190,10 @@ public:
 
 	S_I2C(byte num, byte pinscl, byte pinsda, u32 genclk)
 		: USIC(num), _PIN_SCL(pinscl), _PIN_SDA(pinsda), _GEN_CLK(genclk), _dsc(0), _state(I2C_WAIT) {}
+
+#elif defined (__ADSPBF60x__)
+
+	S_I2C(byte num)	: _hw((num==0) ? HW::TWI0 : HW::TWI1), _dsc(0), _state(I2C_WAIT) {}
 
 #endif
 

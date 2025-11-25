@@ -235,7 +235,7 @@ bool I2C_AddRequest(DSCI2C *d)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#elif defined(__ADSPBF70x__) || defined(__ADSPBF60x__)
+#elif defined(__ADSPBF70x__)
 
 static volatile u16 twiWriteCount = 0;
 static volatile u16 twiReadCount = 0;
@@ -747,6 +747,13 @@ void S_I2C::InitHW()
 	uhw->MSTTIME = _MSTTIME;
 	uhw->CFG = _CFG;
 
+#elif defined(__ADSPBF60x__)
+
+	_hw->CTL		= TWI_CTL_EN | TWI_CTL_PRESCALE(SCLK0_MHz/10);
+	_hw->CLKDIV		= TWI_CLKHI(10)|TWI_CLKLO(12);
+	_hw->IMSK		= 0;
+	_hw->MSTRADDR	= 0;
+
 #endif
 }
 
@@ -805,6 +812,10 @@ bool S_I2C::Connect(u32 baudrate)
 		if (_CLKDIV > 0) _CLKDIV -= 1;
 		_MSTTIME = 0;
 		_CFG = 0;
+
+		InitHW();
+
+	#elif defined(__ADSPBF60x__)
 
 		InitHW();
 
@@ -1443,6 +1454,180 @@ bool S_I2C::Update()
 
 			break;
 	};
+
+#elif defined(CPU_BF607)
+
+	u16 stat = _hw->ISTAT;
+	u16 mstat = _hw->MSTRSTAT;
+
+	switch (_state)
+	{
+		case I2C_WAIT:
+		{
+			_dsc = _reqList.Get();
+
+			if (_dsc != 0)
+			{
+				DSCI2C &dsc = *_dsc;
+
+				dsc.ready = false;
+				dsc.ack = false;
+				dsc.readedLen = 0;
+
+				wrPtr	= (byte*)dsc.wdata;
+				wrPtr2	= (byte*)dsc.wdata2;
+				rdPtr	= (byte*)dsc.rdata;
+				wlen	= dsc.wlen;
+				wlen2	= dsc.wlen2;
+				rlen	= dsc.rlen;
+
+				_hw->MSTRCTL	= 0;
+				_hw->MSTRSTAT	= ~0;
+				_hw->FIFOCTL	= 0;//XMTINTLEN|RCVINTLEN;
+				_hw->MSTRADDR	= dsc.adr;
+				_hw->IMSK = 0; 
+
+				if (wlen == 0)
+				{
+					_hw->MSTRCTL = TWI_MST_DCNT(~0)|TWI_MST_DIR|TWI_MST_FAST|TWI_MST_EN;
+
+					_state = I2C_READ;
+				}
+				else
+				{
+					if (wlen > 1)
+					{
+						_hw->TXDATA16 = wrPtr[0]|(wrPtr[1]<<8); wrPtr += 2; wlen -= 2;
+					}
+					else
+					{
+						_hw->TXDATA8 = *wrPtr++; wlen--;
+					};
+
+					_hw->MSTRCTL = TWI_MST_DCNT(~0)|TWI_MST_FAST|TWI_MST_EN;
+
+					_state = I2C_WRITE;
+				};
+			};
+
+			break;
+		};
+
+		case I2C_WRITE:
+					
+			if (stat & TWI_MERR)
+			{
+				_hw->MSTRCTL |= TWI_MST_STOP;
+				_hw->FIFOCTL  = TWI_TXFLUSH|TWI_RXFLUSH;
+
+				_state = I2C_STOP;
+			}
+			else if (stat & TWI_TXSERV)
+			{
+				DSCI2C& dsc = *_dsc;
+
+				dsc.ack = true;
+
+				if (wlen != 0)
+				{
+					if (wlen > 1 && _hw->FIFOSTAT._TXSTAT == TWI_TXSTAT_EMPTY)
+					{
+						_hw->TXDATA16 = wrPtr[0]|(wrPtr[1]<<8); wrPtr += 2; wlen -= 2;
+					}
+					else
+					{
+						_hw->TXDATA8 = *wrPtr++; wlen--;
+					};
+
+					_hw->ISTAT = TWI_TXSERV;
+
+					if (wlen == 0 && wlen2 != 0)
+					{
+						wrPtr = wrPtr2;
+						wlen = wlen2;
+						wlen2 = 0;
+					};
+				}
+				else if ((stat & (TWI_SCLI|TWI_SDAI)) == (TWI_SCLI|TWI_SDAI) && (mstat & (TWI_SCLSEN|TWI_SDASEN)) == TWI_SCLSEN)
+				{
+					if (rlen > 0)
+					{
+						_hw->MSTRCTL = TWI_MST_DCNT(~0)|TWI_MST_RSTART|TWI_MST_FAST|TWI_MST_DIR|TWI_MST_EN;
+
+						_state = I2C_READ;
+					}
+					else
+					{
+						HW::TWI->MSTRCTL |= TWI_MST_STOP;
+
+						_state = I2C_STOP;
+					};
+				};
+			};
+
+			break;
+
+		case I2C_READ:
+
+			if (stat & TWI_MERR)
+			{
+				_hw->MSTRCTL |= TWI_MST_STOP;
+				_hw->FIFOCTL  = TWI_TXFLUSH|TWI_RXFLUSH;
+
+				_state = I2C_STOP;
+			}
+			else if (stat & TWI_RXSERV)
+			{
+				if (rlen > 0)
+				{
+					if (rlen > 1 && _hw->FIFOSTAT._RXSTAT == TWI_RXSTAT_FULL)
+					{
+						u16 t = _hw->RXDATA16; *rdPtr++ = t; *rdPtr++ = t>>8; rlen -= 2;
+					}
+					else
+					{
+						*rdPtr++ = _hw->TXDATA8; rlen--;
+					};
+
+					_hw->ISTAT = TWI_RXSERV;
+				};
+
+				if (rlen == 0)
+				{
+					_hw->MSTRCTL |= TWI_MST_STOP;
+					_hw->FIFOCTL  = TWI_TXFLUSH|TWI_RXFLUSH;
+
+					_state = I2C_STOP;
+				};
+			};				
+
+			break;
+
+		case I2C_STOP:
+
+			if ((_hw->MSTRCTL & TWI_MST_EN) == 0)
+			{
+				_hw->FIFOCTL = 0;
+
+				_dsc->readedLen = _dsc->rlen - rlen;
+				_dsc->ready = true;
+				
+				_dsc = 0;
+				
+				_state = I2C_WAIT;
+			};
+
+			break;
+
+		case I2C_RESET:
+
+			_state = I2C_WAIT;
+
+			break;
+	};
+
+	_hw->ISTAT		= stat & ~(TWI_TXSERV|TWI_RXSERV);
+	_hw->MSTRSTAT	= mstat;
 	
 #endif
 
