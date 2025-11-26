@@ -90,11 +90,11 @@ void GetTime(RTC *t)
 
 bool CheckTime(const RTC &t)
 {
-	if (t.sec > 59 || t.min > 59 || t.hour > 23 || t.day < 1 || (t.mon-1) > 11 || (t.year-2000) > 99) { return false; };
+	if (t.time.sec > 59 || t.time.min > 59 || t.time.hour > 23 || t.date.day < 1 || (t.date.mon-1) > 11 || (t.date.year-2000) > 99) { return false; };
 
-	byte d = daysInMonth[t.mon] + ((t.mon == 2 && (t.year&3) == 0) ? 1 : 0);
+	byte d = daysInMonth[t.date.mon] + ((t.date.mon == 2 && (t.date.year&3) == 0) ? 1 : 0);
 
-	if (t.day > d) { return false; };
+	if (t.date.day > d) { return false; };
 
 	return true;
 }
@@ -151,59 +151,59 @@ static __irq void Timer_Handler (void)
 
 	#ifdef REAL_TIME_CLOCK_ENABLE	//defined(CPU_SAME53) || defined(CPU_XMC48)
 
-		if (timeBDC.msec < 999)
+		if (timeBDC.time.msec < 999)
 		{
-			timeBDC.msec += 1;
+			timeBDC.time.msec += 1;
 		}
 		else
 		{
-			timeBDC.msec = 0;
+			timeBDC.time.msec = 0;
 
-			if (timeBDC.sec < 59)
+			if (timeBDC.time.sec < 59)
 			{
-				timeBDC.sec += 1;
+				timeBDC.time.sec += 1;
 			}
 			else
 			{
-				timeBDC.sec = 0;
+				timeBDC.time.sec = 0;
 
-				if (timeBDC.min < 59)
+				if (timeBDC.time.min < 59)
 				{
-					timeBDC.min += 1;
+					timeBDC.time.min += 1;
 				}
 				else
 				{
-					timeBDC.min = 0;
+					timeBDC.time.min = 0;
 
-					if (timeBDC.hour < 23)
+					if (timeBDC.time.hour < 23)
 					{
-						timeBDC.hour += 1;
+						timeBDC.time.hour += 1;
 					}
 					else
 					{
-						timeBDC.hour = 0;
+						timeBDC.time.hour = 0;
 
-						byte day = daysInMonth[timeBDC.mon] + ((timeBDC.mon == 2 && (timeBDC.year&3) == 0) ? 1 : 0);
+						byte day = daysInMonth[timeBDC.date.mon] + ((timeBDC.date.mon == 2 && (timeBDC.date.year&3) == 0) ? 1 : 0);
 
 	//					if ((timeBDC.dayofweek += 1) > 6) timeBDC.dayofweek = 0;
 
-						if (timeBDC.day < day)
+						if (timeBDC.date.day < day)
 						{
-							timeBDC.day += 1;
+							timeBDC.date.day += 1;
 						}
 						else
 						{
-							timeBDC.day = 1;
+							timeBDC.date.day = 1;
 
-							if (timeBDC.mon < 12)
+							if (timeBDC.date.mon < 12)
 							{
-								timeBDC.mon += 1;
+								timeBDC.date.mon += 1;
 							}
 							else
 							{
-								timeBDC.mon = 1;
+								timeBDC.date.mon = 1;
 
-								timeBDC.year += 1;
+								timeBDC.date.year += 1;
 							};
 						};
 					};
@@ -227,9 +227,9 @@ static void InitTimer(/*u32 cpuclk*/)
 	enum { freq = 1000 };
 
 	#ifdef REAL_TIME_CLOCK_ENABLE
-		timeBDC.day = 1;
-		timeBDC.mon = 1;
-		timeBDC.year = 2000;
+		timeBDC.date.day = 1;
+		timeBDC.date.mon = 1;
+		timeBDC.date.year = 2000;
 		timeBDC.time = 0;
 	#endif
 

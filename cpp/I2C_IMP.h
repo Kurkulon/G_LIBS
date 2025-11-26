@@ -1508,6 +1508,8 @@ bool S_I2C::Update()
 
 					_state = I2C_WRITE;
 				};
+
+				_tm.Reset();
 			};
 
 			break;
@@ -1524,9 +1526,7 @@ bool S_I2C::Update()
 			}
 			else if (stat & TWI_TXSERV)
 			{
-				DSCI2C& dsc = *_dsc;
-
-				dsc.ack = true;
+				_dsc->ack = true;
 
 				if (wlen != 0)
 				{
@@ -1539,7 +1539,7 @@ bool S_I2C::Update()
 						_hw->TXDATA8 = *wrPtr++; wlen--;
 					};
 
-					_hw->ISTAT = TWI_TXSERV;
+					//_hw->ISTAT = TWI_TXSERV;
 
 					if (wlen == 0 && wlen2 != 0)
 					{
@@ -1547,21 +1547,27 @@ bool S_I2C::Update()
 						wlen = wlen2;
 						wlen2 = 0;
 					};
-				}
-				else if ((stat & (TWI_SCLI|TWI_SDAI)) == (TWI_SCLI|TWI_SDAI) && (mstat & (TWI_SCLSEN|TWI_SDASEN)) == TWI_SCLSEN)
+				};
+
+				_tm.Reset();
+			}
+			else if (stat & (TWI_SCLI|TWI_SDAI))
+			{
+				_tm.Reset();
+			}
+			else if (_tm.Check(US2CTM(5)))
+			{
+				if (rlen > 0)
 				{
-					if (rlen > 0)
-					{
-						_hw->MSTRCTL = TWI_MST_DCNT(~0)|TWI_MST_RSTART|TWI_MST_FAST|TWI_MST_DIR|TWI_MST_EN;
+					_hw->MSTRCTL = TWI_MST_DCNT(0)|TWI_MST_RSTART|TWI_MST_FAST|TWI_MST_DIR|TWI_MST_EN;
 
-						_state = I2C_READ;
-					}
-					else
-					{
-						HW::TWI->MSTRCTL |= TWI_MST_STOP;
+					_state = I2C_READ;
+				}
+				else
+				{
+					HW::TWI->MSTRCTL = TWI_MST_STOP|TWI_MST_DCNT(0)|TWI_MST_FAST|TWI_MST_EN;
 
-						_state = I2C_STOP;
-					};
+					_state = I2C_STOP;
 				};
 			};
 
@@ -1576,26 +1582,33 @@ bool S_I2C::Update()
 
 				_state = I2C_STOP;
 			}
+			else if (stat & TWI_MCOMP)
+			{
+				_hw->MSTRCTL = TWI_MST_DCNT(~0)|TWI_MST_FAST|TWI_MST_DIR|TWI_MST_EN;
+				//_hw->MSTRCTL &= ~TWI_MST_RSTART;
+				//_hw->MSTRCTL |= TWI_MST_EN;
+			}
 			else if (stat & TWI_RXSERV)
 			{
 				if (rlen > 0)
 				{
+					_dsc->ack = true;
+
 					if (rlen > 1 && _hw->FIFOSTAT._RXSTAT == TWI_RXSTAT_FULL)
 					{
 						u16 t = _hw->RXDATA16; *rdPtr++ = t; *rdPtr++ = t>>8; rlen -= 2;
 					}
 					else
 					{
-						*rdPtr++ = _hw->TXDATA8; rlen--;
+						*rdPtr++ = _hw->RXDATA8; rlen--;
 					};
 
-					_hw->ISTAT = TWI_RXSERV;
+					//_hw->ISTAT = TWI_RXSERV;
 				};
 
 				if (rlen == 0)
 				{
-					_hw->MSTRCTL |= TWI_MST_STOP;
-					_hw->FIFOCTL  = TWI_TXFLUSH|TWI_RXFLUSH;
+					_hw->MSTRCTL = TWI_MST_STOP|TWI_MST_DCNT(0)|TWI_MST_FAST|TWI_MST_DIR|TWI_MST_EN;;
 
 					_state = I2C_STOP;
 				};
@@ -1607,7 +1620,9 @@ bool S_I2C::Update()
 
 			if ((_hw->MSTRCTL & TWI_MST_EN) == 0)
 			{
-				_hw->FIFOCTL = 0;
+				_hw->FIFOCTL = TWI_TXFLUSH|TWI_RXFLUSH;
+				_hw->MSTRCTL	= 0;
+				_hw->MSTRSTAT	= ~0;
 
 				_dsc->readedLen = _dsc->rlen - rlen;
 				_dsc->ready = true;
@@ -1626,7 +1641,7 @@ bool S_I2C::Update()
 			break;
 	};
 
-	_hw->ISTAT		= stat & ~(TWI_TXSERV|TWI_RXSERV);
+	_hw->ISTAT		= stat; // & ~(TWI_TXSERV|TWI_RXSERV);
 	_hw->MSTRSTAT	= mstat;
 	
 #endif

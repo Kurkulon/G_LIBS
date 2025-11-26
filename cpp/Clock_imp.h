@@ -71,14 +71,14 @@ void Clock_DS3232::SetClock(const RTC &t, DSCI2C &dsc, byte buf[8])
 	//static byte buf[8];
 
 	buf[0] = 0;
-	buf[1] = ((t.sec/10) << 4)|(t.sec%10);
-	buf[2] = ((t.min/10) << 4)|(t.min%10);
-	buf[3] = ((t.hour/10) << 4)|(t.hour%10);
+	buf[1] = ((t.time.sec/10) << 4)|(t.time.sec%10);
+	buf[2] = ((t.time.min/10) << 4)|(t.time.min%10);
+	buf[3] = ((t.time.hour/10) << 4)|(t.time.hour%10);
 	buf[4] = 1;
-	buf[5] = ((t.day/10) << 4)|(t.day%10);
-	buf[6] = ((t.mon/10) << 4)|(t.mon%10);
+	buf[5] = ((t.date.day/10) << 4)|(t.date.day%10);
+	buf[6] = ((t.date.mon/10) << 4)|(t.date.mon%10);
 
-	byte y = t.year % 100;
+	byte y = t.date.year % 100;
 
 	buf[7] = ((y/10) << 4)|(y%10);
 
@@ -104,14 +104,14 @@ void Clock_RV3129::SetClock(const RTC &t, DSCI2C &dsc, byte buf[8])
 	//static byte buf[8];
 
 	buf[0] = 8;
-	buf[1] = ((t.sec/10) << 4)|(t.sec%10);
-	buf[2] = ((t.min/10) << 4)|(t.min%10);
-	buf[3] = ((t.hour/10) << 4)|(t.hour%10);
+	buf[1] = ((t.time.sec/10) << 4)|(t.time.sec%10);
+	buf[2] = ((t.time.min/10) << 4)|(t.time.min%10);
+	buf[3] = ((t.time.hour/10) << 4)|(t.time.hour%10);
 	buf[4] = 1;
-	buf[5] = ((t.day/10) << 4)|(t.day%10);
-	buf[6] = ((t.mon/10) << 4)|(t.mon%10);
+	buf[5] = ((t.date.day/10) << 4)|(t.date.day%10);
+	buf[6] = ((t.date.mon/10) << 4)|(t.date.mon%10);
 
-	byte y = t.year % 100;
+	byte y = t.date.year % 100;
 
 	buf[7] = ((y/10) << 4)|(y%10);
 
@@ -281,12 +281,12 @@ bool Clock_DS3232::Init()
 
 	if (!dsc.ack) { SEGGER_RTT_WriteString(0, RTT_CTRL_TEXT_BRIGHT_RED "!!! ERROR !!!\n"); return false; };
 
-	t.sec	= (buf[0]&0xF) + ((buf[0]>>4)*10);
-	t.min	= (buf[1]&0xF) + ((buf[1]>>4)*10);
-	t.hour	= (buf[2]&0xF) + ((buf[2]>>4)*10);
-	t.day	= (buf[4]&0xF) + ((buf[4]>>4)*10);
-	t.mon	= (buf[5]&0xF) + ((buf[5]>>4)*10);
-	t.year	= (buf[6]&0xF) + ((buf[6]>>4)*10) + 2000;
+	t.time.sec	= (buf[0]&0xF) + ((buf[0]>>4)*10);
+	t.time.min	= (buf[1]&0xF) + ((buf[1]>>4)*10);
+	t.time.hour	= (buf[2]&0xF) + ((buf[2]>>4)*10);
+	t.date.day	= (buf[4]&0xF) + ((buf[4]>>4)*10);
+	t.date.mon	= (buf[5]&0xF) + ((buf[5]>>4)*10);
+	t.date.year	= (buf[6]&0xF) + ((buf[6]>>4)*10) + 2000;
 
 	SetTime(t);
 
@@ -364,12 +364,12 @@ bool Clock_RV3129::Init()
 
 	if (!dsc.ack) { SEGGER_RTT_WriteString(0, RTT_CTRL_TEXT_BRIGHT_RED "!!! ERROR !!!\n"); return false; };
 
-	t.sec	= (buf[0]&0xF) + ((buf[0]>>4)*10);
-	t.min	= (buf[1]&0xF) + ((buf[1]>>4)*10);
-	t.hour	= (buf[2]&0xF) + ((buf[2]>>4)*10);
-	t.day	= (buf[3]&0xF) + ((buf[3]>>4)*10);
-	t.mon	= (buf[5]&0xF) + ((buf[5]>>4)*10);
-	t.year	= (buf[6]&0xF) + ((buf[6]>>4)*10) + 2000;
+	t.time.sec	= (buf[0]&0xF) + ((buf[0]>>4)*10);
+	t.time.min	= (buf[1]&0xF) + ((buf[1]>>4)*10);
+	t.time.hour	= (buf[2]&0xF) + ((buf[2]>>4)*10);
+	t.date.day	= (buf[3]&0xF) + ((buf[3]>>4)*10);
+	t.date.mon	= (buf[5]&0xF) + ((buf[5]>>4)*10);
+	t.date.year	= (buf[6]&0xF) + ((buf[6]>>4)*10) + 2000;
 
 	SetTime(t);
 
@@ -432,7 +432,7 @@ static __irq void Clock_IRQ()
 
 	HW::EIC->INTFLAG = 1UL<<CLOCK_EXTINT;
 	
-	timeBDC.msec = (timeBDC.msec < 500) ? 0 : 999;
+	timeBDC.time.msec = (timeBDC.time.msec < 500) ? 0 : 999;
 
 #elif defined(CPU_XMC48)
 
@@ -442,7 +442,7 @@ static __irq void Clock_IRQ()
 	}
 	else
 	{
-		timeBDC.msec = (timeBDC.msec < 500) ? 0 : 999;
+		timeBDC.time.msec = (timeBDC.msec < 500) ? 0 : 999;
 	};
 
 	HW::SCU_GCU->SRCLR = SCU_INTERRUPT_SRCLR_PI_Msk;

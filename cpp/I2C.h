@@ -166,7 +166,7 @@ protected:
 	u32	_baud;
 	u32	_prevCount;
 
-	TM32 _tm;
+	CTM32 _tm;
 
 public:
 

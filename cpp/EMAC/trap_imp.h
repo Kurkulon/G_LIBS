@@ -1550,57 +1550,57 @@ static bool UpdateSendVector_Dlya_Vova()
 					trap.counter	= count;
 #endif
 
-					if (rtc.msec < 999)
+					if (rtc.time.msec < 999)
 					{
-						rtc.msec += 1;
+						rtc.time.msec += 1;
 					}
 					else
 					{
-						rtc.msec = 0;
+						rtc.time.msec = 0;
 
-						if (rtc.sec < 59)
+						if (rtc.time.sec < 59)
 						{
-							rtc.sec += 1;
+							rtc.time.sec += 1;
 						}
 						else
 						{
-							rtc.sec = 0;
+							rtc.time.sec = 0;
 
-							if (rtc.min < 59)
+							if (rtc.time.min < 59)
 							{
-								rtc.min += 1;
+								rtc.time.min += 1;
 							}
 							else
 							{
-								rtc.min = 0;
+								rtc.time.min = 0;
 
-								if (rtc.hour < 23)
+								if (rtc.time.hour < 23)
 								{
-									rtc.hour += 1;
+									rtc.time.hour += 1;
 								}
 								else
 								{
-									rtc.hour = 0;
+									rtc.time.hour = 0;
 
 									byte day = 30;
 
-									if (rtc.day < day)
+									if (rtc.date.day < day)
 									{
-										rtc.day += 1;
+										rtc.date.day += 1;
 									}
 									else
 									{
-										rtc.day = 1;
+										rtc.date.day = 1;
 
-										if (rtc.mon < 12)
+										if (rtc.date.mon < 12)
 										{
-											rtc.mon += 1;
+											rtc.date.mon += 1;
 										}
 										else
 										{
-											rtc.mon = 1;
+											rtc.date.mon = 1;
 
-											rtc.year += 1;
+											rtc.date.year += 1;
 										};
 									};
 								};
