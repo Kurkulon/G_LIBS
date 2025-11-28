@@ -351,9 +351,9 @@ union DataPointer
 	pack_float		*f;
 
 	DataPointer() : v(0) { } 
-	DataPointer(void *p) : v(p) { } 
+	DataPointer(__packed void *p) : v(p) { } 
 
-	void operator=(void *p) { v = p; } 
+	void operator=(__packed void *p) { v = p; } 
 
 #ifdef _ADI_COMPILER
 	void WW(word a) { misaligned_store16(v, a); }
@@ -372,9 +372,9 @@ union ConstDataPointer
 	const pack_u32			*d;
 	const pack_float		*f;
 
-	ConstDataPointer(const void *p) { v = p; } 
+	ConstDataPointer(__packed const void *p) { v = p; } 
 
-	void operator=(const void *p) { v = p; } 
+	void operator=(__packed const void *p) { v = p; } 
 };
 
 #ifdef __ADSPBF6xx__

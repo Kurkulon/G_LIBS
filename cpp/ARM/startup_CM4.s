@@ -116,7 +116,10 @@ __segger_rttcb_end
 
 
                 ALIGN	16
-                DCB		"\n", __PROGNAME__, "\n"
+
+                EXPORT	_Firmware_str
+
+_Firmware_str   DCB		"\n", __PROGNAME__, "\n"
                 DCB		__DATE__, "\n"
                 DCB		__TIME__, "\n"
 

@@ -442,7 +442,7 @@ static __irq void Clock_IRQ()
 	}
 	else
 	{
-		timeBDC.time.msec = (timeBDC.msec < 500) ? 0 : 999;
+		timeBDC.time.msec = (timeBDC.time.msec < 500) ? 0 : 999;
 	};
 
 	HW::SCU_GCU->SRCLR = SCU_INTERRUPT_SRCLR_PI_Msk;

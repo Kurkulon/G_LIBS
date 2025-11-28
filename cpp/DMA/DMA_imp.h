@@ -393,7 +393,7 @@ void DMA_CH::WritePeripheral(const volatile void *src, volatile void *dst, u16 l
 
 	_InitLLI(src, dst, len, ctrl1);
 
-	_dmach->CFGL = H HW::SEL_SRC;
+	_dmach->CFGL = HS_SEL_SRC;
 	_dmach->CFGH = PROTCTL(1)|DEST_PER(_drl&7);
 
 	Enable();
@@ -456,7 +456,7 @@ void DMA_CH::ReadPeripheral(const volatile void *src, volatile void *dst, u16 le
 
 	_InitLLI(src, dst, len, ctrl1);
 
-	_dmach->CFGL = H HW::SEL_DST;
+	_dmach->CFGL = HS_SEL_DST;
 	_dmach->CFGH = PROTCTL(1)|SRC_PER(_drl&7);
 
 	Enable();

@@ -22,6 +22,7 @@ public:
 
 	void*	GetDataPtr() { return (byte*)_data+dataOffset; }
 	u32		GetDataMaxLen() { return MaxLen()-dataOffset; }
+	u32		GetDataFreeLen() { return MaxLen()-dataOffset-len; }
 
 	MB() : len(0), dataOffset(0) {}
 };

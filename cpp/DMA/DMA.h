@@ -16,6 +16,7 @@ protected:
 #ifdef __ADSPBF59x__
 
 	T_HW::S_DMACH*				const _dmach;
+	T_HW::S_DMACH*				const _dstch;
 
 	T_HW::DMADSC_LLM			_dsc1;
 	T_HW::DMADSC_LLM			_dsc2;
@@ -129,13 +130,12 @@ public:
 	void MemCopy(volatile void* src, volatile void* dst, u16 len)		{ _MemCopy(src, dst, len, 0x10001); }
 	void MemCopySrcInc(volatile void *src, volatile void *dst, u16 len)	{ _MemCopy(src, dst, len, 0x00001); }
 	void MemCopyDstInc(volatile void *src, volatile void *dst, u16 len)	{ _MemCopy(src, dst, len, 0x10000); }
-	bool CheckMemCopyComplete() { return _dstch->STAT & (DMA_STAT_IRQDONE|DMA_STAT_IRQERR); }
 	void Reset() {  }
 
 	#ifdef __ADSPBF60x__
 		DMA_CH(byte chnum) : _dmach(DMACH_TBL[chnum]), _dstch(DMACH_TBL[((chnum - MDMA0_SRC) < 7) ? (chnum+1) : 12]){ }
 	#else
-		DMA_CH(byte chnum) : _dmach(&HW::DMA->CH[chnum]) { }
+		DMA_CH(byte chnum) : _dmach(&HW::DMA->CH[chnum]), _dstch(&HW::DMA->CH[chnum+1]) { }
 	#endif
 
 	//void Enable() {  }
@@ -144,6 +144,7 @@ public:
 		
 		inline void Disable()		{ _dmach->CONFIG = 0; _dmach->IRQ_STATUS = ~0; }
 		inline bool CheckComplete() { return _dmach->IRQ_STATUS & (DMA_DONE|DMA_ERR); }
+		inline bool CheckMemCopyComplete() { return _dstch->IRQ_STATUS & (DMA_DONE|DMA_ERR); }
 		inline u32 GetBytesLeft()	{ return _dmach->CURR_X_COUNT; }
 		inline u32 GetBytesReady()	{ return _dmach->X_COUNT-_dmach->CURR_X_COUNT; }
 
@@ -175,6 +176,7 @@ public:
 
 		inline void Disable()		{ _dmach->CFG = 0; _dmach->STAT = ~0; }
 		inline bool CheckComplete() { return _dmach->STAT & (DMA_STAT_IRQDONE|DMA_STAT_IRQERR); }
+		inline bool CheckMemCopyComplete() { return _dstch->STAT & (DMA_STAT_IRQDONE|DMA_STAT_IRQERR); }
 		inline u32 GetBytesLeft()	{ return _dmach->XCNT_CUR; }
 		inline u32 GetBytesReady()	{ return _dmach->XCNT - _dmach->XCNT_CUR; }
 
