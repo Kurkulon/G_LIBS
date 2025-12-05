@@ -318,6 +318,8 @@ public:
 	void	Add(const Ptr<T> &r);
 
 	bool	Empty() { return first == 0; }
+
+	u32		GetCount() { return count; }
 };
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -397,9 +399,11 @@ protected:
 
 	ListRef* _selfPtr;
 
+	u32 count;
+
 public:
 
-	void Init() { if (_selfPtr != this) first = 0, last = 0, _selfPtr = this; }
+	void Init() { if (_selfPtr != this) first = 0, last = 0, count = 0, _selfPtr = this; }
 
 	ListRef() { Init(); }
 
@@ -408,6 +412,8 @@ public:
 	bool Add(const Ptr<T> &r);
 
 	bool Empty() { return first == 0; }
+
+	u32	GetCount() { return count; }
 };
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -433,6 +439,8 @@ template <class T> Ptr<T> ListRef<T>::Get()
 		if (r.Valid()) r->DecCount(/*(Ptr<T>*)~0*/);
 		
 		i->Free();
+
+		count--;
 	};
 
 	Unlock(t);
@@ -465,6 +473,8 @@ template <class T> bool ListRef<T>::Add(const Ptr<T>& r)
 		last->next = item;
 		last = item;
 	};
+
+	count++;
 
 	Unlock(t);
 
