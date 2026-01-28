@@ -474,7 +474,7 @@ static byte NAND_CheckDataComplete()
 
 		byte res = 0;
 
-		if (res = NAND_DMA.CheckComplete())
+		if ((res = NAND_DMA.CheckComplete()) != 0)
 		{
 			NAND_DMA.Reset();
 

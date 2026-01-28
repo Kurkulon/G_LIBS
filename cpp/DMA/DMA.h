@@ -24,6 +24,7 @@ protected:
 #elif defined(__ADSPBF70x__)
 
 	T_HW::S_DMACH*				const _dmach;
+	T_HW::S_DMACH*				const _dstch;
 
 	T_HW::DMADSC_LM				_dsc1;
 	T_HW::DMADSC_LM				_dsc2;

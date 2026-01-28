@@ -690,7 +690,7 @@ bool EraseBlock::Update()
 																																
 		case ERASE_1:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++				
 																																
-			if (res = NAND_CheckDataComplete())																							
+			if ((res = NAND_CheckDataComplete()) != 0)																							
 			{	
 				if (res == 2)
 				{
@@ -1190,7 +1190,7 @@ bool Write::Update()
 
 		case WRITE_BUFFER:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
 
-			if (res = NAND_CheckCopyComplete())
+			if ((res = NAND_CheckCopyComplete()) != 0)
 			{
 				if (res == 2) nand_dma_CopyErr++;
 
@@ -1269,7 +1269,7 @@ bool Write::Update()
 
 		case WRITE_PAGE_1:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
 
-			if (res = NAND_CheckDataComplete())
+			if ((res = NAND_CheckDataComplete()) != 0)
 			{
 				if (res == 2)
 				{
@@ -1314,7 +1314,7 @@ bool Write::Update()
 
 		case WRITE_PAGE_2:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
 
-			if (res = NAND_CheckDataComplete())
+			if ((res = NAND_CheckDataComplete()) != 0)
 			{
 				if (res == 2)
 				{
@@ -1446,7 +1446,7 @@ bool Write::Update()
 
 		case WRITE_PAGE_7:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++			
 
-			if (res = NAND_CheckDataComplete())
+			if ((res = NAND_CheckDataComplete()) != 0)
 			{
 				if (res == 2) nand_dma_ReadErr++;
 
@@ -1773,7 +1773,7 @@ bool ReadSpare::Update()
 
 		case READ_2:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
 
-			if (res = NAND_CheckDataComplete())
+			if ((res = NAND_CheckDataComplete()) != 0)
 			{
 				if (res == 2)
 				{
@@ -2061,7 +2061,7 @@ void Read2::UpdatePage()
 
 		case 3:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 			
-			if(res = NAND_CheckDataComplete())
+			if((res = NAND_CheckDataComplete()) != 0)
 			{
 				if (res == 2) nand_dma_ReadErr++;
 
@@ -3163,7 +3163,7 @@ static bool UpdateSendSession()
 //	static u32 sum = 0;
 	static TM32 tm;
 	
-	FLADR &a = a_UpdateSendSession;
+	//FLADR &a = a_UpdateSendSession;
 
 	NandFileDsc &s = nvsi[ind].f;
 
