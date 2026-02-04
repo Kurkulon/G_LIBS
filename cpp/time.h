@@ -38,7 +38,7 @@ __packed struct RTC
 		u32 msec:10;     // mili second value - [0,999] 
 		u32 sec:6;     // Second value - [0,59] 
 		u32 min:6;     // Minute value - [0,59] 
-		u32 hour:5;    // Hour value - [0,23] 
+		u32 hour:10;    // Hour value - [0,23] 
 		
 		__forceinline bool	operator==(const Time &t) { return *((u32*)this) == *((u32*)&t);  }
 		__forceinline			operator u32()		{ return *((u32*)this); }
@@ -53,7 +53,7 @@ __packed struct RTC
 	{
 		u32 day:5;    // Day of the month value - [1,31] 
 		u32 mon:4;     // Month value - [1,12] 
-		u32 year:12;    // Year value - [0,4095] 
+		u32 year:23;    // Year value - [0,4095] 
 
 		__forceinline bool	operator==(const Date &d) { return *((u32*)this) == *((u32*)&d);  }
 		__forceinline			operator u32()		{ return *((u32*)this); }

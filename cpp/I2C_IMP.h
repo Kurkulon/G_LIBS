@@ -945,7 +945,7 @@ bool S_I2C::Update()
 				
 				_state = I2C_STOP; 
 			}
-			else if (_tm.Timeout(100))
+			else if (_tm.Timeout(MS2CTM(100)))
 			{
 				i2c->CTRLB = I2C_SMEN|I2C_CMD_STOP;
 				
@@ -1003,7 +1003,7 @@ bool S_I2C::Update()
 				
 				_state = I2C_STOP; 
 			}
-			else if (_tm.Timeout(100))
+			else if (_tm.Timeout(MS2CTM(100)))
 			{
 				i2c->CTRLB = I2C_SMEN|I2C_CMD_STOP;
 				
@@ -1165,7 +1165,7 @@ bool S_I2C::Update()
 				
 				_state = I2C_STOP; 
 			}
-			else if (_tm.Timeout(100))
+			else if (_tm.Timeout(MS2CTM(100)))
 			{
 				i2c->CR = TWI_STOP;
 
@@ -1206,7 +1206,7 @@ bool S_I2C::Update()
 
 				_state = I2C_STOP; 
 			}
-			else if (_tm.Timeout(100))
+			else if (_tm.Timeout(MS2CTM(100)))
 			{
 				i2c->CR = TWI_STOP;
 
