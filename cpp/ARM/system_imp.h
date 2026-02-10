@@ -16,79 +16,172 @@
 #define TEST_PIN_DELAY MCK_MHz
 #endif
 
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#ifdef CPU_SAME53
+
+	#define PIOA_SetWRCONFIG(mask,mux) HW::PIOA->SetWRCONFIG(mask,mux)
+	#define PIOB_SetWRCONFIG(mask,mux) HW::PIOB->SetWRCONFIG(mask,mux)
+
+	#define PIOA_CTRL(v)	HW::PIOA->CTRL=v
+	#define PIOB_CTRL(v)	HW::PIOB->CTRL=v
+
+	#define PIOA_DIRCLR(v)	HW::PIOA->DIRCLR=v
+	#define PIOB_DIRCLR(v)	HW::PIOB->DIRCLR=v
+
+	#define PIOA_DIRSET(v)	HW::PIOA->DIRSET=v
+	#define PIOB_DIRSET(v)	HW::PIOB->DIRSET=v
+
+	#define PIOA_OUTSET(v)	HW::PIOA->OUTSET=v
+	#define PIOB_OUTSET(v)	HW::PIOB->OUTSET=v
+
+	#define PIOA_OUTCLR(v)	HW::PIOA->OUTCLR=v
+	#define PIOB_OUTCLR(v)	HW::PIOB->OUTCLR=v
+
+	#define PIOA_IN()		HW::PIOA->IN
+	#define PIOB_IN()		HW::PIOB->IN
+
+	#ifdef PC00
+
+		#define PIOC_SetWRCONFIG(mask,mux)	HW::PIOC->SetWRCONFIG(mask,mux)
+		#define PIOC_CTRL(v)				HW::PIOC->CTRL=v
+		#define PIOC_DIRCLR(v)				HW::PIOC->DIRCLR=v
+		#define PIOC_DIRSET(v)				HW::PIOC->DIRSET=v
+		#define PIOC_OUTSET(v)				HW::PIOC->OUTSET=v
+		#define PIOC_OUTCLR(v)				HW::PIOC->OUTCLR=v
+		#define PIOC_IN()					HW::PIOC->IN
+
+	#else	
+
+		#ifndef PIOC_TEST_MASK
+		#define PIOC_TEST_MASK 0
+		#endif	
+
+		#define PIOC_SetWRCONFIG(mask,mux)	
+		#define PIOC_CTRL(v)				
+		#define PIOC_DIRCLR(v)				
+		#define PIOC_DIRSET(v)				
+		#define PIOC_OUTSET(v)				
+		#define PIOC_OUTCLR(v)				
+		#define PIOC_IN()					0					
+
+	#endif
+
+	#ifdef PD00
+
+		#define PIOD_SetWRCONFIG(mask,mux)	HW::PIOD->SetWRCONFIG(mask,mux)
+		#define PIOD_CTRL(v)				HW::PIOD->CTRL=v
+		#define PIOD_DIRCLR(v)				HW::PIOD->DIRCLR=v
+		#define PIOD_DIRSET(v)				HW::PIOD->DIRSET=v
+		#define PIOD_OUTSET(v)				HW::PIOD->OUTSET=v
+		#define PIOD_OUTCLR(v)				HW::PIOD->OUTCLR=v
+		#define PIOD_IN()					HW::PIOD->IN
+
+	#else	
+
+		#ifndef PIOD_TEST_MASK
+		#define PIOD_TEST_MASK 0
+		#endif	
+
+		#define PIOD_SetWRCONFIG(mask,mux)	
+		#define PIOD_CTRL(v)				
+		#define PIOD_DIRCLR(v)				
+		#define PIOD_DIRSET(v)				
+		#define PIOD_OUTSET(v)				
+		#define PIOD_OUTCLR(v)				
+		#define PIOD_IN()					0					
+
+	#endif
+
+
+#endif	// #ifdef CPU_SAME53
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 static void Test_PIO_Pins()
 {
 	SEGGER_RTT_WriteString(0, RTT_CTRL_TEXT_WHITE "Test PIO Pins start ...\n" RTT_CTRL_BG_BRIGHT_WHITE);
 
-	#if defined(CPU_SAME53) && defined(PIOA_TEST_MASK) && defined(PIOB_TEST_MASK) && defined(PIOC_TEST_MASK)
+	#if defined(CPU_SAME53) && defined(PIOA_TEST_MASK) && defined(PIOB_TEST_MASK) && defined(PIOC_TEST_MASK) && defined(PIOD_TEST_MASK)
 
-		HW::PIOA->SetWRCONFIG(PIOA_TEST_MASK, PORT_WRPINCFG|PORT_WRPMUX|PORT_INEN);
-		HW::PIOB->SetWRCONFIG(PIOB_TEST_MASK, PORT_WRPINCFG|PORT_WRPMUX|PORT_INEN);
-		HW::PIOC->SetWRCONFIG(PIOC_TEST_MASK, PORT_WRPINCFG|PORT_WRPMUX|PORT_INEN);
+		PIOA_SetWRCONFIG(PIOA_TEST_MASK, PORT_WRPINCFG|PORT_WRPMUX|PORT_INEN);
+		PIOB_SetWRCONFIG(PIOB_TEST_MASK, PORT_WRPINCFG|PORT_WRPMUX|PORT_INEN);
+		PIOC_SetWRCONFIG(PIOC_TEST_MASK, PORT_WRPINCFG|PORT_WRPMUX|PORT_INEN);
+		PIOD_SetWRCONFIG(PIOD_TEST_MASK, PORT_WRPINCFG|PORT_WRPMUX|PORT_INEN);
 
-		HW::PIOA->CTRL = PIOA_TEST_MASK;
-		HW::PIOB->CTRL = PIOB_TEST_MASK;
-		HW::PIOC->CTRL = PIOC_TEST_MASK;
+		PIOA_CTRL(PIOA_TEST_MASK);
+		PIOB_CTRL(PIOB_TEST_MASK);
+		PIOC_CTRL(PIOC_TEST_MASK);
+		PIOD_CTRL(PIOD_TEST_MASK);
 
-		for (u32 i = 0; i < 96; i++)
+		for (u32 i = 0; i < 128; i++)
 		{
-			HW::PIOA->DIRCLR = PIOA_TEST_MASK;
-			HW::PIOB->DIRCLR = PIOB_TEST_MASK;
-			HW::PIOC->DIRCLR = PIOC_TEST_MASK;
+			PIOA_DIRCLR(PIOA_TEST_MASK);
+			PIOB_DIRCLR(PIOB_TEST_MASK);
+			PIOC_DIRCLR(PIOC_TEST_MASK);
+			PIOD_DIRCLR(PIOD_TEST_MASK);
 
-			u32 pinMask[3] = {0,0,0};
+			u32 pinMask[4] = {0,0,0,0};
 
 			pinMask[i>>5] = 1UL<<(i&31);
 
 			u32 &pinMaskA = pinMask[0];
 			u32 &pinMaskB = pinMask[1];
 			u32 &pinMaskC = pinMask[2];
+			u32 &pinMaskD = pinMask[3];
 
-			if ((pinMaskA & PIOA_TEST_MASK) || (pinMaskB & PIOB_TEST_MASK) || (pinMaskC & PIOC_TEST_MASK))
+			if ((pinMaskA & PIOA_TEST_MASK) || (pinMaskB & PIOB_TEST_MASK) || (pinMaskC & PIOC_TEST_MASK) || (pinMaskD & PIOD_TEST_MASK))
 			{
-				HW::PIOA->DIRSET = pinMaskA; HW::PIOA->OUTSET = pinMaskA;
-				HW::PIOB->DIRSET = pinMaskB; HW::PIOB->OUTSET = pinMaskB;
-				HW::PIOC->DIRSET = pinMaskC; HW::PIOC->OUTSET = pinMaskC;
+				PIOA_DIRSET(pinMaskA); PIOA_OUTSET(pinMaskA);
+				PIOB_DIRSET(pinMaskB); PIOB_OUTSET(pinMaskB);
+				PIOC_DIRSET(pinMaskC); PIOC_OUTSET(pinMaskC);
+				PIOD_DIRSET(pinMaskD); PIOD_OUTSET(pinMaskD);
 
 				delay(TEST_PIN_DELAY); 
 
-				u32 a1 = HW::PIOA->IN;
-				u32 b1 = HW::PIOB->IN;
-				u32 c1 = HW::PIOC->IN;
+				u32 a1 = PIOA_IN();
+				u32 b1 = PIOB_IN();
+				u32 c1 = PIOC_IN();
+				u32 d1 = PIOD_IN();
 
-				if ((pinMaskA && ((a1 & pinMaskA) == 0)) || (pinMaskB && ((b1 & pinMaskB) == 0)) || (pinMaskC && ((c1 & pinMaskC) == 0)))
+				if ((pinMaskA && ((a1 & pinMaskA) == 0)) || (pinMaskB && ((b1 & pinMaskB) == 0)) || (pinMaskC && ((c1 & pinMaskC) == 0)) || (pinMaskD && ((d1 & pinMaskD) == 0)))
 				{
 					SEGGER_RTT_printf(0, RTT_CTRL_TEXT_BRIGHT_RED "ERROR: PIN P%c%02u LOW\n", 'A'+(i>>5), i&31); // Error_PIO_pin(ERROR_PIO_PIN_LOW, i>>5, i&31);
 				};
 
-				HW::PIOA->DIRSET = pinMaskA; HW::PIOA->OUTCLR = pinMaskA;
-				HW::PIOB->DIRSET = pinMaskB; HW::PIOB->OUTCLR = pinMaskB;
-				HW::PIOC->DIRSET = pinMaskC; HW::PIOC->OUTCLR = pinMaskC;
+				PIOA_DIRSET(pinMaskA); PIOA_OUTCLR(pinMaskA);
+				PIOB_DIRSET(pinMaskB); PIOB_OUTCLR(pinMaskB);
+				PIOC_DIRSET(pinMaskC); PIOC_OUTCLR(pinMaskC);
+				PIOD_DIRSET(pinMaskD); PIOD_OUTCLR(pinMaskD);
 
 				delay(TEST_PIN_DELAY); 
 
-				u32 a2 = HW::PIOA->IN;
-				u32 b2 = HW::PIOB->IN;
-				u32 c2 = HW::PIOC->IN;
+				u32 a2 = PIOA_IN();
+				u32 b2 = PIOB_IN();
+				u32 c2 = PIOC_IN();
+				u32 d2 = PIOD_IN();
 
-				if ((a2 & pinMaskA) || (b2 & pinMaskB) || (c2 & pinMaskC))
+				if ((a2 & pinMaskA) || (b2 & pinMaskB) || (c2 & pinMaskC) || (d2 & pinMaskD))
 				{
 					SEGGER_RTT_printf(0, RTT_CTRL_TEXT_BRIGHT_RED "ERROR: PIN P%c%02u HI\n", 'A'+(i>>5), i&31); // Error_PIO_pin(ERROR_PIO_PIN_HI, i>>5, i&31);
 				};
 
-				HW::PIOA->DIRSET = pinMaskA; HW::PIOA->OUTSET = pinMaskA;
-				HW::PIOB->DIRSET = pinMaskB; HW::PIOB->OUTSET = pinMaskB;
-				HW::PIOC->DIRSET = pinMaskC; HW::PIOC->OUTSET = pinMaskC;
+				PIOA_DIRSET(pinMaskA); PIOA_OUTSET(pinMaskA);
+				PIOB_DIRSET(pinMaskB); PIOB_OUTSET(pinMaskB);
+				PIOC_DIRSET(pinMaskC); PIOC_OUTSET(pinMaskC);
+				PIOD_DIRSET(pinMaskD); PIOC_OUTSET(pinMaskD);
 				
 				delay(TEST_PIN_DELAY); 
 
-				u32 a3 = HW::PIOA->IN;
-				u32 b3 = HW::PIOB->IN;
-				u32 c3 = HW::PIOC->IN;
+				u32 a3 = PIOA_IN();
+				u32 b3 = PIOB_IN();
+				u32 c3 = PIOC_IN();
+				u32 d3 = PIOD_IN();
 
-				HW::PIOA->OUTCLR = pinMaskA;
-				HW::PIOB->OUTCLR = pinMaskB;
-				HW::PIOC->OUTCLR = pinMaskC;
+				PIOA_OUTCLR(pinMaskA);
+				PIOB_OUTCLR(pinMaskB);
+				PIOC_OUTCLR(pinMaskC);
+				PIOD_OUTCLR(pinMaskD);
 
 				bool ca1 = (a1 ^ a2) & PIOA_TEST_MASK & ~pinMaskA;
 				bool ca2 = (a2 ^ a3) & PIOA_TEST_MASK & ~pinMaskA;
@@ -99,24 +192,30 @@ static void Test_PIO_Pins()
 				bool cc1 = (c1 ^ c2) & PIOC_TEST_MASK & ~pinMaskC;
 				bool cc2 = (c2 ^ c3) & PIOC_TEST_MASK & ~pinMaskC;
 
-				if (ca1 || ca2 || cb1 || cb2 || cc1 || cc2) 
+				bool cd1 = (d1 ^ d2) & PIOD_TEST_MASK & ~pinMaskD;
+				bool cd2 = (d2 ^ d3) & PIOD_TEST_MASK & ~pinMaskD;
+
+				if (ca1 || ca2 || cb1 || cb2 || cc1 || cc2 || cd1 || cd2) 
 				{
 					SEGGER_RTT_printf(0, RTT_CTRL_TEXT_BRIGHT_RED "ERROR: PIN P%c%02u SHORT\n", 'A'+(i>>5), i&31); // Error_PIO_pin(ERROR_PIO_PIN_SHORT, i>>5, i&31);
 				};
 			};
 		};
 
-		HW::PIOA->DIRCLR = PIOA_TEST_MASK;
-		HW::PIOB->DIRCLR = PIOB_TEST_MASK;
-		HW::PIOC->DIRCLR = PIOC_TEST_MASK;
+		PIOA_DIRCLR(PIOA_TEST_MASK);
+		PIOB_DIRCLR(PIOB_TEST_MASK);
+		PIOC_DIRCLR(PIOC_TEST_MASK);
+		PIOD_DIRCLR(PIOD_TEST_MASK);
 
-		HW::PIOA->CTRL = 0;
-		HW::PIOB->CTRL = 0;
-		HW::PIOC->CTRL = 0;
+		PIOA_CTRL(0);
+		PIOB_CTRL(0);
+		PIOC_CTRL(0);
+		PIOD_CTRL(0);
 
-		HW::PIOA->SetWRCONFIG(PIOA_TEST_MASK, PORT_WRPINCFG|PORT_WRPMUX);
-		HW::PIOB->SetWRCONFIG(PIOB_TEST_MASK, PORT_WRPINCFG|PORT_WRPMUX);
-		HW::PIOC->SetWRCONFIG(PIOC_TEST_MASK, PORT_WRPINCFG|PORT_WRPMUX);
+		PIOA_SetWRCONFIG(PIOA_TEST_MASK, PORT_WRPINCFG|PORT_WRPMUX);
+		PIOB_SetWRCONFIG(PIOB_TEST_MASK, PORT_WRPINCFG|PORT_WRPMUX);
+		PIOC_SetWRCONFIG(PIOC_TEST_MASK, PORT_WRPINCFG|PORT_WRPMUX);
+		PIOD_SetWRCONFIG(PIOD_TEST_MASK, PORT_WRPINCFG|PORT_WRPMUX);
 
 	#endif
 
