@@ -1330,7 +1330,7 @@ static u16 word2man[16] = {
 	0x8095, // 1001	0101
 	0x806A, // 0110	1010
 	0x0069, // 0110	1001
-	0x8066, // 0110	0110
+	0x0066, // 0110	0110
 	0x8065, // 0110	0101
 	0x005A, // 0101	1010
 	0x8859, // 0101	1001
@@ -1359,7 +1359,7 @@ inline void GetManBits(ManBits &man, u16 t)
 	man.b4 = r1;
 	parity ^= r1;
 
-	man.pr = 2 - (parity>>15);
+	man.pr = 1 + (parity>>15);
 	man.st = 0x38;
 }
 
@@ -1370,7 +1370,7 @@ static __irq void ManTrm_ISR()
 
 #ifdef CPU_SAM4SA
 
-	HW::PIOA->BSET(21);
+	Pin_ManTrmIRQ_Set();
 
 	u32 stat = HW::SSC->SR & HW::SSC->IMR;
 
@@ -1419,7 +1419,7 @@ static __irq void ManTrm_ISR()
 		HW::PIOA->BCLR(22);
 	};
 
-	HW::PIOA->BCLR(21);
+	Pin_ManTrmIRQ_Clr();
 
 #endif
 
@@ -1634,7 +1634,7 @@ static void ManRcvEnd(bool ok)
 	}
 	else
 	{
-		u32 y = (rcvManCount12 - 1) * US2MR(12*12);
+		u32 y = (rcvManCount12 - 1) * US2MR(12) * US2MR(12);
 		u32 e = 100 * rcvManSum12 / y;
 		rcvManQuality = (e < 100) ? (100 - e) : 0;
 	};
