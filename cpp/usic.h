@@ -15,7 +15,11 @@
 
 #ifdef CPU_SAME53
 
-	#define USIC_NUM 8
+	#if !defined(PID_SERCOM6) || !defined(PID_SERCOM7)
+		#define USIC_NUM 6
+	#else
+		#define USIC_NUM 8
+	#endif
 
 	typedef T_HW::SERCOM USICHWT;
 
