@@ -435,6 +435,8 @@ void DMA_CH::ReadPeripheral(const volatile void *src, volatile void *dst, u16 le
 		_dmach->INTENCLR = ~0;
 		_dmach->INTFLAG = ~0;
 
+		if (ctrl2 & DMDSC_BLOCKACT_INT) _dmach->INTENSET = DMCH_TCMPL;
+
 		_dmach->CTRLA = ctrl1 | DMCH_ENABLE; //|DMCH_TRIGACT_BURST|_dma_trgsrc_rx;
 
 		tm.Reset();

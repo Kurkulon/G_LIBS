@@ -20,6 +20,14 @@
 
 #ifdef CPU_SAME53
 
+	#ifndef CLKIN_MHz
+	#define CLKIN_MHz	25
+	#endif
+
+	#ifndef CLKIN_XOSC_NUM
+	#define CLKIN_XOSC_NUM	1
+	#endif
+
 	#define PIOA_SetWRCONFIG(mask,mux) HW::PIOA->SetWRCONFIG(mask,mux)
 	#define PIOB_SetWRCONFIG(mask,mux) HW::PIOB->SetWRCONFIG(mask,mux)
 
@@ -290,14 +298,14 @@ extern "C" void SystemInit()
 
 		Pin_MainLoop_Clr();
 
-		OSCCTRL->XOSC[1] = XOSC_ENABLE|XOSC_ONDEMAND; // RUNSTDBY|ENABLE
+		OSCCTRL->XOSC[CLKIN_XOSC_NUM] = XOSC_ENABLE|XOSC_ONDEMAND; // RUNSTDBY|ENABLE
 
 		Pin_MainLoop_Set();
 
 		OSCCTRL->DPLL[0].CTRLA = 0; while ((OSCCTRL->DPLL[0].SYNCBUSY & DPLLSYNCBUSY_ENABLE) != 0);
 
-		OSCCTRL->DPLL[0].CTRLB = DPLL_LBYPASS|DPLL_REFCLK_XOSC1|DPLL_DIV(24);	// 0x70010; // XOSC clock source division factor 50 = 2*(DIV+1), XOSC clock reference
-		OSCCTRL->DPLL[0].RATIO = DPLL_LDR((MCK*2+500000)/1000000-1)|DPLL_LDRFRAC(0);	// 47; // Loop Divider Ratio = 200, Loop Divider Ratio Fractional Part = 0
+		OSCCTRL->DPLL[0].CTRLB = DPLL_LBYPASS|CONCAT2(DPLL_REFCLK_XOSC,CLKIN_XOSC_NUM)|DPLL_DIV(CLKIN_MHz-1);	// 0x70010; // XOSC clock source division factor 50 = 2*(DIV+1), XOSC clock reference
+		OSCCTRL->DPLL[0].RATIO = DPLL_LDR((MCK*2+500000)/1000000-1)|DPLL_LDRFRAC(0);							// 47; // Loop Divider Ratio = 200, Loop Divider Ratio Fractional Part = 0
 
 		OSCCTRL->DPLL[0].CTRLA = DPLL_ONDEMAND|DPLL_ENABLE; 
 
