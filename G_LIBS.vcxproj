@@ -576,6 +576,8 @@
     <ClInclude Include="cpp\MANCH\manch_imp.h" />
     <ClInclude Include="cpp\MEM\mem.h" />
     <ClInclude Include="cpp\MEM\mem_imp.h" />
+    <ClInclude Include="cpp\MQCODER\mqcoder.h" />
+    <ClInclude Include="cpp\MQCODER\mqcoder_imp.h" />
     <ClInclude Include="cpp\PointerCRC.h" />
     <ClInclude Include="cpp\RequestQuery.h" />
     <ClInclude Include="cpp\RequestQuery_imp.h" />

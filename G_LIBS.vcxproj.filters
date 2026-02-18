@@ -51,6 +51,9 @@
     <Filter Include="LDF">
       <UniqueIdentifier>{158fdddc-f409-48bc-92b7-34cc2a06bcde}</UniqueIdentifier>
     </Filter>
+    <Filter Include="CPP\MQCODER">
+      <UniqueIdentifier>{d456df13-090e-4480-8232-2c6aba24b157}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cpp\Clock.h">
@@ -313,6 +316,12 @@
     </ClInclude>
     <ClInclude Include="cpp\ADSP\BF607.h">
       <Filter>CPP\ADSP</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\MQCODER\mqcoder.h">
+      <Filter>CPP\MQCODER</Filter>
+    </ClInclude>
+    <ClInclude Include="cpp\MQCODER\mqcoder_imp.h">
+      <Filter>CPP\MQCODER</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
