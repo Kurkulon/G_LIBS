@@ -911,6 +911,12 @@ static __irq void ManTrmIRQ2()
 	//static byte i = 0;
 	static const u16* data = 0;
 	static u16 len = 0;
+
+#ifdef MAN_TRANSMIT_LENPTR
+	static u16 index = 0;
+	static u16 *lenptr = 0;
+#endif
+
 	static bool cmd = false;
 
 	Pin_ManTrmIRQ_Set();
@@ -919,26 +925,54 @@ static __irq void ManTrmIRQ2()
 	{
 		case 0:	// 1-st sync imp 
 
-			data = manTB->data1;
-			len = manTB->len1;
+			#ifdef MAN_TRANSMIT_LENPTR
+				data = manTB->data1;
+				index = 0;
+				len = manTB->len1;
+				lenptr = (manTB->lenptr != 0) ? manTB->lenptr : &len;
+			#else
+				len = manTB->len1;
+				lenptr = &len;
+			#endif
+
 			cmd = false;
 			stateManTrans++;
 
 		case 1:
 
-			if (len == 0)
-			{
-				data = manTB->data2;
-				len = manTB->len2;
-				manTB->len2 = 0;
-			};
+			#ifdef MAN_TRANSMIT_LENPTR
+				if (index == lenptr[0] && manTB->data2 != 0 && manTB->len2 != 0)
+				{
+					data = manTB->data2;
+					len = manTB->len2;
+					index = 0;
+					lenptr = &len;
+					manTB->len2 = 0;
+				};
+			#else	
+				if (len == 0)
+				{
+					data = manTB->data2;
+					len = manTB->len2;
+					manTB->len2 = 0;
+				};
+			#endif	
 
+		#ifdef MAN_TRANSMIT_LENPTR
+			if (index < lenptr[0])
+		#else	
 			if (len != 0)
+		#endif
 			{
 				tw = ((u32)(*data) << 1) | (CheckParity(*data) & 1);
 
 				data++;
-				len--;
+
+				#ifdef MAN_TRANSMIT_LENPTR
+					index++;
+				#else	
+					len--;
+				#endif
 
 				count = 17;
 
@@ -1100,10 +1134,22 @@ bool SendManData(MTB* mtb)
 {
 	#ifndef WIN32
 
-		if (trmBusy || rcvBusy || mtb == 0 || mtb->data1 == 0 || mtb->len1 == 0)
-		{
-			return false;
-		};
+		#ifdef MAN_TRANSMIT_LENPTR
+			if (trmBusy || rcvBusy || mtb == 0 || mtb->data1 == 0) return false;
+			if (mtb->len1 != 0) mtb->lenptr = 0;
+			
+			if (mtb->lenptr != 0)
+			{
+				mtb->data2 = 0; mtb->len2 = 0;
+			}
+			else if (mtb->len1 == 0) return false;
+
+		#else
+			if (trmBusy || rcvBusy || mtb == 0 || mtb->data1 == 0 || mtb->len1 == 0)
+			{
+				return false;
+			};
+		#endif
 
 		mtb->ready = false;
 

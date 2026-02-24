@@ -16,7 +16,7 @@
 #define _DEBUG
 #endif
 
-#ifdef _ADI_COMPILER
+#ifdef __ADSPBLACKFIN__
 
 	#include <ccblkfn.h>
 
@@ -39,7 +39,32 @@
 
 	#endif
 
+#elif defined(__ADSP21000__)
+
+	#include <sys/platform.h> 
+
+	#ifndef _MSC_VER
+
+		#ifdef __DEBUG
+			#define __breakpoint(v) asm("EMUIDLE;")
+		#else
+			#define __breakpoint(v)
+		#endif
+
+		#define __forceinline _Pragma("inline") _Pragma("always_inline")
+		#define __nop __builtin_NOP
+		#define __packed /*__attribute__((packed))*/
+		//#define __align1 __attribute__((aligned(1)))
+
+		#define __disable_irq() u32 irqeirutyieurtu = cli()
+		#define __enable_irq()  sti(irqeirutyieurtu)
+		#pragma diag(suppress: 1645,1646)
+
+	#endif
+
+
 #endif // _ADI_COMPILER
+
 
 #ifdef __clang__
 
@@ -154,7 +179,7 @@ __forceinline float	ABS(float v)	{ *((u32*)&v) &= 0x7FFFFFFF; return v; }
 
 __forceinline u32 Push_IRQ()
 {
-#ifdef _ADI_COMPILER
+#ifdef __ADSPBLACKFIN__
 
 	return __builtin_cli();
 
@@ -181,7 +206,7 @@ __forceinline u32 Push_IRQ()
 
 __forceinline void Pop_IRQ(u32 t)
 {
-#ifdef _ADI_COMPILER
+#ifdef __ADSPBLACKFIN__
 
 	__builtin_sti(t);
 
@@ -196,7 +221,7 @@ __forceinline void Pop_IRQ(u32 t)
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#ifdef _ADI_COMPILER
+#ifdef __ADSPBLACKFIN__
 
 #pragma pack(1)
 
@@ -245,6 +270,57 @@ __forceinline dword SwapDword(dword v) { return (v&0x00FF00FF)<<8 | (v&0xFF00FF0
 
 __forceinline i32 _InterlockedIncrement(volatile i32 *v) { u32 t = __builtin_cli(); i32 r = *v += 1; __builtin_sti(t); return r; }
 __forceinline i32 _InterlockedDecrement(volatile i32 *v) { u32 t = __builtin_cli(); i32 r = *v -= 1; __builtin_sti(t); return r; }
+
+#elif  defined(__ADSP21000__)
+
+#pragma pack(1)
+
+struct pack_u16
+{
+	u16 w;
+
+	__forceinline u16 operator=(u16 v) { return w = v; }
+	__forceinline operator u16() { return w; }
+};
+
+struct pack_u32
+{
+	u32 dw;
+
+	__forceinline u32 operator=(u32 v) { return dw = v; }
+	__forceinline operator u32() { return dw; }
+};
+
+struct pack_float
+{
+	u32 fl;
+
+	__forceinline float operator=(float v) { return fl = v; }
+	__forceinline operator float() { return fl; }
+};
+
+#pragma pack()
+
+
+__forceinline u32 strlcpy(void *dst, const void *src, u32 size)
+{
+	u32 len = size; 
+	const byte *s = (const byte*)src; 
+	byte *d = (byte*)dst;  
+	while(*s != 0 && size != 0) *d++ = *s++, size -= 1; 
+	return len - size;
+}
+
+__forceinline void Read32(u32 v) {  }
+__forceinline word ReverseWord(word v) { return ((v&0x00FF)<<8 | (v&0xFF00)>>8); }
+//__forceinline dword ReverseDword(dword v) { v = (v&0x00FF00FF)<<8 | (v&0xFF00FF00)>>8;	return (v&0x0000FFFF)<<16 | (v&0xFFFF0000)>>16; }
+//__forceinline word ReverseWord(word v) { return __builtin_byteswap2(v); }
+__forceinline dword ReverseDword(dword v) { return __builtin_byteswap4(v); }
+__forceinline dword SwapDword(dword v) { return (v&0x00FF00FF)<<8 | (v&0xFF00FF00)>>8; }
+
+//__forceinline i32 _InterlockedIncrement(volatile i32 *v) { u32 t = __builtin_cli(); i32 r = *v += 1; __builtin_sti(t); return r; }
+//__forceinline i32 _InterlockedDecrement(volatile i32 *v) { u32 t = __builtin_cli(); i32 r = *v -= 1; __builtin_sti(t); return r; }
+
 
 #elif  defined(__CC_ARM)
 
@@ -355,7 +431,7 @@ union DataPointer
 
 	void operator=(__packed void *p) { v = p; } 
 
-#ifdef _ADI_COMPILER
+#ifdef __ADSPBLACKFIN__
 	void WW(word a) { misaligned_store16(v, a); }
 	word RW() { return misaligned_load16(v); }
 #endif

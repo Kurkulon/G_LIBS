@@ -108,18 +108,23 @@ cpu_link_options = --cpu Cortex-M0plus
 
 !else ifeq targetcpu BF592
 
-buildtool = ADSP
+buildtool = ADSP_BLACKFIN
 adsp_cpu_options = -proc ADSP-BF592-A -si-revision 0.2 -DCPU_$(targetcpu)
 
 !else ifeq targetcpu BF706
 
-buildtool = ADSP
+buildtool = ADSP_BLACKFIN
 adsp_cpu_options = -proc ADSP-BF706 -si-revision 1.1 -DCPU_$(targetcpu) 
 
 !else ifeq targetcpu BF607
 
-buildtool = ADSP
+buildtool = ADSP_BLACKFIN
 adsp_cpu_options = -proc ADSP-BF607 -si-revision 0.2 -DCPU_$(targetcpu) 
+
+!else ifeq targetcpu 21489
+
+buildtool = ADSP_SHARC
+adsp_cpu_options = -proc ADSP-21489 -si-revision 0.2 -DCPU_$(targetcpu) 
 
 !else
 
@@ -145,7 +150,7 @@ libname = $(curdir)\$(targetcpu)_$(libsuffix).a
 #	.<dependent_extension> : <path_specification>
 #	.c: $(program_dir);$(screen_dir)
 
-!ifeq buildtool ARMCC
+!ifeq buildtool ARMCC  ##################################################################################################
 
 .cpp:	$(cpp_dir_list)
 	
@@ -159,7 +164,7 @@ debug_compiler_options = -O3 -Otime --debug
 debug_linker_options = 
 !endif
 
-!else ifeq buildtool ARMCLANG
+!else ifeq buildtool ARMCLANG  ##################################################################################################
 
 .cpp:	$(cpp_dir_list)
 	
@@ -173,7 +178,7 @@ debug_compiler_options = -O3 -Omax
 debug_linker_options = 
 !endif
 
-!else ifeq buildtool ADSP
+!else ifeq buildtool ADSP_BLACKFIN  ##################################################################################################
 
 .cpp:	initcode;$(cpp_dir_list)
 
@@ -187,7 +192,21 @@ debug_compiler_options = -Oa -ipa
 debug_linker_options = 
 !endif
 
+!else ifeq buildtool ADSP_SHARC  ##################################################################################################
+
+.cpp:	$(cpp_dir_list)
+
+bindir = $(%ADI_CCES)
+
+!ifeq version Debug
+debug_compiler_options = -O0 -D_DEBUG
+debug_linker_options = 
 !else
+debug_compiler_options = -Oa -ipa
+debug_linker_options = 
+!endif
+
+!else  ##################################################################################################
 
 .cpp:	$(cpp_dir_list)
 
@@ -224,20 +243,37 @@ win32_compiler_options = -nologo -DWIN32 -D_DEBUG -c -Z7 -Zp -I$(curdir)\cpp
 
 ##################################################################################################
 
-adsp_compiler_options = $(debug_compiler_options) -c -c++11 -g++ -g -structs-do-not-overlap -no-multiline &
+blackfin_compiler_options = $(debug_compiler_options) -c -c++11 -g++ -g -structs-do-not-overlap -no-multiline &
 	-double-size-32 -decls-strong -warn-protos -warn-component $(adsp_cpu_options) -Wterse -I$(curdir)\cpp
 
 ##################################################################################################
 
-adsp_asm_options = $(adsp_cpu_options) -g -DADI_CCES
+blackfin_asm_options = $(adsp_cpu_options) -g -DADI_CCES
 
 ##################################################################################################
 
-adsp_link_options = -build-lib $(adsp_cpu_options) 
+blackfin_link_options = -build-lib $(adsp_cpu_options) 
 
 ##################################################################################################
 
-adsp_link_options_initcode = $(adsp_cpu_options) -flags-link -e,-MDADI_CCES,-MDCPU_$(targetcpu)
+blackfin_link_options_initcode = $(adsp_cpu_options) -flags-link -e,-MDADI_CCES,-MDCPU_$(targetcpu)
+
+##################################################################################################
+
+sharc_compiler_options = $(debug_compiler_options) -c -c++11 -g++ -g -structs-do-not-overlap -no-multiline &
+	-double-size-32 -warn-protos -warn-component $(adsp_cpu_options) -Wterse -I$(curdir)\cpp
+
+##################################################################################################
+
+sharc_asm_options = $(adsp_cpu_options) -g -DADI_CCES
+
+##################################################################################################
+
+sharc_link_options = -build-lib $(adsp_cpu_options) 
+
+##################################################################################################
+
+sharc_link_options_initcode = $(adsp_cpu_options) -flags-link -e,-MDADI_CCES,-MDCPU_$(targetcpu)
 
 ##################################################################################################
 #
@@ -335,11 +371,11 @@ $(libname) : $(modules_obj)
 ##################################################################################################
 ##################################################################################################
 
-!else ifeq buildtool ADSP
+!else ifeq buildtool ADSP_BLACKFIN
 
 $(libname) : $(modules_obj) $(objdir)\initcode_osc25.dxe $(objdir)\initcode_osc16.dxe
 	@echo Creating library $(libname) ...
-	@"$(bindir)\ccblkfn"	$(adsp_link_options) -o "$^." $(modules_obj)
+	@"$(bindir)\ccblkfn"	$(blackfin_link_options) -o "$^." $(modules_obj)
 
 ##################################################################################################
 
@@ -349,19 +385,50 @@ $(libname) : $(modules_obj) $(objdir)\initcode_osc25.dxe $(objdir)\initcode_osc1
 
 $(objdir)\initcode_osc25.dxe : $(objdir)\initcode_osc25.doj
 	@echo Linking $^@ ...
-	@"$(bindir)\ccblkfn" $(adsp_link_options_initcode) -T LDF\initcode.ldf -o $^@ $<
+	@"$(bindir)\ccblkfn" $(blackfin_link_options_initcode) -T LDF\initcode.ldf -o $^@ $<
 
 ##################################################################################################
 
 $(objdir)\initcode_osc16.dxe : $(objdir)\initcode_osc16.doj
 	@echo Linking $^@ ...
-	@"$(bindir)\ccblkfn" $(adsp_link_options_initcode) -T LDF\initcode.ldf -o $^@ $<
+	@"$(bindir)\ccblkfn" $(blackfin_link_options_initcode) -T LDF\initcode.ldf -o $^@ $<
 
 ################################################################################################## 
 
 .cpp.doj: 
 	@echo Compiling $[. ...
-	@ccbl.bat $(adsp_compiler_options) -save-temps -path-output $^: -i -absolute-path-dependencies -gnu-style-dependencies -MD -Mo="$^*.d" -o "$^@" $[@
+	@ccbl.bat $(blackfin_compiler_options) -save-temps -path-output $^: -i -absolute-path-dependencies -gnu-style-dependencies -MD -Mo="$^*.d" -o "$^@" $[@
+
+##################################################################################################
+##################################################################################################
+
+!else ifeq buildtool ADSP_SHARC
+
+$(libname) : $(modules_obj) 
+	@echo Creating library $(libname) ...
+	@"$(bindir)\cc21k"	$(sharc_link_options) -o "$^." $(modules_obj)
+
+##################################################################################################
+
+!include $(objdir)\mkoutdep
+
+################################################################################################## -MD -Mo="$^*.d"
+
+$(objdir)\initcode_osc25.dxe : $(objdir)\initcode_osc25.doj
+	@echo Linking $^@ ...
+	@"$(bindir)\cc21k" $(sharc_link_options_initcode) -T LDF\initcode.ldf -o $^@ $<
+
+##################################################################################################
+
+$(objdir)\initcode_osc16.dxe : $(objdir)\initcode_osc16.doj
+	@echo Linking $^@ ...
+	@"$(bindir)\cc21k" $(sharc_link_options_initcode) -T LDF\initcode.ldf -o $^@ $<
+
+################################################################################################## 
+
+.cpp.doj: 
+	@echo Compiling $[. ...
+	@ccsharc.bat $(sharc_compiler_options) -save-temps -path-output $^: -i -absolute-path-dependencies -gnu-style-dependencies -MD -Mo="$^*.d" -o "$^@" $[@
 
 ##################################################################################################
 ##################################################################################################

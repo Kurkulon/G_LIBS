@@ -1307,6 +1307,7 @@ bool ComPort::Update()
 			{
 				_rtm.Reset();
 				_readTimeout = _postReadTimeout;
+				_pReadBuffer->len = GetRecievedLen();
 			}
 			else
 			{

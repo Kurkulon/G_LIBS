@@ -193,6 +193,54 @@
 	#define __NUM_CORES__ 1
 	#endif
 
+#elif defined(CPU_21489)
+
+	#ifndef _ADI_COMPILER
+	#define _ADI_COMPILER
+	#endif
+
+	#ifndef __ADSP21000__ 
+	#define __ADSP21000__ 
+	#endif
+
+	#ifndef __cplusplus
+	#define __cplusplus
+	#endif
+
+	#ifndef _LANGUAGE_C
+	#define _LANGUAGE_C
+	#endif
+
+	#define	CORETYPE_21489
+	#define ADSP_21489
+
+	#ifndef __ADSP21489__ 
+	#define __ADSP21489__ 
+	#endif
+
+	#ifndef __ADSP2148x__  
+	#define __ADSP2148x__  
+	#endif
+
+	#ifndef __ADSP214xx__   
+	#define __ADSP214xx__   
+	#endif
+
+	#ifndef __ADSPLPBLACKFIN__
+	#define __ADSPLPBLACKFIN__ 1
+	#endif
+
+
+	#ifndef __SILICON_REVISION__
+	#define __SILICON_REVISION__ 0x0002
+	#endif
+
+	#include <sys/platform.h> 
+
+	#ifndef __NUM_CORES__
+	#define __NUM_CORES__ 1
+	#endif
+
 #elif defined(WIN32)
 
 	namespace HW

@@ -406,10 +406,10 @@ u32 MQcompress(byte* src, u32 srclen, byte* dst)
 	while (srclen > 0)
 	{
 		code  = *src++;
-		cx    = ctxt;// + (lb << 3); 
+		cx    = ctxt + (lb << 3); 
 		//code ^= (code >> 1);
 		
-		for(i = 0;i < 8;i++/*,cx++*/)
+		for(i = 0;i < 8;i++,cx++)
 		{
 			PutBit(&coder, cx/*+((lb>>(i&4))&15)*/,code & (1 << i));
 		};
@@ -450,9 +450,9 @@ u32 MQdecompress(byte* src, u32 srclen, byte* dst, u32 dstlen)
 
 	while(dstlen > 0)
 	{ 
-		cx    = ctxt;// + (lb << 3);
+		cx    = ctxt + (lb << 3);
 
-		for(i = 0, code = 0; i < 8; i++/*,cx++*/)
+		for(i = 0, code = 0; i < 8; i++,cx++)
 		{
 			if (GetBit(&coder, cx/*+((lb>>(i&4))&15)*/)) code |= (1 << i);
 		};

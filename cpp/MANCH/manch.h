@@ -18,10 +18,15 @@ struct MTB
 {
 	bool		ready;
 	u16			baud;
+
 	u16			len1;
 	const u16	*data1;
 	u16			len2;
 	const u16	*data2;
+
+	#ifdef MAN_TRANSMIT_LENPTR
+		u16		*lenptr;
+	#endif
 };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
