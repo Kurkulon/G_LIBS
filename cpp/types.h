@@ -42,6 +42,7 @@
 #elif defined(__ADSP21000__)
 
 	#include <sys/platform.h> 
+	#include <interrupt.h> 
 
 	#ifndef _MSC_VER
 
@@ -56,8 +57,8 @@
 		#define __packed /*__attribute__((packed))*/
 		//#define __align1 __attribute__((aligned(1)))
 
-		#define __disable_irq() u32 irqeirutyieurtu = cli()
-		#define __enable_irq()  sti(irqeirutyieurtu)
+		#define __disable_irq() sysreg_bit_clr(sysreg_MODE1, IRPTEN);
+		#define __enable_irq()  sysreg_bit_set(sysreg_MODE1, IRPTEN);  
 		#pragma diag(suppress: 1645,1646)
 
 	#endif
@@ -183,6 +184,14 @@ __forceinline u32 Push_IRQ()
 
 	return __builtin_cli();
 
+#elif defined(__ADSP21000__)
+
+	u32 t = sysreg_read(sysreg_MODE1);
+	
+	sysreg_bit_clr(sysreg_MODE1, IRPTEN);
+
+	return t;
+
 #elif  defined(__CC_ARM)
 
 	register u32 t;
@@ -210,6 +219,10 @@ __forceinline void Pop_IRQ(u32 t)
 
 	__builtin_sti(t);
 
+#elif defined(__ADSP21000__)
+
+	if (t & IRPTEN) sysreg_bit_set(sysreg_MODE1, IRPTEN); else sysreg_bit_clr(sysreg_MODE1, IRPTEN);
+	
 #elif  defined(__CC_ARM)
 
 	register u32 primask __asm("primask");

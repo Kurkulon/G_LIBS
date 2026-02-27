@@ -226,16 +226,15 @@
 	#define __ADSP214xx__   
 	#endif
 
-	#ifndef __ADSPLPBLACKFIN__
-	#define __ADSPLPBLACKFIN__ 1
-	#endif
-
-
 	#ifndef __SILICON_REVISION__
 	#define __SILICON_REVISION__ 0x0002
 	#endif
 
-	#include <sys/platform.h> 
+	#define REAL_TIME_CLOCK_DISABLE
+	#define SYSTEM_TICK_TIMER_DISABLE
+
+	#include "ADSP\ADSP-21489.h"
+
 
 	#ifndef __NUM_CORES__
 	#define __NUM_CORES__ 1

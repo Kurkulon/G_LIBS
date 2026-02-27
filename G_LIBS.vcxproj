@@ -446,7 +446,7 @@
     <NMakeReBuildCommandLine>wmake -h -a version=Debug targetcpu=21489</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
     <NMakeOutput>$(ProjectDir)\21489_d.a</NMakeOutput>
-    <NMakePreprocessorDefinitions>_DEBUG;CPU_21489;_ADI_COMPILER;</NMakePreprocessorDefinitions>
+    <NMakePreprocessorDefinitions>_DEBUG;CPU_21489;_ADI_COMPILER;__ADSP21000__;__ADSP21489__;__ADSP2148x__;__ADSP214xx__;</NMakePreprocessorDefinitions>
     <NMakeIncludeSearchPath>.\cpp;$(ADI_CCES)\Sharc\include;</NMakeIncludeSearchPath>
     <ExecutablePath />
     <IncludePath />
@@ -518,7 +518,7 @@
     <NMakeReBuildCommandLine>wmake -h -a version=Release targetcpu=21489</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
     <NMakeOutput>$(ProjectDir)\21489_d.a</NMakeOutput>
-    <NMakePreprocessorDefinitions>CPU_21489;_ADI_COMPILER;</NMakePreprocessorDefinitions>
+    <NMakePreprocessorDefinitions>CPU_21489;_ADI_COMPILER;__ADSP21000__;__ADSP21489__;__ADSP2148x__;__ADSP214xx__;</NMakePreprocessorDefinitions>
     <NMakeIncludeSearchPath>.\cpp;$(ADI_CCES)\Shark\include;</NMakeIncludeSearchPath>
     <ExecutablePath />
     <IncludePath />
@@ -568,6 +568,7 @@
   <ItemDefinitionGroup>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="cpp\ADSP\ADSP-21489.h" />
     <ClInclude Include="cpp\ADSP\AFP_imp.h" />
     <ClInclude Include="cpp\ADSP\AFP_imp_v2.h" />
     <ClInclude Include="cpp\ADSP\BF592.h" />

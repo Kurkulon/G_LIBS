@@ -118,6 +118,14 @@ inline u32 GetCYCCNT() { return ~HW::WKT->COUNT; }
 #define US2CTM(x) US2CCLK(x)
 #define MS2CTM(x) MS2CCLK(x)
 
+#elif defined(ADSP_21489)
+
+#define GetCYCCNT GetCycles32
+
+#define NS2CTM(x) NS2CCLK(x)
+#define US2CTM(x) US2CCLK(x)
+#define MS2CTM(x) MS2CCLK(x)
+
 #endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -146,7 +154,7 @@ inline word GetMillisecondsLow()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#if !(defined(__ADSPBF59x__) || defined(__ADSPBF7xx__))
+#if !(defined(__ADSPBF59x__) || defined(__ADSPBF7xx__) || defined(ADSP_21489))
 
 struct TM32
 {
@@ -174,7 +182,7 @@ struct CTM32
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#if (defined(__ADSPBF59x__) || defined(__ADSPBF7xx__)) && defined(MS2CCLK)
+#if (defined(__ADSPBF59x__) || defined(__ADSPBF7xx__) || defined(ADSP_21489)) && defined(MS2CCLK)
 
 struct TM32
 {
@@ -187,7 +195,7 @@ struct TM32
 
 #endif
 
-#ifdef ADSP_BLACKFIN
+#if defined(ADSP_BLACKFIN) || defined(ADSP_21489)
 
 struct CTM64
 {
