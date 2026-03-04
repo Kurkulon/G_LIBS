@@ -103,10 +103,102 @@ extern byte core_sys_array[0x100000];
 
 namespace T_HW
 {
-
+	typedef volatile u32			AD_RW32, AD_WO32;	// Hardware register definition
+	typedef volatile const u32	AD_RO32;			// Hardware register definition
+	typedef volatile void*			AD_PTR;				// Hardware register definition
 
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	struct S_SPI
+	{
+		AD_RW32 CTL;							//	0x1000	/* SPI Control Register */
+		AD_RW32 FLG;							//	0x1001	/* SPI Flag register */
+		AD_RW32 STAT;							//	0x1002	/* SPI Status register */
+		AD_RW32 TX;								//	0x1003	/* SPI transmit data register */
+		AD_RW32 RX;								//	0x1004	/* SPI receive data register */
+		AD_RW32 BAUD;							//	0x1005	/* SPI baud setup register */
+		AD_RW32 RX_SHADOW;						//	0x1006	/* SPI receive data shadow register */
+								AD_RO32			z__RESERVED0[0x80-0x7];
+		AD_RW32 II;								//	0x1080	/* Internal memory DMA address */
+		AD_RW32 IM;								//	0x1081	/* Internal memory DMA access modifier */
+		AD_RW32 C;								//	0x1082	/* Contains number of DMA transfers remaining */
+		AD_RW32 CP;								//	0x1083	/* Points to next DMA parameters */
+		AD_RW32 DMAC;							//	0x1084	/* SPI DMA control register */
+	};
+
+	typedef S_SPI S_SPIB;
+
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	struct S_UART
+	{
+		union
+		{
+			AD_RW32 THR;				//	0x3c00	/* Transmit Holding Register */
+			AD_RW32 RBR;				//	0x3c00	/* Receive Buffer Register */
+			AD_RW32 DLL;				//	0x3c00	/* Divisor Latch Low Byte */
+		};
+
+		union
+		{
+			AD_RW32 IER;				//	0x3c01	/* Interrupt Enable Register */
+			AD_RW32 DLH;				//	0x3c01	/* Divisor Latch High Byte */
+		};
+
+		AD_RW32 IIR;					//	0x3c02	/* Interrupt Identification Register */
+		AD_RW32 LCR;					//	0x3c03	/* Line Control Register */
+		AD_RW32 MODE;					//	0x3c04	/* Mode Register */
+		AD_RW32 LSR;					//	0x3c05	/* Line Status Register */
+		AD_RW32 SCR;					//	0x3c07	/* Scratch Register */
+		AD_RW32 RBRSH;					//	0x3c08	/* Read Buffer Shadow Register */
+		AD_RW32 IIRSH;					//	0x3c09	/* Interrupt Identification Shadow Register */
+		AD_RW32 LSRSH;					//	0x3c0a	/* Line Status Shadow Register */
+								AD_RO32			z__RESERVED0[0xE00-0xC0B];
+		AD_RW32 IIRX;					//	0x3e00	/* Internal Memory address for DMA access with UART Receiver */
+		AD_RW32 IMRX;					//	0x3e01	/* Internal Memory modifier for DMA access with UART Receiver */
+		AD_RW32 CRX;					//	0x3e02	/* Word Count for DMA access with UART Receiver */
+		AD_RW32 CPRX;					//	0x3e03	/* Chain Point for DMA access with UART Receiver */
+		AD_RW32 RXCTL;					//	0x3e04	/* UART Receiver control register */
+		AD_RW32 RXSTAT;					//	0x3e05	/* UART Receiver status register */
+								AD_RO32			z__RESERVED1[0xF00-0xE06];
+		AD_RW32 IITX;					//	0x3f00	/* Internal Memory address for DMA access with UART Transmitter */
+		AD_RW32 IMTX;					//	0x3f01	/* Internal Memory modifier for DMA access with UART Transmitter */
+		AD_RW32 CTX;					//	0x3f02	/* Word Count for DMA access with UART Transmitter */
+		AD_RW32 CPTX;					//	0x3f03	/* Chain Point for DMA access with UART Transmitter */
+		AD_RW32 TXCTL;					//	0x3f04	/* UART Transmitter control register */
+		AD_RW32 TXSTAT;					//	0x3f05	/* UART Transmitter status register */
+	};
+
+	typedef S_SPI S_SPIB;
+
+	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	struct S_PORT
+	{
+		__forceinline void 	SET(u32 m) 			{ sysreg_bit_set(sysreg_FLAGS, 0); }
+		__forceinline void 	CLR(u32 m) 			{ sysreg_bit_clr(sysreg_FLAGS, 0);	}
+		__forceinline void 	NOT(u32 m) 			{ sysreg_bit_tgl(sysreg_FLAGS, 0);	}
+		__forceinline void 	WBIT(u32 m, bool c)	{ if (c) SET(m); else CLR(m);	}
+		__forceinline void 	BSET(byte b) 		{ SET(1UL<< b);					}
+		__forceinline void 	BCLR(byte b) 		{ CLR(1UL<< b);					}
+		__forceinline void 	BTGL(byte b) 		{ NOT(1UL<< b);					}
+
+		__forceinline bool 	TBSET(byte b) 		{ return sysreg_read(sysreg_FLAGS) & (1<<b); }
+		__forceinline bool 	TBCLR(byte b) 		{ return (sysreg_read(sysreg_FLAGS) & (1<<b)) == 0; }
+
+		__forceinline void 	DirSet(u32 m) 		{ sysreg_bit_set(sysreg_FLAGS, 0); }
+		__forceinline void 	DirClr(u32 m) 		{ sysreg_bit_clr(sysreg_FLAGS, 0); }
+
+		__forceinline void		SetFER(u32 m)		{  }
+		__forceinline void		ClrFER(u32 m)		{  }
+
+		__forceinline void		SetMUX(byte pin, byte v) { }
+
+		__forceinline void		ClearTriggerIRQ(u32 m)	{ /*((S_PINT*)(((u32)this & ~0x1FF)|(((u32)this & 0x1FF)<<1)|0x1000))->LATCH = m;*/ }
+	};
+
+	typedef S_PORT S_PIO;
+	
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -125,9 +217,13 @@ namespace HW
 	//			MKPID(UOTGHS, 40),	MKPID(TRNG, 41),	MKPID(EMAC, 42),	MKPID(CAN0, 43),	MKPID(CAN1, 44) };
 	//};
 
+	MK_PTR(SPI,		SPICTL		);
+	MK_PTR(SPIB,	SPICTLB		);
+	MK_PTR(PORT,	0			);
+	MK_PTR(PIO,		0			);
 
 
-	//inline void ResetWDT()		{ WDOG->Reset();	}
+	inline void ResetWDT()		{ *pWDTUNLOCK = 0xAD21AD21;  *pWDTCURCNT = 1; *pWDTUNLOCK = 0;	}
 	//inline void DisableWDT()	{ WDOG->Disable();	}
 
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

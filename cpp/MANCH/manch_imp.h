@@ -925,14 +925,15 @@ static __irq void ManTrmIRQ2()
 	{
 		case 0:	// 1-st sync imp 
 
+			data = manTB->data1;
+			len = manTB->len1;
+
 			#ifdef MAN_TRANSMIT_LENPTR
-				data = manTB->data1;
 				index = 0;
-				len = manTB->len1;
 				lenptr = (manTB->lenptr != 0) ? manTB->lenptr : &len;
 			#else
-				len = manTB->len1;
-				lenptr = &len;
+				//len = manTB->len1;
+				//lenptr = &len;
 			#endif
 
 			cmd = false;

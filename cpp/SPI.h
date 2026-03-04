@@ -36,6 +36,13 @@ typedef T_HW::S_SPI *SPIHWT;
 
 typedef T_HW::S_SPI *SPIHWT;
 
+#elif defined(__ADSP2148x__)
+
+#define SPI_NUM 2
+#define SPIMODE_MASK (CPHASE|CLKPL|MSBF)
+
+typedef T_HW::S_SPI *SPIHWT;
+
 #endif 
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -87,11 +94,25 @@ struct DSCSPI
 	#define NS2SPI(v)	(((v)*SCLK_MHz+SCLK_MHz/2)/1000)
 	#define BAUD2SPI(v) ((SCLK+(v))/((v)*2))
 
+#elif defined(__ADSP2148x__)
+
+	struct SPI_DSC_CS
+	{
+		//T_HW::S_PORT*	_PIO;
+		u16				_MASK;
+		u16				_BAUD;
+		byte			_MODE; // SPIM Mode [0...3]: bit0 - CPOL, bit1 - CPHA
+	};
+
+	#define US2SPI(v)	((v)*PCLK_MHz)
+	#define NS2SPI(v)	(((v)*PCLK_MHz+PCLK_MHz/2)/1000)
+	#define BAUD2SPI(v) ((PCLK+(v))/((v)*2))
+
 #endif
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#ifdef ADSP_BLACKFIN
+#if defined(ADSP_BLACKFIN) || defined(__ADSP21000__)
 class S_SPIM
 #else
 class S_SPIM : public USIC
@@ -195,7 +216,7 @@ protected:
 		const u32			_DSC_CS_LEN;
 		const u32 			_GEN_CLK;
 		u32					_csnum;
-#else
+	#else
 		//T_HW::S_PORT * const	_PORT_CS;
 		T_HW::S_PIO * const		_PIO_CS;
 		const u16 * const		_MASK_CS;
@@ -247,6 +268,35 @@ protected:
 	#elif defined __ADSPBF60x__
 		u32		_spimode;
 	#endif
+
+#elif defined(__ADSP2148x__)
+
+	static 	u32 			_busy_mask;
+	static 	u32 			_alloc_mask;
+
+	static	SPIHWT	const	_spi_hw[SPI_NUM];
+
+	const SPI_DSC_CS* const _DSC_CS;
+	const u32			_DSC_CS_LEN;
+	const u32 			_GEN_CLK;
+	u32					_csnum;
+
+	const byte				_num;
+	
+	SPIHWT					_hw;
+
+	List<DSCSPI>			_reqList;
+	DSCSPI*					_dsc;
+
+	enum STATE { ST_WAIT = 0, ST_WRITE, ST_READ, ST_STOP };
+
+	STATE _state;
+
+	u16		_baud;
+	u16		_ctl;
+	u16		_MASK_CS_ALL;
+
+	u32		_spimode;
 
 #else
 
@@ -351,6 +401,46 @@ public:
 
 	void ReadByteStart(u16 count);
 	byte ReadByteAsync() { while(_hw->STAT & SPI_RFE); return _hw->RFIFO.W; }
+	byte ReadByteSync(u16 count) { ReadByteStart(count); return ReadByteAsync(); }
+
+#elif defined(__ADSP2148x__)
+
+	S_SPIM(byte num, const SPI_DSC_CS* dcs, u32 dcslen, u32 gen_clk)
+		: _num(num), _DSC_CS(dcs), _DSC_CS_LEN(dcslen), _GEN_CLK(gen_clk),_dsc(0), _state(ST_WAIT), _spimode(0) {}
+
+	bool CheckWriteComplete()	{ return /*_DMATX.CheckComplete() &&*/ (_hw->STAT & (SPIF|TXS)) == SPIF; }
+	bool CheckReadComplete()	{ if (_hw->C == 0) { _hw->DMAC = 0; _hw->CTL = 0; return true; } else return false; }
+
+	void ChipSelect(byte num, u32 spimode, u16 baud)
+	{ 
+		const SPI_DSC_CS& dsc = _DSC_CS[_csnum = num];
+		_hw->BAUD = baud; 
+		_hw->CTL = _spimode = SPIEN|SPIMS|(spimode & SPIMODE_MASK); /*if (dsc._PIO != 0) dsc._PIO->CLR(dsc._MASK);*/ }
+
+	void ChipSelect(byte num)
+	{
+		const SPI_DSC_CS& dsc = _DSC_CS[_csnum = num];
+		_hw->BAUD = dsc._BAUD; 
+		_hw->CTL = _spimode = SPIEN|SPIMS|(dsc._MODE & SPIMODE_MASK);  
+		//if (dsc._PIO != 0) dsc._PIO->CLR(dsc._MASK);
+	}
+
+	void ChipDisable() { const SPI_DSC_CS& dsc = _DSC_CS[_csnum]; /*if (dsc._PIO != 0) dsc._PIO->SET(dsc._MASK);*/ _hw->CTL = TXFLSH|RXFLSH; _hw->DMAC = FIFOFLSH; }
+
+	//void ChipDisable()									{ _PIO_CS->SET(_MASK_CS_ALL);  }
+
+	//void SetMode(u16 mode) { _spimode = SPI_EN|SPI_MSTR|(mode & SPIMODE_MASK); }
+
+	void Disable()	 { _hw->CTL = TXFLSH|RXFLSH; _hw->DMAC = FIFOFLSH; }
+	void DisableTX() { _hw->CTL = TXFLSH|RXFLSH; _hw->DMAC = FIFOFLSH; }
+	void DisableRX() { _hw->CTL = TXFLSH|RXFLSH; _hw->DMAC = FIFOFLSH; }
+
+	void WriteByteSync(byte v)		{ WriteReadByte(v); }
+	void WriteByteAsync(byte v);
+	void WaitWriteByte()			{ while((_hw->STAT & (SPIF|TXS)) != SPIF); }
+
+	void ReadByteStart(u16 count);
+	byte ReadByteAsync() { while((_hw->STAT & RXS) == 0); return _hw->RX; }
 	byte ReadByteSync(u16 count) { ReadByteStart(count); return ReadByteAsync(); }
 
 #elif defined(CPU_SAME53)

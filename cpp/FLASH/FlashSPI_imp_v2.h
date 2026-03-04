@@ -18,7 +18,7 @@
 ////#error !!! Must defined flash type !!!
 //#define FLASH_AT25DF021
 //#endif
-#ifdef _ADI_COMPILER
+#if defined(_ADI_COMPILER) && !defined(__ADSP21000__)
 #define ADSP_CHECKFLASH
 #endif
 

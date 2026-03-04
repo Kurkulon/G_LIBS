@@ -32,6 +32,11 @@ SPIHWT const	S_SPIM::_spi_hw[SPI_NUM]	= { HW::SPI0, HW::SPI1, HW::SPI2			};
 //const byte		S_SPIM::_spi_pid[SPI_NUM]	= {	PID_DMA5_SPI0_RX_TX,	PID_DMA6_SPI1_RX_TX };
 SPIHWT const	S_SPIM::_spi_hw[SPI_NUM]	= { HW::SPI0, HW::SPI1 			};
 
+#elif defined(__ADSP2148x__)
+
+//const byte		S_SPIM::_spi_pid[SPI_NUM]	= {	PID_DMA5_SPI0_RX_TX,	PID_DMA6_SPI1_RX_TX };
+SPIHWT const	S_SPIM::_spi_hw[SPI_NUM]	= { HW::SPI, HW::SPIB 			};
+
 #endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -153,6 +158,47 @@ void S_SPIM::InitHW()
 	_hw->CLK = _baud;
 	_hw->CTL = _ctl;
 	_hw->STAT = ~0;
+
+#elif defined(__ADSP2148x__)
+
+	for (u32 i = 0; i < _DSC_CS_LEN; i++)
+	{
+		const SPI_DSC_CS &dsc = _DSC_CS[i]; 
+
+		//if (dsc._PIO != 0)
+		//{
+		//	dsc._PIO->DirSet(dsc._MASK); 
+		//	dsc._PIO->ClrFER(dsc._MASK); 
+		//	dsc._PIO->SET(dsc._MASK); 
+		//};
+	};
+
+	if (_num == 0)
+	{
+		//HW::PIOD->SetFER((PD0|PD1|PD2|PD3|PD4) & _MASK_SCK_MOSI_MISO_D2_D3);
+
+		//if (_MASK_SCK_MOSI_MISO_D2_D3 & PD0) HW::PIOD->SetMUX(0, 0);
+		//if (_MASK_SCK_MOSI_MISO_D2_D3 & PD1) HW::PIOD->SetMUX(1, 0);
+		//if (_MASK_SCK_MOSI_MISO_D2_D3 & PD2) HW::PIOD->SetMUX(2, 0);
+		//if (_MASK_SCK_MOSI_MISO_D2_D3 & PD3) HW::PIOD->SetMUX(3, 0);
+		//if (_MASK_SCK_MOSI_MISO_D2_D3 & PD4) HW::PIOD->SetMUX(4, 0);
+	}
+	else
+	{
+		//HW::PIOD->SetFER((PD5|PD14|PD13)	& _MASK_SCK_MOSI_MISO_D2_D3);
+		//HW::PIOE->SetFER((PE1|PE0)			& _MASK_SCK_MOSI_MISO_D2_D3);
+
+		//if (_MASK_SCK_MOSI_MISO_D2_D3 & PD5)	HW::PIOD->SetMUX(5,	0);
+		//if (_MASK_SCK_MOSI_MISO_D2_D3 & PD14)	HW::PIOD->SetMUX(14,0);
+		//if (_MASK_SCK_MOSI_MISO_D2_D3 & PD13)	HW::PIOD->SetMUX(13,0);
+		//if (_MASK_SCK_MOSI_MISO_D2_D3 & PE1)	HW::PIOE->SetMUX(1,	0);
+		//if (_MASK_SCK_MOSI_MISO_D2_D3 & PE0)	HW::PIOE->SetMUX(0,	0);
+	};
+
+	_hw->BAUD	= _baud;
+	_hw->CTL	= 0;
+	_hw->DMAC	= 0;
+	_hw->STAT	= ~0;
 
 #elif defined(CPU_SAME53)
 
@@ -1081,6 +1127,20 @@ void S_SPIM::ReadByteStart(u16 count)
 	_hw->TXCTL	= 0;
 	_hw->RWC	= count;
 	_hw->RXCTL	= RXCTL_REN|RXCTL_RTI|RXCTL_RWCEN;
+}
+
+#elif defined(__ADSP2148x__) //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void S_SPIM::ReadByteStart(u16 count)
+{
+	u32 temp; //while((_hw->STAT & SPI_RFE) == 0)	{ asm("%0 = W[%1];" : "=D" (temp) : "p" (&(_hw->RFIFO))); };
+
+	while((_hw->STAT & RXS) != 0) temp = _hw->RX;
+
+	//_hw->CTL	= SPI_EN|SPI_MSTR|(_spimode&SPIMODE_MASK);	
+	//_hw->TXCTL	= 0;
+	//_hw->RWC	= count;
+	//_hw->RXCTL	= RXCTL_REN|RXCTL_RTI|RXCTL_RWCEN;
 }
 
 #endif

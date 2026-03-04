@@ -43,18 +43,26 @@ target_name = $(targetcpu)_AFP
 
 !ifeq targetcpu BF592
 
+buildtool = ADSP_BLACKFIN
 cpu_opt		= -proc ADSP-BF592-A -si-revision 0.2
 loader_opt	=  
 
 !else ifeq targetcpu BF706
 
+buildtool = ADSP_BLACKFIN
 cpu_opt		= -proc ADSP-BF706 -si-revision 1.1
 loader_opt	= -bcode 14
 
 !else ifeq targetcpu BF607
 
+buildtool = ADSP_BLACKFIN
 cpu_opt		= -proc ADSP-BF607 -si-revision 0.2
 loader_opt	= -bcode 13
+
+!else ifeq targetcpu 21489
+
+buildtool = ADSP_SHARC
+cpu_opt = -proc ADSP-21489 -si-revision 0.2 
 
 !endif
 
@@ -94,6 +102,8 @@ startup_obj = $(objdir)\startup_BF592A.doj
 
 ####################################################################################################################################################################################################
 
+!ifeq buildtool ADSP_BLACKFIN
+
 asm_options = $(cpu_opt) -g -Wno-info -DADI_CCES
 
 ####################################################################################################################################################################################################
@@ -105,6 +115,21 @@ compiler_options = $(debug_compiler_options) -c -c++11 -g++ -g -absolute-path-de
 
 link_options = $(cpu_opt) -no-mem -flags-link -e,-MDADI_CCES,-MD__cplusplus,-MDNO_UTILITY_ROM -add-debug-libpaths -flags-link @$(objdir)\link_input.txt
   
+####################################################################################################################################################################################################
+
+!else ifeq buildtool ADSP_SHARC ####################################################################################################################################################################################################
+
+compiler_options = $(debug_compiler_options) -c -c++11 -g++ -g -structs-do-not-overlap -no-multiline -save-temps -path-output $(objdir) &
+	-double-size-32 -warn-protos -proc ADSP-21489 -si-revision 0.2 -DCPU_$(targetcpu) -Wterse -I$(incdir)
+
+#################################################-T main.ldf###################################################################################################################################################
+
+link_options = -proc ADSP-21489 -si-revision 0.2  -no-mem -flags-link -e,-MDADI_CCES,-MDNO_UTILITY_ROM -add-debug-libpaths -flags-link @$(objdir)\link_input.txt
+  
+####################################################################################################################################################################################################
+
+!endif
+
 ####################################################################################################################################################################################################
 
 !include $(objdir)\mkoutcpp
@@ -141,6 +166,8 @@ link_options = $(cpu_opt) -no-mem -flags-link -e,-MDADI_CCES,-MD__cplusplus,-MDN
 #
 ####################################################################################################################################################################################################
 
+!ifeq buildtool ADSP_BLACKFIN
+
 $(objdir)\$(target_name).ldr : $(target_name).dxe #$(initcode_name) -init $(initcode_name)
 	@"$(bindir)\elfloader" $(cpu_opt) $(loader_opt) -v -f binary -b SPI -o "$^@" -dmawidth 8 -width 8 $(objdir)\$(target_name).dxe 
 
@@ -170,4 +197,31 @@ $(target_name).dxe : $(modules_obj) $(libname)
 	@$(libdir)\easmbl.bat $(asm_options) -l $^*.lst  -o $^@ $[@	
 
 ####################################################################################################################################################################################################
+
+!else ifeq buildtool ADSP_SHARC
+
+$(objdir)\$(target_name).ldr : $(target_name).dxe 
+	@"$(bindir)\elfloader" $(cpu_opt) -v -bspislave -fBinary -hostwidth8 -o $@ $(objdir)\$(target_name).dxe 
+
+####################################################################################################################################################################################################
+#-Map "$(objdir)\$^&.xml" $(startup_obj)
+
+$(target_name).dxe : $(modules_obj) $(libname)
+	@echo Linking ...
+	@echo -Map "$(objdir)\$^&_$(buildtool).xml" > $(objdir)\link_input.txt
+	@"$(bindir)\cc21k" $(link_options) -o "$(objdir)\$^." $< 
+
+################################################################################################## 
+
+!include $(objdir)\mkoutdep
+
+####################################################################################################################################################################################################
+
+.cpp.doj: .AUTODEPEND
+	@echo Compiling $[. ...
+	@$(libdir)\ccsharc.bat $(compiler_options) -save-temps -path-output $(objdir) -i -o "$^@" $[@
+
+##################################################################################################
+
+!endif
 

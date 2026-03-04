@@ -13,7 +13,7 @@
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#pragma retain_name
+//#pragma retain_name
 char build_date[] __attribute__ ((used)) = "\n" "ADSP_AFP" "\n" __DATE__ "\n" __TIME__ "\n";
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -165,6 +165,106 @@ static void Init_PLL()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#elif defined(__ADSP2148x__)
+
+	#define PIO_MAINLOOP	HW::PIO
+	#define PIO_TST			HW::PIO
+
+	#define PIN_MAINLOOP	0
+	#define PIN_TST			2
+
+	#define MAINLOOP	(1UL<<PIN_MAINLOOP)
+	#define TST			(1UL<<PIN_TST)		
+
+	#define CLKIN_MHz			25
+
+	#define CLKIN_DIV			1	// 1, 2
+
+	#define PLL_MUL				16	// 1...128
+	#define PLLD_VALUE			0   // 0...3
+	#define CCLK_DIV			(1<<(PLLD_VALUE+1))  
+
+	#define VCO_CLK_MHz 		(CLKIN_MHz*PLL_MUL/CLKIN_DIV)
+	#define CCLK_MHz			(VCO_CLK_MHz/CCLK_DIV)
+	#define PCLK_MHz			(CCLK_MHz/2)
+
+	#if !((CLKIN_DIV == 1) || (CLKIN_DIV == 2))
+	#error CLKIN_DIV must be 1 or 2
+	#endif
+
+	#if (CLKIN_MHz < 10) || (CLKIN_MHz > 56)
+	#error CLKIN_MHz must be 10...56
+	#endif
+
+	#if (VCO_CLK_MHz < 200) || (VCO_CLK_MHz > 900)
+	#error VCO_CLK_MHz must be 200...900
+	#endif
+
+	#if (CCLK_MHz > 450)
+	#error CCLK_MHz must be <= 500
+	#endif
+
+	//#define VRCTL_VALUE         0x0000
+
+	#if CLKIN_DIV == 2
+	#define PMCTL_VALUE        (PLL_MUL|(PLLD_VALUE<<6)|INDIV|DIVEN)
+	#else
+	#define PMCTL_VALUE        (PLL_MUL|(PLLD_VALUE<<6)|DIVEN)
+	#endif
+
+	#define CCLK (CCLK_MHz*1000000)
+	#define PCLK (PCLK_MHz*1000000)
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	#define MS2PCLK(x) ((u64)((x)*PCLK_MHz*1000))
+	#define US2PCLK(x) ((u64)((x)*PCLK_MHz))
+	#define NS2PCLK(x) ((u64)(((x)*PCLK_MHz+500)/1000))
+
+	#define MS2CCLK(x) ((u64)((x)*CCLK_MHz*1000))
+	#define US2CCLK(x) ((u64)((x)*CCLK_MHz))
+	#define NS2CCLK(x) ((u64)(((x)*CCLK_MHz+500)/1000))
+
+	#define MS2CLK(x) MS2PCLK(x)
+	#define US2CLK(x) US2PCLK(x)
+	#define NS2CLK(x) NS2PCLK(x)
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static void Init_PLL()
+{
+	sysreg_write(sysreg_IMASKP, 0);
+	sysreg_write(sysreg_IRPTL, 0);
+	sysreg_write(sysreg_LIRPTL, 0);
+	sysreg_write(sysreg_IMASK, 0);
+	
+	__disable_irq();
+
+	//----- Init PLL ----------------------------------------
+	u32 i, pmctl;
+	
+	pmctl = *pPMCTL;
+	pmctl &= ~(PLLM63 | INDIV | PLLD16);
+	pmctl |= PMCTL_VALUE;
+	
+	*pPMCTL = pmctl;
+	
+	pmctl |= PLLBP;			   // Setting the Bypass bit
+	*pPMCTL = pmctl;		   // Putting the PLL into bypass mode
+	
+	for (i = 0; i < 4096; i++) NOP();	// Wait for around 4096 cycles for the pll to lock.
+		
+	pmctl = *pPMCTL;
+	pmctl &= ~PLLBP; // Clear Bypass Mode
+	*pPMCTL = pmctl;
+	
+	for (i = 0; i < 15; i++) NOP(); // Wait for around 15 cycles for the output dividers to stabilize.
+}
+
+#define INIT_PLL() Init_PLL()
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
 #endif // #elif defined(__ADSPBF60x__) //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -228,6 +328,12 @@ static S_SPIM	spi(2, HW::PIOB, SPI_CS_MASK, ArraySize(SPI_CS_MASK), SCLK);
 static SPI_DSC_CS spi_dsc_cs[1] = { { HW::PIOD, PD11, BAUD2SPI(BAUD_RATE), 0 } };
 
 static S_SPIM	spi(0, spi_dsc_cs, ArraySize(spi_dsc_cs), SCLK, PD0|PD1|PD2|PD3|PD4);
+
+#elif defined(CPU_21489)
+
+static SPI_DSC_CS spi_dsc_cs[1] = { { 0, BAUD2SPI(BAUD_RATE), 0 } };
+
+static S_SPIM	spi(0, spi_dsc_cs, ArraySize(spi_dsc_cs), PCLK);
 
 #endif
 

@@ -77,6 +77,12 @@
 
 	typedef T_HW::S_UART *USICHWT;
 
+#elif defined(__ADSP2148x__)
+
+#define USIC_NUM 2
+
+typedef T_HW::S_UART *USICHWT;
+
 #endif 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
