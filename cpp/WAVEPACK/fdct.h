@@ -28,7 +28,7 @@
 
 #include "types.h"
 
-#ifndef FDCT_FLOAT
+#ifndef FDCT_TYPEFLOAT
 
 #ifndef FDCT_DATA
 #define FDCT_DATA	i32
@@ -40,8 +40,8 @@
 
 #else
 
-#define FDCT_DATA float;
-#define FDCT_TRIG float;
+#define FDCT_DATA float
+#define FDCT_TRIG float
 
 #endif 
 

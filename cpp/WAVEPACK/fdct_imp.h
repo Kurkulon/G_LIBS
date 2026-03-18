@@ -44,7 +44,7 @@
 #endif 
 
 
-#ifndef FDCT_FLOAT
+#ifndef FDCT_TYPEFLOAT
 
 #ifndef FDCT_TRIGBITS
 #define FDCT_TRIGBITS 10
@@ -55,8 +55,8 @@
 
 #else
 
-typedef float FDCT_DATA;
-typedef float FDCT_TRIG;
+//typedef float FDCT_DATA;
+//typedef float FDCT_TRIG;
 
 #define FDCT_FLOAT(x) (x)
 #define FDCT_MULT(x) ((x)+0.5f)
@@ -112,7 +112,7 @@ bool FastDctLee_transform(FDCT_DATA vector[], u16 log2n)
 
 	forwardTransform_v3(vector, fdct_temp, len);
 
-	#ifndef FDCT_FLOAT
+	#ifndef FDCT_TYPEFLOAT
 		//for (u16 i = 0; i < len; i++) vector[i] >>= log2n-3;
 	#else
 		//for (u16 i = 0; i < len; i++) vector[i] /= len/8;
