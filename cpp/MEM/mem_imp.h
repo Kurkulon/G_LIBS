@@ -21,6 +21,14 @@ template <int L> List< MEMB<L> > MEMB<L>::_freeList;
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#if (SMALL_BUF_LEN > MEDIUM_BUF_LEN)
+#error  MEDIUM_BUF_LEN must be greater than SMALL_BUF_LEN
+#endif
+
+#if (MEDIUM_BUF_LEN > HUGE_BUF_LEN)
+#error  HUGE_BUF_LEN must be greater than MEDIUM_BUF_LEN
+#endif
+
 #define MEMBS MEMB<SMALL_BUF_LEN>
 #define MEMBM MEMB<MEDIUM_BUF_LEN>
 #define MEMBH MEMB<HUGE_BUF_LEN>

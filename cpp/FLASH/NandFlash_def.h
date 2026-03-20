@@ -89,6 +89,16 @@
 #define NAND_ECC_SPARE
 #endif
 
+#if NANDFLASH_IMP_VERSION >= 2
+
+	#ifndef HUGE_BUF_LEN
+		#error  Must defined HUGE_BUF_LEN
+	#endif
+
+#endif
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 //#define FRAM_SPI_MAINVARS_ADR 0
 //#define FRAM_SPI_SESSIONS_ADR 0x200
 //
@@ -283,11 +293,35 @@ __packed struct SpareArea
 	byte ecc_spare[3];
 
 	#if defined(NAND_ECC_PAGE) || defined(NAND_ECC_PAGEBUF)
+
 		byte ecc_page[NAND_PAGE_SIZE/NAND_ECC_LEN*3];
+
+		#if (HUGE_BUF_LEN < (NAND_PAGE_SIZE+64+NAND_PAGE_SIZE/NAND_ECC_LEN*3))
+		#error  HUGE_BUF_LEN must be greater then (NAND_PAGE_SIZE+43+3+NAND_PAGE_SIZE/NAND_ECC_LEN*3)
+		#endif
+
 	#elif defined(WIN32)
+
 		byte ecc_page[1];
+
+		#if (HUGE_BUF_LEN < (NAND_PAGE_SIZE+64))
+		#error  HUGE_BUF_LEN must be greater then (NAND_PAGE_SIZE+64)
+		#endif
+
 	#else
+
 		byte ecc_page[0];
+
+		#if (HUGE_BUF_LEN < (NAND_PAGE_SIZE+64))
+		#error  HUGE_BUF_LEN must be greater then (NAND_PAGE_SIZE+64)
+		#endif
+
+	#endif
+
+#else
+
+	#if defined(HUGE_BUF_LEN) && (HUGE_BUF_LEN < (NAND_PAGE_SIZE+64))
+	#error  HUGE_BUF_LEN must be greater then (NAND_PAGE_SIZE+43)
 	#endif
 
 #endif
