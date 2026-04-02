@@ -1258,7 +1258,7 @@ static bool UpdateSendVector()
 
 			if (tm.Check(200))
 			{
-				NandFlash_SendStatus(vecCount * (1<<22) / (size/1024), NANDFL_STAT_READ_VECTOR_IDLE);
+				NandFlash_SendStatus(vecCount * (1<<22) / (size/1024), (pause) ? NANDFL_STAT_PAUSE : NANDFL_STAT_READ_VECTOR_IDLE);
 			};
 
 			if (stop)
