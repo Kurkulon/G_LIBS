@@ -148,6 +148,10 @@ extern u32 NandFlash_ErrECC_Get();
 extern u32 NandFlash_CorrectedErrECC_Get();
 extern u32 NandFlash_ParityErrECC_Get();
 
+extern u32 NandFlash_Read_ErrECC_Get();
+extern u32 NandFlash_Read_CorrectedErrECC_Get();
+extern u32 NandFlash_Read_ParityErrECC_Get();
+
 
 //extern i64 FLASH_Empty_Size_Get();
 

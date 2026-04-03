@@ -3614,6 +3614,38 @@ u32 NandFlash_ParityErrECC_Get()
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+u32 NandFlash_Read_ErrECC_Get()
+{
+#ifdef NAND_ECC_CHECK
+	return read.eccErrCount;
+#else
+	return 0;
+#endif
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+u32 NandFlash_Read_CorrectedErrECC_Get()
+{
+#ifdef NAND_ECC_CHECK
+	return read.eccCorrErrCount;
+#else
+	return 0;
+#endif
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+u32 NandFlash_Read_ParityErrECC_Get()
+{
+#ifdef NAND_ECC_CHECK
+	return read.eccParityErrCount;
+#else
+	return 0;
+#endif
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // удалить 
 //bool FLASH_Erase_Full()
 //{

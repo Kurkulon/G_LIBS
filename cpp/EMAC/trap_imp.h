@@ -1299,6 +1299,8 @@ static bool UpdateSendVector()
 				{
 					mb->len = 0;
 
+					TRAP_TRACE_PrintString("ErrECC = %u, CorrectedErrECC = %u, ParityErrECC = %u", NandFlash_Read_ErrECC_Get(), NandFlash_Read_CorrectedErrECC_Get(), NandFlash_Read_ParityErrECC_Get());
+
 					NandFlash_SendStatus(~0, NANDFL_STAT_READ_VECTOR_READY);
 
 					stop = false;
