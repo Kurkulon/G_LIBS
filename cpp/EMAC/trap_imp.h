@@ -1212,6 +1212,9 @@ static bool UpdateSendVector()
 
 	static NandFileDsc *si = 0;
 
+	static u32 maxVectorCount = 0;
+	static u32 crcErrCount = 0;
+
 	__packed struct TRP { EthUdp eu; TrapVector tv; byte data[VECTOR_IP_MTU - sizeof(UdpHdr) - sizeof(TrapVector)]; };
 	__packed struct FR  { EthIp  ei; byte data[VECTOR_IP_MTU]; };
 
@@ -1242,6 +1245,8 @@ static bool UpdateSendVector()
 
 				vecCount = 0;
 				count = 0;
+				maxVectorCount = 0;
+				crcErrCount = 0;
 
 				NandFlash_SendStatus(0, NANDFL_STAT_READ_VECTOR_IDLE);
 
@@ -1299,7 +1304,8 @@ static bool UpdateSendVector()
 				{
 					mb->len = 0;
 
-					TRAP_TRACE_PrintString("ErrECC = %u, CorrectedErrECC = %u, ParityErrECC = %u", NandFlash_Read_ErrECC_Get(), NandFlash_Read_CorrectedErrECC_Get(), NandFlash_Read_ParityErrECC_Get());
+					TRAP_TRACE_PrintString("Total vect: %u, Lost vect: %u, CRC Err vect: %u, ErrECC = %u, CorrectedErrECC = %u, ParityErrECC = %u", 
+											maxVectorCount, maxVectorCount - count, crcErrCount, NandFlash_Read_ErrECC_Get(), NandFlash_Read_CorrectedErrECC_Get(), NandFlash_Read_ParityErrECC_Get());
 
 					NandFlash_SendStatus(~0, NANDFL_STAT_READ_VECTOR_READY);
 
@@ -1310,6 +1316,8 @@ static bool UpdateSendVector()
 				}
 				else // if (flrb.hdr.crc == 0)
 				{
+					maxVectorCount =flrb.vectorCount;
+
 					TRP &et = *((TRP*)mb->GetDataPtr());
 
 					TrapVector &trap = et.tv;
@@ -1357,7 +1365,9 @@ static bool UpdateSendVector()
 
 						if (flrb.crc != 0)
 						{
-							TRAP_TRACE_PrintString("Send vector %u CRC Error !!!", count);
+							crcErrCount++;
+
+							//TRAP_TRACE_PrintString("Send vector %u CRC Error !!!", count);
 						};
 
 						i = 1;
@@ -1421,8 +1431,10 @@ static bool UpdateSendVector()
 						if (flrb.crc != 0)
 						{
 							mb->len = 0;
+
+							crcErrCount++;
 							
-							TRAP_TRACE_PrintString("Send vector %u CRC Error !!!", count);
+							//TRAP_TRACE_PrintString("Send vector %u CRC Error !!!", count);
 						}
 						else
 						{

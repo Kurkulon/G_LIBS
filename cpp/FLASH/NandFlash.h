@@ -74,6 +74,8 @@ struct NANDFLRB
 	bool	useAdr;
 	u64		adr;
 
+	u32		vectorCount; // Значение из SpareArea
+
 	NandVecData::Hdr hdr;
 
 	u16		maxLen;

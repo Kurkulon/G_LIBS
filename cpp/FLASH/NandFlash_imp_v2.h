@@ -188,7 +188,7 @@ static ListRef<MB> writeFlBuf;
 static List<NANDFLRB> freeFlRdBuf;
 static List<NANDFLRB> readFlBuf;
 
-struct PageBuffer { /*PageBuffer *next;*/ u32 page; u32 prevPage; byte data[NAND_PAGE_SIZE]; SpareArea spare; };
+struct PageBuffer { /*PageBuffer *next;*/ bool spareValid; u32 page; u32 prevPage; byte data[NAND_PAGE_SIZE]; SpareArea spare; };
 
 //static PageBuffer _pageBuf[3];
 
@@ -1693,8 +1693,9 @@ struct ReadSpare
 	u32			blockTryCount;
 	u32			pageTryCount;
 	u32			badBlocks[8];
-	u16			badPages;
-	u16			badSpare;
+	u32			badPages;
+	u32			badSpare;
+	bool		spareValid;
 
 	u16			tryCount;
 
@@ -1855,7 +1856,14 @@ bool ReadSpare::Update()
 
 					if (spare->v1.crc == 0 && spare->v1.rawPage != rp) __breakpoint(0);
 #endif
-					if (spare->v1.fpn != 0xFFFFFFFF && spare->v1.vectorCount != 0xFFFFFFFF && spare->v1.crc != 0) badSpare++;
+					if (spare->v1.fpn != 0xFFFFFFFF && spare->v1.vectorCount != 0xFFFFFFFF)
+					{
+						if (spare->v1.crc != 0) spareValid = false, badSpare++; else spareValid = true;
+					}
+					else
+					{
+						spareValid = false;
+					};
 
 					state = WAIT;
 
@@ -1903,6 +1911,7 @@ struct Read2
 #endif
 
 	u32 	initFlushSparePage;
+	u32		badVecHdrCount;
 
 #ifdef NAND_ECC_PAGEBUF
 	Ptr<MB> eccPB;
@@ -1952,6 +1961,8 @@ bool Read2::Start()
 		{ 
 			rd.SetRawAdr(curRdBuf->adr); 
 			FlushPageBuffer(rd.GetRawPage()); 
+
+			badVecHdrCount = 0;
 
 			state = FLUSH_PAGES;
 		}
@@ -2025,8 +2036,9 @@ void Read2::UpdatePage()
 			{
 				PageBuffer &p = *((PageBuffer*)rdPB->GetDataPtr());
 
-				p.prevPage	= prevSparePage;
-				p.page		= sparePage = padr.GetRawPage();
+				p.spareValid	= readSpare.spareValid;
+				p.prevPage		= prevSparePage;
+				p.page			= sparePage = padr.GetRawPage();
 
 #ifdef NAND_ECC_CHECK
 				eccErrCount			+= readSpare.eccErrCount;
@@ -2289,6 +2301,8 @@ bool Read2::Update()
 				rd.raw += c;
 				rd_data += c;
 				curRdBuf->len += c;
+
+				if (p.spareValid) curRdBuf->vectorCount = p.spare.v1.vectorCount;
 
 				state = READ_PAGE;
 			};
