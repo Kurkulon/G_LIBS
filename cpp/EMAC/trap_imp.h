@@ -1341,19 +1341,18 @@ static bool UpdateSendVector()
 					vecCount += flrb.hdr.dataLen;
 					count += 1;
 
-					ipID = GetIpID(); 
-
-					et.eu.iph.id = ipID;
-					et.eu.iph.off = 0;
-
 					mb->len = sizeof(et.eu) + sizeof(et.tv) + flrb.len;
 
 					if (flrb.hdr.dataLen > flrb.maxLen)
 					{
+						ipID = GetIpID(); 
+
+						et.eu.iph.id = ipID;
+						et.eu.iph.off = 0x2000;
+
 						fragOff = mb->len - sizeof(EthIp); //flrb.maxLen;
 						fragLen = flrb.hdr.dataLen - flrb.maxLen;
 
-						et.eu.iph.off |= 0x2000;
 
 						et.eu.udp.len = sizeof(UdpHdr) + sizeof(trap) + flrb.hdr.dataLen - 2;
 
@@ -1361,6 +1360,8 @@ static bool UpdateSendVector()
 					}
 					else
 					{
+						et.eu.iph.off = 0;
+
 						mb->len -=  (flrb.crc != 0) ? flrb.len : 2;
 
 						if (flrb.crc != 0)
