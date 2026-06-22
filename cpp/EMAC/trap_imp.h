@@ -1302,7 +1302,7 @@ static bool UpdateSendVector()
 			{
 				if (flrb.len == 0 || flrb.hdr.session != ses || vecCount > flashFullSize)
 				{
-					mb->len = 0;
+					mb.Free();
 
 					TRAP_TRACE_PrintString("Total vect: %u, Lost vect: %u, CRC Err vect: %u, ErrECC = %u, CorrectedErrECC = %u, ParityErrECC = %u", 
 											maxVectorCount, maxVectorCount - count, crcErrCount, NandFlash_Read_ErrECC_Get(), NandFlash_Read_CorrectedErrECC_Get(), NandFlash_Read_ParityErrECC_Get());
