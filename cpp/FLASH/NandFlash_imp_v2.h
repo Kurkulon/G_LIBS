@@ -217,6 +217,7 @@ static u32 lastSessionPage = ~0;
 static bool cmdCreateNextFile = false;
 static bool cmdFullErase = false;
 static bool cmdSendSession = false;
+static bool cmdFindSession = false;
 
 static bool writeFlashEnabled = false;
 static bool flashFull = false;
@@ -343,7 +344,8 @@ enum NandState
 	NAND_STATE_FULL_ERASE_START,
 	NAND_STATE_FULL_ERASE_0,
 	NAND_STATE_CREATE_FILE,
-	NAND_STATE_SEND_SESSION
+	NAND_STATE_SEND_SESSION,
+	NAND_STATE_FIND_SESSION
 };
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -2663,7 +2665,7 @@ static void InitSessionsNew()
 		};
 	};
 
-	bool c = false;
+	//bool c = false;
 
 	flashUsedSize = 0;
 	flashStartAdr = write.wr.GetRawAdr();
@@ -2678,12 +2680,12 @@ static void InitSessionsNew()
 			//f.size = ???;
 
 			firstSessionValid = false;
-			c = true;
+			//c = true;   
 		}
-		else if (c)
-		{
-			f.size = 0;
-		}
+		//else if (c)
+		//{
+		//	f.size = 0;
+		//}
 		else if (f.size != 0)
 		{
 			FLADR adr(f.startPage);
@@ -2717,24 +2719,35 @@ static void InitSessionsNew()
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-bool NandFlash_AddSessionInfo(NandFileDsc *dsc)
+bool NandFlash_AddSessionInfo(NandFileDsc *dsc, NandFileDsc *ss)
 {
 	if (dsc == 0) return false;
 
-	if (NandFlash_GetSessionInfo(dsc->session, 0) != 0) return false;
+	//if (ss == 0) ss = NandFlash_GetSessionInfo(dsc->session, 0);
 
-	u16 ind = nvv.index;
-
-	for (u16 i = 128; i > 0; i--)
+	if (ss != 0)
 	{
-		NandFileDsc &s = nvsi[ind].f;
+		if (ss->size != 0) return false;
 
-		if (s.size == 0) { nvsi[ind].f = *dsc; return true; };
+		*ss = *dsc;
 
-		ind = (ind-1)&127;
+		return true;
+	}
+	else
+	{
+		u16 ind = nvv.index;
+
+		for (u16 i = 128; i > 0; i--)
+		{
+			NandFileDsc &s = nvsi[ind].f;
+
+			if (s.size == 0) { nvsi[ind].f = *dsc; return true; };
+
+			ind = (ind-1)&127;
+		};
 	};
 
-	return 0;
+	return false;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -2806,7 +2819,7 @@ static bool UpdateBlackBoxSendSessions()
 	{
 		case 0: // Ќайти последний не битый блок с векторами
 
-			if (cmdSendSession)
+			if (cmdSendSession || cmdFindSession)
 			{
 				prgrss = 0;
 
@@ -3051,13 +3064,13 @@ static bool UpdateBlackBoxSendSessions()
 			dsc.flags		= 0;
 			dsc.SetErased();
 
-			if (sd != 0) dsc.flags = sd->flags;
+			if (sd != 0 && sd->size != 0) dsc.flags = sd->flags;
 
 			if (TRAP_MEMORY_SendSession(sendedFileNum = findFileNum, xsize, findFileStartAdr, start_rtc, stop_rtc, dsc.flags))
 			{
 				if (firstSessionValid && sendedFileNum == firstSessionNum) firstSessionSended = true;
 
-				if (sd == 0)
+				if (sd == 0 || sd->size == 0)
 				{
 					dsc.session		= findFileNum;
 					dsc.size		= xsize;
@@ -3069,7 +3082,7 @@ static bool UpdateBlackBoxSendSessions()
 					adr.SetRawAdr(findFileEndAdr);
 					dsc.lastPage	= adr.GetRawPage();
 
-					NandFlash_AddSessionInfo(&dsc);
+					NandFlash_AddSessionInfo(&dsc, sd);
 				};
 
 				if (count == 0 || rd.CheckOverflow())
@@ -3137,6 +3150,7 @@ static bool UpdateBlackBoxSendSessions()
 			if (TRAP_TRACE_PrintString("NAND chip mask: 0x%02hX; Bad Blocks: %lu, %lu, %lu, %lu, %lu, %lu, %lu, %lu", nandSize.mask, bb[0], bb[1], bb[2], bb[3], bb[4], bb[5], bb[6], bb[7]))
 			{
 				cmdSendSession = false;
+				cmdFindSession = false;
 
 				state = 0;
 			};
@@ -3159,6 +3173,13 @@ static bool UpdateBlackBoxSendSessions()
 void NandFlash_StartSendSession()
 {
 	cmdSendSession = true;
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void NandFlash_StartFindSession()
+{
+	cmdFindSession = true;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -3370,6 +3391,13 @@ void NAND_Idle()
 				break;
 			};
 
+			if (cmdFindSession)
+			{
+				nandState = NAND_STATE_FIND_SESSION;
+
+				break;
+			};
+
 			if (write.Start())
 			{
 				nandState = NAND_STATE_WRITE_START;
@@ -3491,6 +3519,17 @@ void NAND_Idle()
 
 					nandState = NAND_STATE_WAIT;
 				};
+			};
+
+			break;
+
+		case NAND_STATE_FIND_SESSION:	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+			if (!UpdateBlackBoxSendSessions())
+			{
+				blackBoxCount = 0;
+
+				nandState = NAND_STATE_WAIT;
 			};
 
 			break;

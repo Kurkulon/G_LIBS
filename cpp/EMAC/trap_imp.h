@@ -525,6 +525,45 @@ bool TRAP_MEMORY_SendSession(u16 session, i64 size, i64 last_adress, RTC_type st
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+bool TRAP_MEMORY_FindSession(u16 session, i64 size, i64 last_adress, RTC_type start_rtc, RTC_type stop_rtc, byte flags)
+{
+	Ptr<MB> mb(AllocMemBuffer(sizeof(EthTrap)));
+
+	if (!mb.Valid()) return false;
+
+	EthTrap &et = *((EthTrap*)mb->GetDataPtr());
+
+	TrapSession &trap = (TrapSession&)et.trap;
+
+	MakePacketHeaders(&trap.hdr, TRAP_PACKET_NO_NEED_ASK, TRAP_PACKET_NO_ASK, TRAP_MEMORY_DEVICE);
+
+	trap.hdr.cmd = TRAP_MEMORY_COMMAND_SESFIND;
+
+	trap.si.session			= session;
+	trap.si.size			= size;
+	trap.si.start_rtc		= start_rtc;
+	trap.si.stop_rtc		= stop_rtc;
+
+#if TRAP_PACKET_VERSION >= 5
+	trap.si.start_adress	= last_adress;
+	trap.si.last_adress		= last_adress+size;
+#else
+	trap.si.last_adress		= last_adress;
+#endif
+
+	trap.si.flags			= flags;
+
+	mb->len = sizeof(EthUdp) + sizeof(trap);
+
+	SendTrap(mb);
+
+	if (__trace) { TRAP_TRACE_PrintString("TRAP_MEMORY_FindSession ses=%5hu, size=%02X %08X, adr=%02X %08X", session, (u32)(size>>32), (u32)size, (u32)(last_adress>>32), (u32)(last_adress)); };
+
+	return true;
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 //static bool TRAP_MEMORY_SendLastSession(const SessionInfo *si)
 //{
 //	return TRAP_MEMORY_SendSession(si->session, si->size, si->last_adress, si->start_rtc, si->stop_rtc, si->flags);
@@ -769,6 +808,20 @@ void TRAP_HandleRxData(Ptr<MB> &mb)
 						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_MEMORY_DEVICE, TrapRxCounter);
 
 						NandFlash_StartSendSession();
+
+						//TRAP_MEMORY_SendLastSession(GetLastSessionInfo());
+						//TRAP_MEMORY_SendStatus(-1, NANDFL_STAT_READ_SESSION_READY);
+
+//						TRAP_MEMORY_SendNullSession();
+
+//						Mode_Ethernet_Flash_Read_Session_Start();
+						break;
+
+					case TRAP_MEMORY_COMMAND_FIND_SESSION_START:
+
+						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_MEMORY_DEVICE, TrapRxCounter);
+
+						NandFlash_StartFindSession();
 
 						//TRAP_MEMORY_SendLastSession(GetLastSessionInfo());
 						//TRAP_MEMORY_SendStatus(-1, NANDFL_STAT_READ_SESSION_READY);

@@ -106,11 +106,12 @@ __packed struct NandFileDsc
 
 extern MB*			NandFlash_AllocWB(u32 minLen);
 extern NANDFLRB*	NandFlash_AllocRB();
-extern void			NandFlash_FreeRB(NANDFLRB* b);
-extern bool			NandFlash_RequestRead(NANDFLRB* b);
-extern bool			NandFlash_RequestWrite(Ptr<MB> &mb, u16 devID, bool updateCRC);
+extern void		NandFlash_FreeRB(NANDFLRB* b);
+extern bool		NandFlash_RequestRead(NANDFLRB* b);
+extern bool		NandFlash_RequestWrite(Ptr<MB> &mb, u16 devID, bool updateCRC);
 inline u16			NandFlash_GetDeviceID() { extern u16 deviceID; return deviceID; }
-extern void			NandFlash_StartSendSession();
+extern void		NandFlash_StartSendSession();
+extern void		NandFlash_StartFindSession();
 extern NandFileDsc* NandFlash_GetSessionInfo(u16 session, u64 adr);
 
 extern void NAND_Idle();

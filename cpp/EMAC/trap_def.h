@@ -479,6 +479,8 @@ enum { TRAP_MEMORY_COMMAND_INFO = ('T'<<8) + 'I' };
 		i64 size_used;
 	} TRAP_MEMORY_info_type;	
 enum { TRAP_MEMORY_COMMAND_READ_SESSION_START = ('E'<<8) + 'S' };
+enum { TRAP_MEMORY_COMMAND_FIND_SESSION_START = ('F'<<8) + 'S' };
+enum { TRAP_MEMORY_COMMAND_SESFIND = ('T'<<8) + 'F' };
 enum { TRAP_MEMORY_COMMAND_SESSION = ('T'<<8) + 'E' };
 	typedef struct	__attribute__ ((packed))
 	{

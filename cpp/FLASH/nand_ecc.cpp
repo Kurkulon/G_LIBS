@@ -659,7 +659,7 @@ void Nand_ECC_Corr(byte* dat, u16 len, u16 blockLen, const byte* read_ecc, u32 *
 		{
 
 		}
-		else if ((byte)(s.b8[0] ^ s.b8[1]) == 0xFF && ((s.b8[2] ^ (s.b8[2] >> 1)) & 0x54) == 0x54)
+		else if ((byte)(s.b8[0] ^ s.b8[1]) == 0xFF && ((s.b8[2] ^ (s.b8[2] >> 1)) & 0x54) == 0x54 && s.b8[0] < count)
 		{
 			RX bitnum;
 
