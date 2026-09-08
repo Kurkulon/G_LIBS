@@ -22,8 +22,8 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #ifdef __CC_ARM
-	#pragma O3
-	#pragma Otime
+	//#pragma O3
+	//#pragma Otime
 #endif
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1268,6 +1268,12 @@ static bool UpdateSendVector()
 	static u32 maxVectorCount = 0;
 	static u32 crcErrCount = 0;
 
+	#ifdef TRAP_VEC_CHECK_CRC
+	const u16 CRC_SIZE = 2;
+	#else
+	const u16 CRC_SIZE = 0;
+	#endif
+
 	__packed struct TRP { EthUdp eu; TrapVector tv; byte data[VECTOR_IP_MTU - sizeof(UdpHdr) - sizeof(TrapVector)]; };
 	__packed struct FR  { EthIp  ei; byte data[VECTOR_IP_MTU]; };
 
@@ -1369,7 +1375,7 @@ static bool UpdateSendVector()
 				}
 				else // if (flrb.hdr.crc == 0)
 				{
-					maxVectorCount =flrb.vectorCount;
+					maxVectorCount = flrb.vectorCount;
 
 					TRP &et = *((TRP*)mb->GetDataPtr());
 
@@ -1385,7 +1391,7 @@ static bool UpdateSendVector()
 
 #if TRAP_PACKET_VERSION >= 5
 					trap.tx_size	= 0;
-					trap.rx_size	= flrb.hdr.dataLen-2;
+					trap.rx_size	= flrb.hdr.dataLen - CRC_SIZE;
 #endif
 
 #if TRAP_PACKET_VERSION >= 7
@@ -1407,7 +1413,7 @@ static bool UpdateSendVector()
 						fragLen = flrb.hdr.dataLen - flrb.maxLen;
 
 
-						et.eu.udp.len = sizeof(UdpHdr) + sizeof(trap) + flrb.hdr.dataLen - 2;
+						et.eu.udp.len = sizeof(UdpHdr) + sizeof(trap) + flrb.hdr.dataLen - CRC_SIZE;
 
 						i = 3;
 					}
@@ -1415,7 +1421,9 @@ static bool UpdateSendVector()
 					{
 						et.eu.iph.off = 0;
 
-						mb->len -=  (flrb.crc != 0) ? flrb.len : 2;
+						#ifdef TRAP_VEC_CHECK_CRC
+							mb->len -= (flrb.crc != 0) ? 0/*flrb.len*/ : CRC_SIZE;
+						#endif
 
 						if (flrb.crc != 0)
 						{
@@ -1482,18 +1490,22 @@ static bool UpdateSendVector()
 					}
 					else 
 					{
-						if (flrb.crc != 0)
-						{
-							mb->len = 0;
+							if (flrb.crc != 0)
+							{
+								#ifdef TRAP_VEC_CHECK_CRC
+									//mb->len = 0;
+								#endif
 
-							crcErrCount++;
+								crcErrCount++;
 							
-							//TRAP_TRACE_PrintString("Send vector %u CRC Error !!!", count);
-						}
-						else
-						{
-							mb->len -= 2;
-						};
+								//TRAP_TRACE_PrintString("Send vector %u CRC Error !!!", count);
+							}
+							else
+							{
+								#ifdef TRAP_VEC_CHECK_CRC
+									mb->len -= CRC_SIZE;
+								#endif
+							};
 
 						i = 1;
 					};
@@ -1510,6 +1522,8 @@ static bool UpdateSendVector()
 
 #endif
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#define TEST_TRAP_VEC_SIZE 1400
 
 static bool UpdateSendVector_Dlya_Vova()
 {
@@ -1554,7 +1568,7 @@ static bool UpdateSendVector_Dlya_Vova()
 
 				//si = NandFlash_GetSessionInfo(ses, adr);
 
-				size = 20000000;
+				size = 100000;
 
 				vecCount = 0;
 
@@ -1611,7 +1625,7 @@ static bool UpdateSendVector_Dlya_Vova()
 
 #if TRAP_PACKET_VERSION >= 5
 					trap.tx_size	= 0;
-					trap.rx_size	= 1000;
+					trap.rx_size	= TEST_TRAP_VEC_SIZE;
 #endif
 
 #if TRAP_PACKET_VERSION >= 7
@@ -1684,9 +1698,9 @@ static bool UpdateSendVector_Dlya_Vova()
 					et.data[0] = 0x40;
 					et.data[1] = 0xAD;
 
-					mb->len = sizeof(et.eu) + sizeof(et.tv) + 1000;
+					mb->len = sizeof(et.eu) + sizeof(et.tv) + TEST_TRAP_VEC_SIZE;
 
-					SendTrap(mb);
+					SendFragTrap(mb);
 
 					//i++;
 				};

@@ -143,6 +143,7 @@ u16 reg_PHYCON1 = 0;
 static byte RxBufIndex = 0;
 static byte TxBufIndex = 0;
 static byte TxFreeIndex = 0;
+static byte TxBufLen = 0;
 
 enum	StateEM { LINKING, CONNECTED };	
 
@@ -290,6 +291,7 @@ static Transmit_Desc* GetTxDesc()
 	{
 		p = &td;
 		TxBufIndex = (td.ChkWrap()) ? 0 : TxBufIndex + 1;
+		TxBufLen += 1;
 	};
 
 	return p;
@@ -312,6 +314,8 @@ static void FreeTxDesc()
 		TxFreeIndex = (td.ChkWrap()) ? 0 : TxFreeIndex + 1;
 
 		if (__debug && TxFreeIndex >= ArraySize(Tx_Desc)) __breakpoint(0);
+
+		TxBufLen -= 1;
 	};
 }
 
@@ -466,7 +470,7 @@ bool TransmitFragIp(Ptr<MB> &mb)
 {
 	if (!mb.Valid() || mb->len < sizeof(EthIp))	return false;
 
-	EthIp &b = *((EthIp*)mb->GetDataPtr());
+	EthUdp &b = *((EthUdp*)mb->GetDataPtr());
 
 	b.eth.protlen = SWAP16(PROT_IP);
 
@@ -912,25 +916,30 @@ static void UpdateTransmit()
 
 	static Transmit_Desc *dsc = 0;
 
+	//static CTM32 ctm;
+
 	switch (i)
 	{
 		case 0:
 
-			buf = txEthList.Get();
+			//if (ctm.Check(US2CTM(200)))
+			{
+				buf = txEthList.Get();
 
-			if (buf.Valid())
-			{
-				i += 1;
-			}
-			else
-			{
-				FreeTxDesc();
+				if (buf.Valid())
+				{
+					i += 1;
+				}
+				else
+				{
+					FreeTxDesc();
+				};
 			};
 
 			break;
 
 		case 1:
-
+			
 			if ((dsc = GetTxDesc()) != 0)
 			{
 				dsc->SetAdr(buf->GetDataPtr(), buf->len);
@@ -972,6 +981,10 @@ static void UpdateTransmit()
 			break;
 
 		case 2:
+
+			#ifdef CPU_SAME53	
+				if ((HW::GMAC->TSR & (TSR_TXGO|TSR_TXCOMP)) != TSR_TXCOMP) break;
+			#endif
 
 			FreeTxDesc();
 
@@ -1104,7 +1117,7 @@ bool InitEMAC()
 		rx_descr_init ();
 		tx_descr_init ();
 
-		HW::GMAC->DCFGR = GMAC_RXBMS_FULL|GMAC_DRBS(ETH_RX_DRBS)|GMAC_FBLDO_INCR4|GMAC_TXPBMS|GMAC_TXCOEN; // DMA Receive Buffer Size 512 bytes
+		HW::GMAC->DCFGR = GMAC_RXBMS_FULL|GMAC_DRBS(ETH_RX_DRBS)|GMAC_FBLDO_INCR4|GMAC_TXPBMS/*|GMAC_TXCOEN*/; // DMA Receive Buffer Size 512 bytes
 
 		/* The sequence write GMAC_SA1L and write GMAC_SA1H must be respected. */
 		HW::GMAC->SA[0].B = hwAdr.B;
