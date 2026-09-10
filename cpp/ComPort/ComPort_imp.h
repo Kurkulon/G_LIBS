@@ -385,11 +385,24 @@ bool ComPort::Connect(CONNECT_TYPE ct, dword speed, byte parity, byte stopBits)
 		switch (ct)
 		{
 			case ASYNC:
+			{
+				_CTRLA = USART_MODE_INT_CLK|_TXPO|_RXPO|USART_DORD;
+				
+				u32 baud = (_GEN_CLK+speed/2) / speed;
 
-				_CTRLA = USART_MODE_INT_CLK|_TXPO|_RXPO|USART_DORD|USART_SAMPR_8x_ARITH;
-				_BaudRateRegister = BoudToPresc(speed);
+				if (baud > 0xFFFF) 
+				{
+					_CTRLA |= USART_SAMPR_8x_ARITH;
+					_BaudRateRegister = BoudToPresc(speed);
+				}
+				else
+				{
+					_CTRLA |= USART_SAMPR_8x_FRACT;
+					_BaudRateRegister = (baud>>3)|(baud<<13);
+				};
 
 				break;
+			};
 
 			case SYNC_M:
 
