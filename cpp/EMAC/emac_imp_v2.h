@@ -158,6 +158,7 @@ u32 reqIpCount = 0;
 u32 reqUdpCount = 0;
 u32 reqIcmpCount = 0;
 u32 rxCount = 0;
+u32 txErrCount = 0;
 //u32 countBNA = 0;
 //u32 countREC = 0;
 //u32 countRXOVR = 0;
@@ -221,6 +222,7 @@ void EnablePHY()	{ PIO_RESET_PHY->BSET(PIN_RESET_PHY); }
 			u16 ResultPHY() { return HW::GMAC->MAN; }
 	inline	bool CheckStatusIP(u32 stat) { return (stat & RD_IP_CHECK); }
 	inline 	bool CheckStatusUDP(u32 stat) { return (stat & RD_IP_CHECK) == RD_IP_UDP_OK; }
+	inline 	bool CheckTxComp() { return (HW::GMAC->TSR & (TSR_TXGO|TSR_TXCOMP)) == TSR_TXCOMP; }
 	inline	void ResumeReceiveProcessing() {}
 
 #elif defined(CPU_XMC48)
@@ -287,7 +289,7 @@ static Transmit_Desc* GetTxDesc()
 	Transmit_Desc *p = 0;
 	Transmit_Desc &td = Tx_Desc[TxBufIndex];
 
-	if (td.ChkFree())
+	if (TxBufLen < (NUM_TX_DSC-1) && td.ChkFree())
 	{
 		p = &td;
 		TxBufIndex = (td.ChkWrap()) ? 0 : TxBufIndex + 1;
@@ -303,9 +305,13 @@ static void FreeTxDesc()
 {
 	Transmit_Desc &td = Tx_Desc[TxFreeIndex];
 
-	if (td.ChkTransmit())
+	if ((TxBufLen > 1 /*|| CheckTxComp()*/) && td.ChkTransmit() && Tx_MB[TxFreeIndex].Valid())
 	{
+		//if (__debug && !Tx_MB[TxFreeIndex].Valid()) __breakpoint(0); 
+
 		td.Free();
+
+		if (td.ChkError()) txErrCount++; 
 
 		if (__debug && !HW::RamCheck(td.GetAdr())) __breakpoint(0); 
 
@@ -507,7 +513,7 @@ bool TransmitUdp(Ptr<MB> &mb)
 
 bool TransmitFragUdp(Ptr<MB> &mb, u16 src, u16 dst)
 {
-	if (!mb.Valid() || mb->len < sizeof(EthUdp)) return false;
+	if (!mb.Valid() || mb->len < sizeof(EthIp)) return false;
 
 	EthUdp &b = *((EthUdp*)mb->GetDataPtr());
 
@@ -914,7 +920,7 @@ static void UpdateTransmit()
 
 	Ptr<MB> &buf = buf_UpdateTransmit;
 
-	static Transmit_Desc *dsc = 0;
+	//static Transmit_Desc *dsc = 0;
 
 	//static CTM32 ctm;
 
@@ -939,10 +945,16 @@ static void UpdateTransmit()
 			break;
 
 		case 1:
-			
-			if ((dsc = GetTxDesc()) != 0)
+		{
+			Transmit_Desc &td = Tx_Desc[TxBufIndex];
+
+			if (TxBufLen < (NUM_TX_DSC-1) && /*td.ChkFree() &&*/ !Tx_MB[TxBufIndex].Valid())
 			{
-				dsc->SetAdr(buf->GetDataPtr(), buf->len);
+				td.SetAdr(buf->GetDataPtr(), buf->len);
+				Tx_MB[TxBufIndex] = buf;
+
+				TxBufIndex = (td.ChkWrap()) ? 0 : TxBufIndex + 1;
+				TxBufLen += 1;
 
 				#ifdef CPU_SAME53	
 
@@ -979,11 +991,12 @@ static void UpdateTransmit()
 			};
 
 			break;
+		};
 
 		case 2:
 
 			#ifdef CPU_SAME53	
-				if ((HW::GMAC->TSR & (TSR_TXGO|TSR_TXCOMP)) != TSR_TXCOMP) break;
+				//if ((HW::GMAC->TSR & (TSR_TXGO|TSR_TXCOMP)) != TSR_TXCOMP) break;
 			#endif
 
 			FreeTxDesc();

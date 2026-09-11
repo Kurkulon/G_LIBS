@@ -51,9 +51,10 @@ static const bool __trace = true;
 
 //char TrapTxDataBuffer[TRAP_TX_DATA_BUFFER_SIZE];
 
-u32 TrapRxCounter;
-u32 TrapTxCounter;
-u32 TrapRxLost;
+u32 trapRxCounter = 0;
+u32 trapTxCounter = 0;
+u32 trapRxLost = 0;
+u32 trapTxNotSended = 0;
 
 static bool startSendVector = false;
 static u16  startSession = 0;
@@ -677,16 +678,16 @@ void TRAP_HandleRxData(Ptr<MB> &mb)
 
 //	TRAP_RX_PACKET_type *packet = (TRAP_RX_PACKET_type *)data;
 
-	if((TrapRxCounter == 0) || (t->hdr.counter <= 1))
+	if((trapRxCounter == 0) || (t->hdr.counter <= 1))
 	{
-		TrapRxLost = 0;
+		trapRxLost = 0;
 	}
 	else
 	{
-		TrapRxLost += t->hdr.counter - TrapRxCounter - 1;	
+		trapRxLost += t->hdr.counter - trapRxCounter - 1;	
 	};
 
-	TrapRxCounter = t->hdr.counter;
+	trapRxCounter = t->hdr.counter;
 
 	bool need_ask = (((t->hdr.status)>>3)&0x1);
 
@@ -720,7 +721,7 @@ void TRAP_HandleRxData(Ptr<MB> &mb)
 				{
 					case TRAP_INFO_COMMAND_GET_INFO:
 
-						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_INFO_DEVICE, TrapRxCounter);					
+						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_INFO_DEVICE, trapRxCounter);					
 						TRAP_INFO_SendInfo();
 						break;
 
@@ -728,14 +729,14 @@ void TRAP_HandleRxData(Ptr<MB> &mb)
 
 					case TRAP_INFO_COMMAND_GET_DEVICES:
 
-						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_INFO_DEVICE, TrapRxCounter);					
+						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_INFO_DEVICE, trapRxCounter);					
 						TRAP_INFO_SendDevices();
 						break;
 #endif
 
 					case TRAP_INFO_COMMAND_SET_NUMBER:
 
-						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_INFO_DEVICE, TrapRxCounter);
+						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_INFO_DEVICE, trapRxCounter);
 						
 						{ TrapInfoSet &ts = (TrapInfoSet&)*t; SetNumDevice(ts.number); };
 						
@@ -745,13 +746,13 @@ void TRAP_HandleRxData(Ptr<MB> &mb)
 
 					case TRAP_INFO_COMMAND_SET_TYPE:
 
-						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_INFO_DEVICE, TrapRxCounter);
+						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_INFO_DEVICE, trapRxCounter);
 //						FRAM_Main_Device_Type_Set(ts.type);
 						break;
 
 					case TRAP_INFO_COMMAND_SET_TELEMETRY:
 
-						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_INFO_DEVICE, TrapRxCounter);
+						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_INFO_DEVICE, trapRxCounter);
 //						FRAM_Main_Device_Telemetry_Set(ts.telemetry);
 						break;
 
@@ -769,7 +770,7 @@ void TRAP_HandleRxData(Ptr<MB> &mb)
 				{
 					case TRAP_CLOCK_COMMAND_GET:
 
-						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_CLOCK_DEVICE, TrapRxCounter);					
+						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_CLOCK_DEVICE, trapRxCounter);					
 						TRAP_CLOCK_SendMain(/*RTC_Get()*/);
 						break;
 
@@ -777,7 +778,7 @@ void TRAP_HandleRxData(Ptr<MB> &mb)
 
 						//TrapClock &tc = (TrapClock&)*t;
 
-						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_CLOCK_DEVICE, TrapRxCounter);	
+						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_CLOCK_DEVICE, trapRxCounter);	
 
 						{ TrapClock &tc = (TrapClock&)*t; SetClock(tc.rtc); };
 
@@ -799,13 +800,13 @@ void TRAP_HandleRxData(Ptr<MB> &mb)
 				{
 					case TRAP_MEMORY_COMMAND_GET_INFO:
 
-						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_MEMORY_DEVICE, TrapRxCounter);					
+						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_MEMORY_DEVICE, trapRxCounter);					
 						TRAP_MEMORY_SendInfo();
 						break;
 
 					case TRAP_MEMORY_COMMAND_READ_SESSION_START:
 
-						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_MEMORY_DEVICE, TrapRxCounter);
+						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_MEMORY_DEVICE, trapRxCounter);
 
 						NandFlash_StartSendSession();
 
@@ -819,7 +820,7 @@ void TRAP_HandleRxData(Ptr<MB> &mb)
 
 					case TRAP_MEMORY_COMMAND_FIND_SESSION_START:
 
-						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_MEMORY_DEVICE, TrapRxCounter);
+						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_MEMORY_DEVICE, trapRxCounter);
 
 						NandFlash_StartFindSession();
 
@@ -833,7 +834,7 @@ void TRAP_HandleRxData(Ptr<MB> &mb)
 
 					case TRAP_MEMORY_COMMAND_READ_VECTOR_START:
 
-						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_MEMORY_DEVICE, TrapRxCounter);
+						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_MEMORY_DEVICE, trapRxCounter);
 
 						{ TrapReadVector &tr = (TrapReadVector&)*t; StartSendVector(tr.session, tr.last_adress); };
 
@@ -843,7 +844,7 @@ void TRAP_HandleRxData(Ptr<MB> &mb)
 
 					case TRAP_MEMORY_COMMAND_STOP:
 
-						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_MEMORY_DEVICE, TrapRxCounter);					
+						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_MEMORY_DEVICE, trapRxCounter);					
 
 						stop = true;
 
@@ -854,7 +855,7 @@ void TRAP_HandleRxData(Ptr<MB> &mb)
 
 					case TRAP_MEMORY_COMMAND_PAUSE:
 
-						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_MEMORY_DEVICE, TrapRxCounter);	
+						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_MEMORY_DEVICE, trapRxCounter);	
 
 						pause = true;
 
@@ -864,7 +865,7 @@ void TRAP_HandleRxData(Ptr<MB> &mb)
 
 					case TRAP_MEMORY_COMMAND_RESUME:
 
-						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_MEMORY_DEVICE, TrapRxCounter);
+						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_MEMORY_DEVICE, trapRxCounter);
 
 						pause = false;
 
@@ -874,7 +875,7 @@ void TRAP_HandleRxData(Ptr<MB> &mb)
 
 					case TRAP_MEMORY_COMMAND_ERASE:
 
-						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_MEMORY_DEVICE, TrapRxCounter);	
+						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_MEMORY_DEVICE, trapRxCounter);	
 
 						NandFlash_FullErase();
 
@@ -883,7 +884,7 @@ void TRAP_HandleRxData(Ptr<MB> &mb)
 
 					case TRAP_MEMORY_COMMAND_UNERASE:
 
-						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_MEMORY_DEVICE, TrapRxCounter);
+						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_MEMORY_DEVICE, trapRxCounter);
 
 						NandFlash_UnErase();
 
@@ -903,7 +904,7 @@ void TRAP_HandleRxData(Ptr<MB> &mb)
 				{
 					case TRAP_BOOTLOADER_COMMAND_START:
 
-						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_BOOTLOADER_DEVICE, TrapRxCounter);
+						if(need_ask == TRAP_PACKET_NEED_ASK) TRAP_SendAsknowlege(TRAP_BOOTLOADER_DEVICE, trapRxCounter);
 
 						cmdReboot = true;
 						tmReboot.Reset();
@@ -946,8 +947,8 @@ void EMAC_HandleRxError()
 static void MakePacketHeaders(TrapHdr *p, bool need_ask, bool is_ask, char device)
 {
 //	TRAP_TX_PACKET_type p;
-	p->counter = TrapTxCounter++;
-	p->errors = (u16)TrapRxLost;
+	p->counter = trapTxCounter++;
+	p->errors = (u16)trapRxLost;
 	p->version = TRAP_PACKET_VERSION;
 	p->status = ((is_ask&0x1)<<2) | ((need_ask&0x1)<<3);
 	p->device = device;
@@ -959,7 +960,7 @@ static void MakePacketHeaders(TrapHdr *p, bool need_ask, bool is_ask, char devic
 //static void TRAP_MakePacketHeaders(char *data, bool need_ask, bool is_ask, char device)
 //{
 //	TRAP_TX_PACKET_type p;
-//	p.counter = TrapTxCounter++;
+//	p.counter = trapTxCounter++;
 //	p.errors = (u16)TrapRxLost;
 //	p.version = TRAP_PACKET_VERSION;
 //	p.status = ((is_ask&0x1)<<2) | ((need_ask&0x1)<<3);
@@ -1306,6 +1307,7 @@ static bool UpdateSendVector()
 				count = 0;
 				maxVectorCount = 0;
 				crcErrCount = 0;
+				trapTxNotSended = 0;
 
 				NandFlash_SendStatus(0, NANDFL_STAT_READ_VECTOR_IDLE);
 
@@ -1363,8 +1365,8 @@ static bool UpdateSendVector()
 				{
 					mb.Free();
 
-					TRAP_TRACE_PrintString("Total vect: %u, Lost vect: %u, CRC Err vect: %u, ErrECC = %u, CorrectedErrECC = %u, ParityErrECC = %u", 
-											maxVectorCount, maxVectorCount - count, crcErrCount, NandFlash_Read_ErrECC_Get(), NandFlash_Read_CorrectedErrECC_Get(), NandFlash_Read_ParityErrECC_Get());
+					TRAP_TRACE_PrintString("Total vect: %u, Lost vect: %u, CRC Err vect: %u, ErrECC = %u, CorrectedErrECC = %u, ParityErrECC = %u, NotSended = %u", 
+											maxVectorCount, maxVectorCount - count, crcErrCount, NandFlash_Read_ErrECC_Get(), NandFlash_Read_CorrectedErrECC_Get(), NandFlash_Read_ParityErrECC_Get(), trapTxNotSended);
 
 					NandFlash_SendStatus(~0, NANDFL_STAT_READ_VECTOR_READY);
 
@@ -1716,9 +1718,9 @@ static bool UpdateSendVector_Dlya_Vova()
 
 void TRAP_Init()
 {
-	TrapRxCounter = 0;
-	TrapTxCounter = 0;
-	TrapRxLost = 0;
+	trapRxCounter = 0;
+	trapTxCounter = 0;
+	trapRxLost = 0;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1874,7 +1876,7 @@ static void UpdateSendTraps()
 
 		if (et.iph.off == 0) { et.iph.id = GetIpID(); };
 
-		TransmitFragUdp(mb, srcUDPPort, ComputerUDPPort);
+		if (!TransmitFragUdp(mb, srcUDPPort, ComputerUDPPort)) trapTxNotSended++;
 	};
 
 	if (ComputerFind && tm.Check(500))

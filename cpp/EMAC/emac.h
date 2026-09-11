@@ -89,6 +89,9 @@ inline bool EmacIsCableNormal()
 			bool	ChkTransmit()				{ return (stat & TD_TRANSMIT_OK) && (stat & TD_LENGTH_MASK) != 0; }
 			void	Free()						{ stat &= TD_TRANSMIT_OK|TD_TRANSMIT_WRAP; }
 
+			bool	ChkError()					{ return stat & (TD_TRANSMIT_ERR|TD_TRANSMIT_UND|TD_BUF_EX|TD_TRANSMIT_NO_CRC); }
+			u16		GetLen()					{ return stat & TD_LENGTH_MASK; }
+
 			void 	SetAdr(void *adr, u32 len)	{ addr1 = adr; stat &= TD_TRANSMIT_OK|TD_TRANSMIT_WRAP; stat |= TD_LAST_BUF | (len & TD_LENGTH_MASK); stat &= ~TD_TRANSMIT_OK; }
 			byte*	GetAdr() 					{ return (byte*)addr1; }
 			//void	ClrAdr()					{ addr1 = 0; stat = (stat & TD_TRANSMIT_WRAP)|TD_TRANSMIT_OK; }
