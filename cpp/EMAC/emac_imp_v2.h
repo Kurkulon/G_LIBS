@@ -158,6 +158,12 @@ u32 reqIpCount = 0;
 u32 reqUdpCount = 0;
 u32 reqIcmpCount = 0;
 u32 rxCount = 0;
+u32 framesTX = 0;
+u32 framesBCFT = 0;
+u32 framesMFT = 0;
+u32 framesTUR = 0;
+
+
 u32 txErrCount = 0;
 //u32 countBNA = 0;
 //u32 countREC = 0;
@@ -305,7 +311,11 @@ static void FreeTxDesc()
 {
 	Transmit_Desc &td = Tx_Desc[TxFreeIndex];
 
-	if ((TxBufLen > 1 /*|| CheckTxComp()*/) && td.ChkTransmit() && Tx_MB[TxFreeIndex].Valid())
+	//byte next = (td.ChkWrap()) ? 0 : TxFreeIndex + 1;
+
+	//Transmit_Desc &ntd = Tx_Desc[next];
+
+	if (td.ChkTransmit() && Tx_MB[TxFreeIndex].Valid() /*&& ntd.ChkTransmit() && Tx_MB[next].Valid()*/)
 	{
 		//if (__debug && !Tx_MB[TxFreeIndex].Valid()) __breakpoint(0); 
 
@@ -460,7 +470,7 @@ bool TransmitIp(Ptr<MB> &mb)
 
 	b.iph.hl_v = 0x45;	
 	b.iph.tos = 0;		
-	b.iph.ttl = 64;		
+	b.iph.ttl = 5;		
 	b.iph.sum = 0;		
 	b.iph.src = ipAdr;		
 	b.iph.len = ReverseWord(mb->len - sizeof(EthHdr));		
@@ -482,7 +492,7 @@ bool TransmitFragIp(Ptr<MB> &mb)
 
 	b.iph.hl_v = 0x45;	
 	b.iph.tos = 0;		
-	b.iph.ttl = 64;		
+	b.iph.ttl = 5;		
 	b.iph.sum = 0;		
 	b.iph.src = ipAdr;		
 	b.iph.off = ReverseWord(b.iph.off);		
@@ -948,7 +958,7 @@ static void UpdateTransmit()
 		{
 			Transmit_Desc &td = Tx_Desc[TxBufIndex];
 
-			if (TxBufLen < (NUM_TX_DSC-1) && /*td.ChkFree() &&*/ !Tx_MB[TxBufIndex].Valid())
+			if (/*TxBufLen < (NUM_TX_DSC-1) && td.ChkFree() &&*/ !Tx_MB[TxBufIndex].Valid())
 			{
 				td.SetAdr(buf->GetDataPtr(), buf->len);
 				Tx_MB[TxBufIndex] = buf;
@@ -957,6 +967,11 @@ static void UpdateTransmit()
 				TxBufLen += 1;
 
 				#ifdef CPU_SAME53	
+
+					framesTX	+= HW::GMAC->FT;
+					framesBCFT	+= HW::GMAC->BCFT;
+					framesMFT	+= HW::GMAC->MFT; 
+					framesTUR	+= HW::GMAC->TUR; 
 
 					HW::GMAC->TSR = 0x17F;
 					HW::GMAC->NCR |= GMAC_TXEN|GMAC_TSTART;

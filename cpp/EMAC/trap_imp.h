@@ -1240,6 +1240,11 @@ static bool UpdateSendVector()
 #else
 
 static Ptr<MB> mb_UpdateSendVector;
+static Ptr<MB> prmb_UpdateSendVector;
+
+//static ListPtr<MB> mbList_UpdateSendVector;
+
+u32 trapVectCountBP = ~0;
 
 static bool UpdateSendVector()
 {
@@ -1247,6 +1252,10 @@ static bool UpdateSendVector()
 	static NANDFLRB flrb;
 
 	Ptr<MB> &mb = mb_UpdateSendVector;
+	Ptr<MB> &prmb = prmb_UpdateSendVector;
+
+	//ListPtr<MB> &mbList = mbList_UpdateSendVector;
+
 //	static VecData::Hdr h;
 
 	static u64 vecCount = 0;
@@ -1402,20 +1411,38 @@ static bool UpdateSendVector()
 					vecCount += flrb.hdr.dataLen;
 					count += 1;
 
+					if (__debug && count == trapVectCountBP) __breakpoint(0);
+
 					mb->len = sizeof(et.eu) + sizeof(et.tv) + flrb.len;
 
 					if (flrb.hdr.dataLen > flrb.maxLen)
 					{
-						ipID = GetIpID(); 
-
-						et.eu.iph.id = ipID;
-						et.eu.iph.off = 0x2000;
-
 						fragOff = mb->len - sizeof(EthIp); //flrb.maxLen;
 						fragLen = flrb.hdr.dataLen - flrb.maxLen;
 
+						ipID = GetIpID(); 
+
+						et.eu.iph.id = ipID;
+
+						#ifndef TRAP_VEC_CHECK_CRC
+							et.eu.iph.off = 0x2000;
+						#else
+
+							if (fragLen > 2)
+							{
+								et.eu.iph.off = 0x2000;
+							}
+							else
+							{
+								et.eu.iph.off = 0;
+								mb->len += fragLen;
+							};
+
+						#endif
 
 						et.eu.udp.len = sizeof(UdpHdr) + sizeof(trap) + flrb.hdr.dataLen - CRC_SIZE;
+						
+						prmb = mb; //mbList.Add(mb);
 
 						i = 3;
 					}
@@ -1431,13 +1458,13 @@ static bool UpdateSendVector()
 						{
 							crcErrCount++;
 
-							//TRAP_TRACE_PrintString("Send vector %u CRC Error !!!", count);
+							//TRAP_TRACE_PrintString("Send vector %u CRC Error !!! IP-Id %u", count, txIpID);
 						};
+
+						SendFragTrap(mb);
 
 						i = 1;
 					};
-
-					SendFragTrap(mb);
 				};
 			};
 
@@ -1487,32 +1514,56 @@ static bool UpdateSendVector()
 
 					if (fragLen > 0)
 					{ 
-						ef.ei.iph.off |= 0x2000; 
+						#ifndef TRAP_VEC_CHECK_CRC
+							ef.ei.iph.off |= 0x2000;
+						#else
+
+							if (fragLen > 2)
+							{
+								ef.ei.iph.off |= 0x2000;
+							}
+							else
+							{
+								mb->len += fragLen;
+							};
+
+						#endif
+
+						SendFragTrap(prmb);
+						prmb = mb; //mbList.Add(mb);
+
 						i = 3;
 					}
 					else 
 					{
-							if (flrb.crc != 0)
+						#ifdef TRAP_VEC_CHECK_CRC
+							if (flrb.len <= 2)
 							{
-								#ifdef TRAP_VEC_CHECK_CRC
-									//mb->len = 0;
-								#endif
-
-								crcErrCount++;
-							
-								//TRAP_TRACE_PrintString("Send vector %u CRC Error !!!", count);
-							}
-							else
-							{
-								#ifdef TRAP_VEC_CHECK_CRC
-									mb->len -= CRC_SIZE;
-								#endif
+								mb = prmb; prmb.Free();
 							};
+						#endif
+
+						if (flrb.crc != 0)
+						{
+							crcErrCount++;
+							
+							//TRAP_TRACE_PrintString("Send vector %u CRC Error !!! IP-Id %u", count, ipID);
+						}
+						else
+						{
+							#ifdef TRAP_VEC_CHECK_CRC
+								mb->len -= CRC_SIZE;
+							#endif
+						};
+
+						SendFragTrap(prmb);
+						SendFragTrap(mb);
+
+						prmb.Free();
+						mb.Free();
 
 						i = 1;
 					};
-
-					SendFragTrap(mb);
 				};
 			};
 

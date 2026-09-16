@@ -86,13 +86,13 @@ inline bool EmacIsCableNormal()
 			//void	ClrWrap()					{ stat &= ~TD_TRANSMIT_WRAP; }
 			bool	ChkWrap()					{ return stat & TD_TRANSMIT_WRAP; }
 			bool	ChkFree()					{ return (stat & TD_TRANSMIT_OK) && (stat & TD_LENGTH_MASK) == 0; }
-			bool	ChkTransmit()				{ return (stat & TD_TRANSMIT_OK) && (stat & TD_LENGTH_MASK) != 0; }
-			void	Free()						{ stat &= TD_TRANSMIT_OK|TD_TRANSMIT_WRAP; }
+			bool	ChkTransmit()				{ return (stat & (TD_TRANSMIT_OK|(1<<25))) == TD_TRANSMIT_OK;  /*&& (stat & TD_LENGTH_MASK) != 0*/; }
+			void	Free()						{ stat &= TD_TRANSMIT_OK|TD_TRANSMIT_WRAP|(1<<25); }
 
 			bool	ChkError()					{ return stat & (TD_TRANSMIT_ERR|TD_TRANSMIT_UND|TD_BUF_EX|TD_TRANSMIT_NO_CRC); }
 			u16		GetLen()					{ return stat & TD_LENGTH_MASK; }
 
-			void 	SetAdr(void *adr, u32 len)	{ addr1 = adr; stat &= TD_TRANSMIT_OK|TD_TRANSMIT_WRAP; stat |= TD_LAST_BUF | (len & TD_LENGTH_MASK); stat &= ~TD_TRANSMIT_OK; }
+			void 	SetAdr(void *adr, u32 len)	{ addr1 = adr; stat &= TD_TRANSMIT_OK|TD_TRANSMIT_WRAP; stat |= (1<<25)|TD_LAST_BUF | (len & TD_LENGTH_MASK); stat &= ~TD_TRANSMIT_OK; }
 			byte*	GetAdr() 					{ return (byte*)addr1; }
 			//void	ClrAdr()					{ addr1 = 0; stat = (stat & TD_TRANSMIT_WRAP)|TD_TRANSMIT_OK; }
 
@@ -200,6 +200,9 @@ inline bool EmacIsCableNormal()
 			bool	ChkFree()					{ return (stat & TD0_OWN) == 0 && (ctrl & TD1_TBS1) == 0; }
 			bool	ChkTransmit()				{ return (stat & TD0_OWN) == 0 && (ctrl & TD1_TBS1) != 0; }
 			void	Free()						{ ctrl = 0; }
+
+			bool	ChkError()					{ return false; }
+			u16		GetLen()					{ return TBS1(ctrl); }
 
 			void 	SetAdr(void *adr, u32 len)	{ addr1 = adr; addr2 = 0; ctrl = TBS1(len); stat |= TD0_LS|TD0_FS; stat |= TD0_OWN; }
 			byte*	GetAdr() 					{ return (byte*)addr1; }
