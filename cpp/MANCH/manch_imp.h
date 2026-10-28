@@ -89,6 +89,40 @@
 
 		inline void MANTT_ClockEnable()			{ HW::GCLK->PCHCTRL[GCLK_MANT] = MANT_GEN|GCLK_CHEN; HW::MCLK->ClockEnable(PID_MANT); }
 	
+	#elif defined(MAN_TRANSMIT_SSC) // #ifdef MAN_TRANSMIT_V1
+
+		#define MANT						HW::CONCAT2(SPI,MAN_SERCOM_NUM)
+		//#define MANT_GEN					CONCAT2(GEN_,MANT_TCC)
+		//#define MANT_GEN_CLK				CONCAT2(CLK_,MANT_TCC) 
+		#define MANT_IRQ					CONCAT3(SERCOM,MAN_SERCOM_NUM,_0_IRQ)
+		#define GCLK_MANT					CONCAT3(GCLK_SERCOM,MAN_SERCOM_NUM,_CORE)
+		#define PID_MANT					CONCAT2(PID_SERCOM,MAN_SERCOM_NUM)
+
+		#define BAUD2CLK(x)					((u32)(MANT_GEN_CLK/(2*(x))+0.5))
+
+		//#define _MAN_SSC_TCMR	(SSC_TCKS_MCK|SSC_TCKO_TRANSFER|SSC_TCKI)
+		//#define _MAN_SSC_TFMR	(SSC_TDATLEN(20)|SSC_TMSBF|SSC_TFSOS_HIGH)
+
+		#define ManDisableTransmit()		{ PIO_MANEN->CLR(MANEN); MANT->INTENCLR = SPI_DRE; MANT->INTENCLR = SPI_TXC; MANT->CTRLA &= ~SPI_ENABLE;}
+		#define ManTransmit_ClockEnable()	{ HW::GCLK->PCHCTRL[GCLK_MANT] = MANT_GEN|GCLK_CHEN; HW::MCLK->ClockEnable(PID_MANT); }
+
+		inline void ManDisable()	{ } 
+		inline void ManZero()		{ } 
+		inline void ManOne()		{ } 
+		inline void ManDischarge()	{ } 
+
+		typedef byte MANBUFTYPE;
+		#define MANBUFNUM 16
+
+		//static const u16 manbaud[5] = { BAUD2CLK(20833), BAUD2CLK(41666), BAUD2CLK(62500), BAUD2CLK(83333), BAUD2CLK(104166) };//0:20833Hz, 1:41666Hz,2:62500Hz,3:83333Hz
+
+		//static u16 GetTrmBaudRate(byte i)
+		//{
+		//	if (i >= ArraySize(manbaud)) { i = ArraySize(manbaud) - 1; };
+		//
+		//	return (manbaud[i]+1)/2;
+		//}
+
 	#endif // #if defined(MAN_TRANSMIT_V1) || defined(MAN_TRANSMIT_V2)
 
 #elif defined(CPU_SAM4SA) //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -139,6 +173,9 @@
 		inline void ManZero()		{ } 
 		inline void ManOne()		{ } 
 		inline void ManDischarge()	{ } 
+
+		typedef u32 MANBUFTYPE;
+		#define MANBUFNUM 8
 
 		//static const u16 manbaud[5] = { BAUD2CLK(20833), BAUD2CLK(41666), BAUD2CLK(62500), BAUD2CLK(83333), BAUD2CLK(104166) };//0:20833Hz, 1:41666Hz,2:62500Hz,3:83333Hz
 
@@ -1311,14 +1348,14 @@ void InitManTransmit()
 
 static const u16 *mantPtr = 0;
 static u16 mantLen = 0;
-static u32 manBuf[8];
+static MANBUFTYPE manBuf[MANBUFNUM];
 static byte manBufStart = 0;
 static byte manBufEnd = 0;
 static byte manBufLen = 0;
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-inline void ManBufAdd(u32 v)
+inline void ManBufAdd(MANBUFTYPE v)
 {
 	manBuf[manBufEnd] = v;
 	manBufEnd = (manBufEnd+1) & (ArraySize(manBuf)-1);
@@ -1327,9 +1364,9 @@ inline void ManBufAdd(u32 v)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-inline u32 ManBufGet()
+inline MANBUFTYPE ManBufGet()
 {
-	u32	v = manBuf[manBufStart];
+	MANBUFTYPE	v = manBuf[manBufStart];
 
 	manBufStart = (manBufStart+1) & (ArraySize(manBuf)-1);
 	manBufLen -= 1;
@@ -1362,6 +1399,8 @@ union ManBits
 		u64 dw1 : 20;
 		u64 dw2 : 20;
 	};
+
+	byte b[5];
 };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1412,12 +1451,11 @@ inline void GetManBits(ManBits &man, u16 t)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static __irq void ManTrm_ISR()
+static __irq void ManTrm_ISR() // MAN_TRANSMIT_SSC
 {
+	Pin_ManTrmIRQ_Set();
 
 #ifdef CPU_SAM4SA
-
-	Pin_ManTrmIRQ_Set();
 
 	u32 stat = HW::SSC->SR & HW::SSC->IMR;
 
@@ -1466,15 +1504,64 @@ static __irq void ManTrm_ISR()
 		HW::PIOA->BCLR(22);
 	};
 
-	Pin_ManTrmIRQ_Clr();
+#elif defined(CPU_SAME53)
+
+	u32 stat = MANT->INTFLAG & MANT->INTENSET;
+
+	if (stat & SPI_DRE)
+	{
+		if (mantLen > 0)
+		{
+			if (ManBufFreeLen() >= 5)
+			{
+				ManBits man;
+
+				GetManBits(man, *(mantPtr++));
+
+				ManBufAdd(man.b[4]); 
+				ManBufAdd(man.b[3]); 
+				ManBufAdd(man.b[2]); 
+				ManBufAdd(man.b[1]); 
+				ManBufAdd(man.b[0]); 
+
+				mantLen -= 1;
+
+				if (mantLen == 0 && manTB->data2 != 0 && manTB->len2 != 0)
+				{
+					mantPtr = manTB->data2;
+					mantLen = manTB->len2;
+					manTB->len2 = 0;
+				};
+			};
+		};
+
+		if (!ManBufEmpty())
+		{
+			MANT->DATA = ManBufGet(); //man.dw1;
+		}
+		else
+		{
+			//HW::SSC->THR = 0;
+			MANT->INTENCLR = SPI_DRE;
+			MANT->INTENSET = SPI_TXC;
+		};
+	}
+	else if (stat & SPI_TXC)
+	{
+		ManDisableTransmit();
+
+		manTB->ready = true;
+		trmBusy = false;
+	};
 
 #endif
 
+	Pin_ManTrmIRQ_Clr();
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-bool SendManData(MTB *mtb)
+bool SendManData(MTB *mtb) // MAN_TRANSMIT_SSC
 {
 	if (trmBusy || rcvBusy || mtb == 0 || mtb->data1 == 0 || mtb->len1 == 0)
 	{
@@ -1515,6 +1602,38 @@ bool SendManData(MTB *mtb)
 
 	HW::PIOA->BSET(22);
 
+#elif defined(CPU_SAME53)
+
+	//ManBufAdd(man.b[4]); 
+	//ManBufAdd(man.b[3]); 
+	ManBufAdd(man.b[2]); 
+	ManBufAdd(man.b[1]); 
+	ManBufAdd(man.b[0]); 
+
+	while(MANT->SYNCBUSY);
+
+	MANT->INTENCLR = ~0;
+
+	MANT->CTRLA = SERCOM_MODE_SPI_MASTER;
+	MANT->CTRLA = SERCOM_MODE_SPI_MASTER|MANT_DOPO_BITS|SPI_CPHA/*|SPI_CPOL*/;
+	MANT->CTRLB = 0;
+	MANT->CTRLC = 0;
+	MANT->BAUD = GetTrmBaudRate(mtb->baud)-1; 
+	
+	MANT->CTRLA |= SPI_ENABLE;
+
+	while(MANT->SYNCBUSY);
+
+	MANT->DATA = man.b[4];
+	
+	PIO_MANEN->SET(MANEN);
+
+	while ((MANT->INTFLAG & SPI_DRE) == 0);
+
+	MANT->DATA = man.b[3];
+
+	MANT->INTENSET = SPI_DRE;
+
 #endif
 
 	return trmBusy = true;
@@ -1522,7 +1641,7 @@ bool SendManData(MTB *mtb)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void InitManTransmit()
+void InitManTransmit() // MAN_TRANSMIT_SSC
 {
 
 #ifdef CPU_SAM4SA
@@ -1541,6 +1660,46 @@ void InitManTransmit()
 	VectorTableExt[SSC_IRQ] = ManTrm_ISR;
 	CM4::NVIC->CLR_PR(SSC_IRQ);
 	CM4::NVIC->SET_ER(SSC_IRQ);
+
+#elif defined(CPU_SAME53)
+
+	ManTransmit_ClockEnable();
+
+	#ifdef PIO_MANT_SPCK
+	PIO_MANT_SPCK->SetWRCONFIG(	MANT_SPCK,	MANT_PMUX_SPCK|PORT_WRPINCFG|PORT_PMUXEN|PORT_WRPMUX);
+	#endif
+
+	PIO_MANTX->SetWRCONFIG(		MANTX,		MANT_PMUX_MANTX|PORT_WRPINCFG|PORT_PMUXEN|PORT_WRPMUX);
+	
+	PIO_MANEN->SetWRCONFIG(		MANEN,		PORT_WRPINCFG|PORT_WRPMUX);
+	PIO_MANEN->DIRSET = MANEN;
+	PIO_MANEN->CLR(MANEN);
+
+	MANT->CTRLA = SPI_SWRST;
+
+	while(MANT->SYNCBUSY);
+
+	MANT->CTRLA = SERCOM_MODE_SPI_MASTER;
+	MANT->CTRLA = SERCOM_MODE_SPI_MASTER|MANT_DOPO_BITS|SPI_CPHA;
+	MANT->CTRLB = 0;
+	MANT->CTRLC = 0;
+	MANT->BAUD = 1;
+
+	MANT->DBGCTRL = 1;
+
+	//MANT->CTRLA |= SPI_ENABLE;
+
+	while(MANT->SYNCBUSY);
+
+	MANT->INTFLAG = ~0;
+
+	VectorTableExt[MANT_IRQ] = ManTrm_ISR;
+	CM4::NVIC->CLR_PR(MANT_IRQ);
+	CM4::NVIC->SET_ER(MANT_IRQ);
+
+	VectorTableExt[MANT_IRQ+1] = ManTrm_ISR;
+	CM4::NVIC->CLR_PR(MANT_IRQ+1);
+	CM4::NVIC->SET_ER(MANT_IRQ+1);
 
 #endif
 
