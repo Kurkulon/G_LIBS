@@ -3098,6 +3098,26 @@ namespace T_HW
 		SERCOM(S_SPI *p)	: spi(p)	{}
 		SERCOM(S_I2C *p)	: i2c(p)	{}
 	};
+
+	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	
+	__packed struct S_TEMPCAL
+	{
+		RO32    TLI				: 8;	//	7:0		TLI Integer part of calibration temperature TL        
+		RO32    TLD				: 4;	//	11:8	TLD Decimal part of calibration temperature TL     
+		RO32    THI				: 8;	//	19:12	THI Integer part of calibration temperature TH     
+		RO32    THD				: 4;	//	23:20	THD Decimal part of calibration temperature TH     
+		RO32    z__Reserved1	: 16;   //	39:24	Reserved Reserved for future use.     
+		RO32    VPL				: 12;	//	51:40	VPL Temperature calibration parameters.     
+		RO32    VPH				: 12;	//	63:52	VPH     
+		RO32    VCL				: 12;	//	75:64	VCL     
+		RO32    VCH				: 12;	//	87:76	VCH     
+		//RO32    z__Reserved2	: 40;	//	127:88	Reserved Reserved for future use.     
+	};
+
+	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 };
 
 
@@ -3209,7 +3229,7 @@ namespace HW
 	MK_PTR(GMAC,	0x42000800);
 #endif
 
-	//MK_PTR(MATRIX,	0x400E0200);
+	MK_PTR(TEMPCAL,	0x00800100);
 	//MK_PTR(UART0,	0x400E0600);
 	//MK_PTR(UART1,	0x400E0800);
 

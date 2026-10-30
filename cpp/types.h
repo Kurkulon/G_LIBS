@@ -139,6 +139,8 @@ typedef signed long long int i64;
 typedef unsigned long long int u64;
 
 #define ArraySize(x) (sizeof(x)/sizeof(x[0]))
+#define SMUL64(a,b) ((i64)(a)*(i32)(b))
+#define UMUL64(a,b) ((u64)(a)*(u32)(b))
 
 #if !defined(_MSC_VER) && !defined(NAN)
 static const dword __NAN_dword = 0xFFFFFFFF;
